@@ -1,0 +1,32 @@
+name: Check connectors
+
+# Manual check that the live connectors are up and turn away bad requests.
+# Sends nothing that creates records.
+
+on:
+    workflow_dispatch:
+
+jobs:
+    check:
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+        env:
+            BASE: https://mxoqwwdpclfkoydfofug.supabase.co/functions/v1
+        steps:
+            - name: Probe connectors
+              run: |
+                  set -u
+                  fail=0
+                  expect() {
+                    label="$1"; want="$2"; shift 2
+                    got=$(curl -s -o /dev/null -w "%{http_code}" "$@")
+                    if [ "$got" = "$want" ]; then echo "PASS $label ($got)"; else echo "FAIL $label: wanted $want, got $got"; fail=1; fi
+                  }
+                  expect "shopify rejects unsigned" 401 -X POST "$BASE/shopify_webhook" -H 'content-type: application/json' -d '{"id":1}'
+                  expect "calcom rejects unsigned" 401 -X POST "$BASE/calcom_webhook" -d '{}'
+                  expect "calcom rejects forged signature" 401 -X POST "$BASE/calcom_webhook" -H 'x-cal-signature-256: deadbeef' -d '{}'
+                  expect "lead_intake rejects other sites" 403 -X POST "$BASE/lead_intake" -H 'origin: https://example.com' -d '{}'
+                  expect "lead_intake needs an email or phone" 400 -X POST "$BASE/lead_intake" -H 'origin: https://thelabfsj.ca' -d '{}'
+                  expect "lead_intake ignores bots quietly" 200 -X POST "$BASE/lead_intake" -H 'origin: https://thelabfsj.ca' -d '{"website":"spam","email":"bot@example.com"}'
+                  expect "lead_intake allows the website" 204 -X OPTIONS "$BASE/lead_intake" -H 'origin: https://thelabfsj.ca'
+                  exit $fail
