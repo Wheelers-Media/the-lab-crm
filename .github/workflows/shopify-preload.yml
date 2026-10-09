@@ -1,0 +1,95 @@
+name: Shopify preload
+
+# One-time (re-runnable) load of Shopify customers, orders and open carts into
+# the CRM database. Runs on pushes to preload/* branches; never on main.
+#
+# This repository is public, so the request (links to the Shopify exports)
+# travels encrypted and the log shows counts only:
+#   1. Push a preload/* branch without preload/request.enc. The run makes an
+#      RSA key pair, commits the public key and the private key encrypted with
+#      the SUPABASE_DB_PASSWORD secret (only the project owner can open it).
+#   2. Encrypt the request for that public key, commit preload/request.enc,
+#      preload/request.key and preload/mode ("dry" or "send"), push.
+#   3. The run decrypts, loads, and commits preload/result.txt (counts only).
+# Delete the branch afterwards; the export links expire within seven days.
+
+on:
+    push:
+        branches:
+            - "preload/**"
+
+permissions:
+    contents: write
+
+concurrency:
+    group: shopify-preload
+    cancel-in-progress: false
+
+jobs:
+    preload:
+        runs-on: ubuntu-latest
+        timeout-minutes: 20
+        env:
+            SUPABASE_PROJECT_ID: mxoqwwdpclfkoydfofug
+            SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+            SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        steps:
+            - name: Check secrets
+              if: ${{ !env.SUPABASE_ACCESS_TOKEN || !env.SUPABASE_DB_PASSWORD }}
+              run: |
+                  echo "::error::SUPABASE_ACCESS_TOKEN and SUPABASE_DB_PASSWORD are needed."
+                  exit 1
+
+            - uses: actions/checkout@v4
+
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 24
+
+            - name: Make a key pair
+              if: ${{ hashFiles('preload/request.enc') == '' }}
+              run: |
+                  set -euo pipefail
+                  umask 077
+                  mkdir -p preload
+                  openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:3072 -out "$RUNNER_TEMP/key.pem" 2>/dev/null
+                  openssl pkey -in "$RUNNER_TEMP/key.pem" -pubout -out preload/public.pem
+                  openssl enc -aes-256-cbc -pbkdf2 -iter 300000 -salt -a -A \
+                    -pass env:SUPABASE_DB_PASSWORD -in "$RUNNER_TEMP/key.pem" -out preload/private.enc
+                  rm -f "$RUNNER_TEMP/key.pem"
+                  git config user.name "github-actions[bot]"
+                  git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+                  git add preload/public.pem preload/private.enc
+                  git commit -m "Add preload key"
+                  git push
+
+            - name: Load
+              if: ${{ hashFiles('preload/request.enc') != '' }}
+              run: |
+                  set -euo pipefail
+                  umask 077
+                  K="$RUNNER_TEMP/key.pem"
+                  openssl enc -d -aes-256-cbc -pbkdf2 -iter 300000 -a -A \
+                    -pass env:SUPABASE_DB_PASSWORD -in preload/private.enc -out "$K"
+                  base64 -d preload/request.key > "$RUNNER_TEMP/request.key.bin"
+                  openssl pkeyutl -decrypt -inkey "$K" -pkeyopt rsa_padding_mode:oaep \
+                    -pkeyopt rsa_oaep_md:sha256 -in "$RUNNER_TEMP/request.key.bin" -out "$RUNNER_TEMP/pass"
+                  openssl enc -d -aes-256-cbc -pbkdf2 -iter 100000 -a -A \
+                    -pass file:"$RUNNER_TEMP/pass" -in preload/request.enc -out "$RUNNER_TEMP/request.json"
+                  rm -f "$K" "$RUNNER_TEMP/pass" "$RUNNER_TEMP/request.key.bin"
+                  MODE=$(tr -d '[:space:]' < preload/mode 2>/dev/null || echo dry)
+                  FLAG=""
+                  if [ "$MODE" = "send" ]; then FLAG="--send"; fi
+                  set +e
+                  PRELOAD_REQUEST="$RUNNER_TEMP/request.json" node scripts/preload/run.ts $FLAG > "$RUNNER_TEMP/result.txt" 2>&1
+                  STATUS=$?
+                  set -e
+                  rm -f "$RUNNER_TEMP/request.json"
+                  { echo "mode: $MODE"; echo "exit: $STATUS"; cat "$RUNNER_TEMP/result.txt"; } > preload/result.txt
+                  cat preload/result.txt
+                  git config user.name "github-actions[bot]"
+                  git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+                  git add preload/result.txt
+                  git commit -m "Preload result ($MODE)"
+                  git push
+                  exit $STATUS
