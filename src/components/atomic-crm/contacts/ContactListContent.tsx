@@ -131,13 +131,13 @@ const ContactItemContent = ({
           <div className="font-medium">
             {`${contact.first_name} ${contact.last_name ?? ""}`}
           </div>
-          {contact.title || contact.company_id != null || contact.nb_tasks ? (
+          {contact.vehicle_label ||
+          contact.company_id != null ||
+          contact.nb_tasks ? (
             <div className="text-sm text-muted-foreground">
-              {contact.title && contact.company_id != null
-                ? `${translate("resources.contacts.position_at", {
-                    title: contact.title,
-                  })} `
-                : contact.title}
+              {contact.vehicle_label
+                ? `${contact.vehicle_label}${contact.company_id != null ? " · " : ""}`
+                : null}
               {contact.company_id != null && (
                 <ReferenceField
                   source="company_id"
@@ -266,11 +266,9 @@ const ContactItemContentMobile = ({ contact }: { contact: Contact }) => {
           <div className="text-sm text-muted-foreground">
             <div className="flex flex-col gap-1">
               <span>
-                {contact.title && contact.company_id != null
-                  ? `${translate("resources.contacts.position_at", {
-                      title: contact.title,
-                    })} `
-                  : contact.title}
+                {contact.vehicle_label
+                  ? `${contact.vehicle_label}${contact.company_id != null ? " · " : ""}`
+                  : null}
                 {contact.company_id != null && (
                   <ReferenceField
                     source="company_id"

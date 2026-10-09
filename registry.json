@@ -42,6 +42,26 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/vehicles/vehicleModel.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/vehicles/VehicleInputs.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/vehicles/VehicleField.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/vehicles/DealVehicleInput.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/vehicles/ContactVehicles.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/tasks/tasksPredicate.ts",
           "type": "registry:component"
         },
@@ -159,6 +179,10 @@
         },
         {
           "path": "src/components/atomic-crm/shop/OrderList.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/shop/MobileShopLists.tsx",
           "type": "registry:component"
         },
         {
@@ -298,6 +322,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/providers/fakerest/dataGenerator/vehicles.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/providers/fakerest/dataGenerator/utils.ts",
           "type": "registry:component"
         },
@@ -399,6 +427,10 @@
         },
         {
           "path": "src/components/atomic-crm/operations/format.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/operations/PipelineSnapshot.tsx",
           "type": "registry:component"
         },
         {
@@ -606,6 +638,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/layout/MobileListPage.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/layout/MobileLayout.tsx",
           "type": "registry:component"
         },
@@ -638,6 +674,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/deals/pipelineView.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/deals/index.ts",
           "type": "registry:component"
         },
@@ -646,7 +686,19 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/deals/dealBay.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/deals/OnlyMineInput.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/deals/MobileDealList.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/deals/DealStageSelect.tsx",
           "type": "registry:component"
         },
         {
@@ -790,6 +842,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/contacts/customerProfile.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/contacts/contactModel.ts",
           "type": "registry:component"
         },
@@ -883,6 +939,10 @@
         },
         {
           "path": "src/components/atomic-crm/companies/getTranslatedCompanySizeLabel.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/companies/MobileCompanyList.tsx",
           "type": "registry:component"
         },
         {

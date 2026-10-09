@@ -10,6 +10,7 @@ import type {
   ShopifyCheckout,
   Tag,
   Task,
+  Vehicle,
 } from "../../../types";
 import type { ConfigurationContextValue } from "../../../root/ConfigurationContext";
 
@@ -25,5 +26,6 @@ export interface Db {
   orders: Order[];
   shopify_checkouts: ShopifyCheckout[];
   appointments: Appointment[];
+  vehicles: Vehicle[];
   configuration: Array<{ id: number; config: ConfigurationContextValue }>;
 }

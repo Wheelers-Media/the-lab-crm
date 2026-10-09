@@ -72,6 +72,7 @@ export const generateContacts = (db: Db, size = 500): Required<Contact>[] => {
 
     const first_seen = randomDate(new Date(company.created_at)).toISOString();
     const last_seen = first_seen;
+    const sms_consent = weightedBoolean(60);
 
     return {
       id,
@@ -96,6 +97,34 @@ export const generateContacts = (db: Db, size = 500): Required<Contact>[] => {
       sales_id: company.sales_id!,
       nb_tasks: 0,
       linkedin_url: null,
+      preferred_contact: random.arrayElement(["text", "text", "call", "email"]),
+      sms_consent,
+      sms_consent_at: sms_consent ? first_seen : null,
+      lead_source: random.arrayElement([
+        "website",
+        "website",
+        "facebook",
+        "phone",
+        "walk-in",
+        "referral",
+        "shopify",
+      ]),
+      membership: weightedBoolean(8)
+        ? random.arrayElement(["monthly-signature", "lab-syndicate"])
+        : null,
+      membership_since: null,
+      city: random.arrayElement([
+        "Fort St. John",
+        "Fort St. John",
+        "Fort St. John",
+        "Taylor",
+        "Charlie Lake",
+        "Dawson Creek",
+        "Hudson's Hope",
+      ]),
+      province: "BC",
+      vehicles_fts: "",
+      vehicle_label: null,
     };
   });
 };

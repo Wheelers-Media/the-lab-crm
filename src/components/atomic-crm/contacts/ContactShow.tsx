@@ -33,6 +33,7 @@ import { Avatar } from "./Avatar";
 import { ContactAside } from "./ContactAside";
 import { MobileBackButton } from "../misc/MobileBackButton";
 import { ContactOrders } from "../shop/ContactOrders";
+import { ContactVehicles } from "../vehicles/ContactVehicles";
 
 export const ContactShow = (props: ShowBaseProps = {}) => {
   const isMobile = useIsMobile();
@@ -105,11 +106,9 @@ const ContactShowContentMobile = () => {
                 <RecordRepresentation />
               </h2>
               <div className="text-sm text-muted-foreground">
-                {record.title && record.company_id != null
-                  ? `${translate("resources.contacts.position_at", {
-                      title: record.title,
-                    })} `
-                  : record.title}
+                {record.vehicle_label
+                  ? `${record.vehicle_label}${record.company_id != null ? " · " : ""}`
+                  : null}
                 {record.company_id != null && (
                   <ReferenceField
                     source="company_id"
@@ -199,6 +198,18 @@ const ContactShowContentMobile = () => {
               </div>
               <div>
                 <h3 className="text-lg font-semibold">
+                  {translate("resources.vehicles.name", {
+                    smart_count: 2,
+                    _: "Vehicles",
+                  })}
+                </h3>
+                <Separator />
+                <div className="mt-3">
+                  <ContactVehicles contactId={record.id} />
+                </div>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold">
                   {translate(
                     "resources.contacts.field_categories.personal_info",
                   )}
@@ -246,7 +257,6 @@ const ContactShowContentMobile = () => {
 };
 
 const ContactShowContent = () => {
-  const translate = useTranslate();
   const { record, isPending } = useShowContext<Contact>();
   if (isPending || !record) return null;
 
@@ -262,11 +272,9 @@ const ContactShowContent = () => {
                   <RecordRepresentation />
                 </h5>
                 <div className="inline-flex text-sm text-muted-foreground">
-                  {record.title && record.company_id != null
-                    ? `${translate("resources.contacts.position_at", {
-                        title: record.title,
-                      })} `
-                    : record.title}
+                  {record.vehicle_label
+                    ? `${record.vehicle_label}${record.company_id != null ? " · " : ""}`
+                    : null}
                   {record.company_id != null && (
                     <ReferenceField
                       source="company_id"

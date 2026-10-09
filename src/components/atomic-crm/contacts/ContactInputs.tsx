@@ -13,21 +13,22 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { BooleanInput } from "@/components/admin/boolean-input";
 import { ReferenceInput } from "@/components/admin/reference-input";
 import { TextInput } from "@/components/admin/text-input";
-import { RadioButtonGroupInput } from "@/components/admin/radio-button-group-input";
+import { DateInput } from "@/components/admin/date-input";
 import { SelectInput } from "@/components/admin/select-input";
 import { ArrayInput } from "@/components/admin/array-input";
 import { SimpleFormIterator } from "@/components/admin/simple-form-iterator";
 
-import { isLinkedinUrl } from "../misc/isLinkedInUrl";
 import { StatusSelector } from "../notes";
 import type { Sale, Contact } from "../types";
 import { Avatar } from "./Avatar";
 import { AutocompleteCompanyInput } from "../companies/AutocompleteCompanyInput.tsx";
+import { translatePersonalInfoTypeLabel } from "./contactModel.ts";
 import {
-  contactGender,
-  translateContactGenderLabel,
-  translatePersonalInfoTypeLabel,
-} from "./contactModel.ts";
+  LEAD_SOURCE_CHOICES,
+  MEMBERSHIP_CHOICES,
+  PREFERRED_CONTACT_CHOICES,
+  PROVINCE_CHOICES,
+} from "./customerProfile.ts";
 
 export const ContactInputs = () => {
   const isMobile = useIsMobile();
@@ -61,17 +62,6 @@ const ContactIdentityInputs = () => {
       <h6 className="text-lg font-semibold">
         {translate("resources.contacts.field_categories.identity")}
       </h6>
-      <RadioButtonGroupInput
-        label={false}
-        row
-        source="gender"
-        choices={contactGender}
-        helperText={false}
-        optionText={(choice) => translateContactGenderLabel(choice, translate)}
-        translateChoice={false}
-        optionValue="value"
-        defaultValue={contactGender[0].value}
-      />
       <TextInput source="first_name" validate={required()} helperText={false} />
       <TextInput source="last_name" validate={required()} helperText={false} />
     </div>
@@ -85,10 +75,22 @@ const ContactPositionInputs = () => {
       <h6 className="text-lg font-semibold">
         {translate("resources.contacts.field_categories.position")}
       </h6>
-      <TextInput source="title" helperText={false} />
       <ReferenceInput source="company_id" reference="companies" perPage={10}>
         <AutocompleteCompanyInput label="resources.contacts.fields.company_id" />
       </ReferenceInput>
+      <div className="grid grid-cols-[1fr_6rem] gap-4">
+        <TextInput
+          source="city"
+          helperText={false}
+          placeholder="Fort St. John"
+        />
+        <SelectInput
+          source="province"
+          choices={PROVINCE_CHOICES}
+          helperText={false}
+          emptyText="-"
+        />
+      </div>
     </div>
   );
 };
@@ -195,10 +197,14 @@ const ContactPersonalInformationInputs = () => {
           />
         </SimpleFormIterator>
       </ArrayInput>
-      <TextInput
-        source="linkedin_url"
+      <SelectInput
+        source="preferred_contact"
+        choices={PREFERRED_CONTACT_CHOICES}
         helperText={false}
-        validate={isLinkedinUrl}
+      />
+      <BooleanInput
+        source="sms_consent"
+        helperText="Only when the customer said yes to texts about their jobs and offers."
       />
     </div>
   );
@@ -211,7 +217,21 @@ const ContactMiscInputs = () => {
       <h6 className="text-lg font-semibold">
         {translate("resources.contacts.field_categories.misc")}
       </h6>
-      <TextInput source="background" multiline helperText={false} />
+      <SelectInput
+        source="lead_source"
+        choices={LEAD_SOURCE_CHOICES}
+        helperText={false}
+      />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <SelectInput
+          source="membership"
+          choices={MEMBERSHIP_CHOICES}
+          helperText={false}
+          emptyText="No membership"
+        />
+        <DateInput source="membership_since" helperText={false} />
+      </div>
+      <TextInput source="background" multiline rows={3} helperText={false} />
       <BooleanInput source="has_newsletter" helperText={false} />
       <ReferenceInput
         reference="sales"

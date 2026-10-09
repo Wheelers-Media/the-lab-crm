@@ -17,16 +17,31 @@ const cleanContactArrayFields = (data: Contact) => {
   };
 };
 
-export const cleanupContactForCreate = (data: Contact) => {
-  return cleanContactArrayFields({
-    ...data,
-    first_seen: new Date().toISOString(),
-    last_seen: new Date().toISOString(),
-    tags: [],
-  });
+/** Record when the customer agreed to texts; clear it when they withdraw. */
+export const stampSmsConsent = <
+  T extends { sms_consent?: boolean; sms_consent_at?: string | null },
+>(
+  data: T,
+  now: Date = new Date(),
+): T & { sms_consent_at?: string | null } => {
+  if (!data.sms_consent) return { ...data, sms_consent_at: null };
+  if (data.sms_consent_at) return data;
+  return { ...data, sms_consent_at: now.toISOString() };
 };
 
-export const cleanupContactForEdit = cleanContactArrayFields;
+export const cleanupContactForCreate = (data: Contact) => {
+  return stampSmsConsent(
+    cleanContactArrayFields({
+      ...data,
+      first_seen: new Date().toISOString(),
+      last_seen: new Date().toISOString(),
+      tags: [],
+    }),
+  );
+};
+
+export const cleanupContactForEdit = (data: Contact) =>
+  stampSmsConsent(cleanContactArrayFields(data));
 
 type TranslateFn = (key: string, options?: { [key: string]: any }) => string;
 

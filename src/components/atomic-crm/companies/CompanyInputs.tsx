@@ -8,11 +8,8 @@ import { Separator } from "@/components/ui/separator";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 import ImageEditorField from "../misc/ImageEditorField";
-import { isLinkedinUrl } from "../misc/isLinkedInUrl";
 import { useConfigurationContext } from "../root/ConfigurationContext";
 import type { Company, Sale } from "../types";
-import { getTranslatedCompanySizeLabel } from "./getTranslatedCompanySizeLabel";
-import { sizes } from "./sizes";
 
 const isUrl = (url: string) => {
   if (!url) return;
@@ -84,11 +81,6 @@ const CompanyContactInputs = () => {
         })}
       </h6>
       <TextInput source="website" helperText={false} validate={isUrl} />
-      <TextInput
-        source="linkedin_url"
-        helperText={false}
-        validate={isLinkedinUrl}
-      />
       <TextInput source="phone_number" helperText={false} />
     </div>
   );
@@ -97,10 +89,6 @@ const CompanyContactInputs = () => {
 const CompanyContextInputs = () => {
   const translate = useTranslate();
   const { companySectors } = useConfigurationContext();
-  const translatedSizes = sizes.map((size) => ({
-    ...size,
-    name: getTranslatedCompanySizeLabel(size, translate),
-  }));
   return (
     <div className="flex flex-col gap-4">
       <h6 className="text-lg font-semibold">
@@ -115,9 +103,6 @@ const CompanyContextInputs = () => {
         optionValue="value"
         helperText={false}
       />
-      <SelectInput source="size" choices={translatedSizes} helperText={false} />
-      <TextInput source="revenue" helperText={false} />
-      <TextInput source="tax_identifier" helperText={false} />
     </div>
   );
 };

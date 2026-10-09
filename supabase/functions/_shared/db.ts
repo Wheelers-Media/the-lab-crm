@@ -35,6 +35,14 @@ export interface ContactsTable {
   company_id: number | null;
   sales_id: number | null;
   linkedin_url: string | null;
+  preferred_contact: string | null;
+  sms_consent: boolean;
+  sms_consent_at: Date | null;
+  lead_source: string | null;
+  membership: string | null;
+  membership_since: Date | null;
+  city: string | null;
+  province: string | null;
 }
 
 interface TasksTable {

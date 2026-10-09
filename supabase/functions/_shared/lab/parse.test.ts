@@ -49,6 +49,27 @@ describe("parseWebsiteLead", () => {
     sms_consent: true,
   };
 
+  it("keeps the vehicle's year, make and model apart for the customer's profile", () => {
+    const result = parseWebsiteLead({
+      ...base,
+      make: "ram",
+      model: "3500 Laramie",
+      vin: "3c63r3hl1ng123456",
+    });
+    expect(result.ok && result.value.vehicleParts).toEqual({
+      year: 2022,
+      make: "Ram",
+      model: "3500 Laramie",
+    });
+    expect(result.ok && result.value.vin).toBe("3C63R3HL1NG123456");
+    expect(result.ok && result.value.vehicle).toBe("2022 Ram 3500 Laramie");
+  });
+
+  it("drops a year that is not a real model year", () => {
+    const result = parseWebsiteLead({ ...base, year: "22" });
+    expect(result.ok && result.value.vehicleParts.year).toBeNull();
+  });
+
   it("normalizes contact details and maps the service to a deal category", () => {
     const result = parseWebsiteLead(base);
     expect(result.ok).toBe(true);

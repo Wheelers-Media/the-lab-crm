@@ -29,6 +29,9 @@ export const ContactCreate = ({
               sales_id: identity?.id,
               email_jsonb: defaultEmailJsonb,
               phone_jsonb: defaultPhoneJsonb,
+              preferred_contact: "text",
+              province: "BC",
+              sms_consent: false,
             }}
           >
             <Card>
