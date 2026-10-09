@@ -1,0 +1,8 @@
+mode: dry
+exit: 0
+orders: 2347 export lines
+customers: 549 export lines
+carts: 16 export lines
+ready: 549 customers, 753 orders ($582836.16 net), 8 open carts
+  skipped 1: status pending
+Dry run. Nothing was written.
