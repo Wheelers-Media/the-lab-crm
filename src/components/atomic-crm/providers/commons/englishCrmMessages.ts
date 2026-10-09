@@ -274,6 +274,44 @@ export const englishCrmMessages = {
         note_or_attachment_required: "A note or an attachment is required",
       },
     },
+    orders: {
+      name: "Order |||| Orders",
+      fields: {
+        ordered_at: "Date",
+        order_number: "Order",
+        contact_id: "Customer",
+        line_items: "What they bought",
+        total: "Total",
+        financial_status: "Payment",
+      },
+      filters: {
+        deposits: "Deposits only",
+        no_contact: "Not linked to a contact",
+      },
+      purchases: "Purchases",
+      lifetime: "%{smart_count} order |||| %{smart_count} orders",
+      see_all: "See all %{smart_count} orders",
+      empty_contact: "No Shopify orders yet.",
+      deposit: "Deposit",
+      cancelled: "Cancelled",
+    },
+    shopify_checkouts: {
+      name: "Abandoned cart |||| Abandoned carts",
+      fields: {
+        checkout_updated_at: "Last activity",
+        customer: "Customer",
+        line_items: "In the cart",
+        total: "Total",
+        follow_up: "Follow-up",
+      },
+      filters: {
+        big: "$2,000 and up",
+      },
+      action: {
+        open_cart: "Open cart",
+      },
+      call_task: "Call task added",
+    },
     sales: {
       name: "User |||| Users",
       fields: {

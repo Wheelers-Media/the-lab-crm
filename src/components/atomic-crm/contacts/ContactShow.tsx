@@ -32,6 +32,7 @@ import type { Contact } from "../types";
 import { Avatar } from "./Avatar";
 import { ContactAside } from "./ContactAside";
 import { MobileBackButton } from "../misc/MobileBackButton";
+import { ContactOrders } from "../shop/ContactOrders";
 
 export const ContactShow = (props: ShowBaseProps = {}) => {
   const isMobile = useIsMobile();
@@ -216,6 +217,15 @@ const ContactShowContentMobile = () => {
                 <Separator />
                 <div className="mt-3">
                   <ContactBackgroundInfo />
+                </div>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold">
+                  {translate("resources.orders.purchases", { _: "Purchases" })}
+                </h3>
+                <Separator />
+                <div className="mt-3">
+                  <ContactOrders contactId={record.id} />
                 </div>
               </div>
               <div>

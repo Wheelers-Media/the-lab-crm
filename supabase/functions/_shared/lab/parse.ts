@@ -165,16 +165,16 @@ const LINE_RULES: Array<[string, RegExp]> = [
   ],
   [
     "Detailing",
-    /detail|wash|decontamination|bio bomb|seat cover cleaning|car seat cleaning|head ?light restoration|engine bay|leather conditioner|pet hair|urine|personal belongings|maintenance|large suv/,
+    /detail|signature|membership|ozone|odou?r|wash|decontamination|bio bomb|seat cover cleaning|car seat cleaning|head ?light restoration|engine bay|leather conditioner|pet hair|urine|personal belongings|maintenance|large suv/,
   ],
-  ["Lighting", /light|led|bulb|baja|speed ?demon|kc hilites|harness/],
+  ["Lighting", /light(?! truck)|led|bulb|baja|speed ?demon|kc hilites|harness/],
   [
     "Diesel parts",
     /polar|exhaust|delete|downpipe|muffler|silencer|cp4|grid heater|turbo|intake|up ?pipe|uppipe|clamp|elbow|tip|flex plate|s&b|flange|silicon boot|egr|resonator/,
   ],
   [
     "Mechanical",
-    /mechanical|coolant|antifreeze|cabin air filter|rotate|brake|caliper|hub bearing|map sensor|shock|leveling kit|air lift|relay/,
+    /mechanical|coolant|antifreeze|cabin air filter|rotat|brake|caliper|hub bearing|map sensor|shock|leveling kit|air lift|relay/,
   ],
   [
     "Accessories",

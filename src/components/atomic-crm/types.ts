@@ -172,7 +172,9 @@ export type Order = {
   deal_id?: Identifier | null;
   source?: string | null;
   financial_status?: string | null;
+  fulfillment_status?: string | null;
   currency: string;
+  subtotal?: number | null;
   total: number;
   refunded_amount: number;
   line_items: OrderLineItem[];
@@ -210,8 +212,10 @@ export type ShopifyCheckout = {
   checkout_token: string;
   contact_id?: Identifier | null;
   email?: string | null;
+  phone?: string | null;
   customer_name?: string | null;
   total: number;
+  line_items?: OrderLineItem[];
   recovery_url?: string | null;
   completed_at?: string | null;
   task_id?: Identifier | null;

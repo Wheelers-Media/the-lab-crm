@@ -142,7 +142,7 @@ const ATTENTION: Record<
     icon: ShoppingCart,
     chip: "lab-chip-warn",
     action: "Call",
-    to: "/contacts",
+    to: "/shopify_checkouts",
     title: (i) =>
       i.count === 1
         ? `Abandoned cart, ${money(i.amount ?? 0)}`

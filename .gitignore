@@ -58,3 +58,9 @@ node_modules/
 
 *.lock
  
+# Shopify order exports hold customer details: never commit them
+orders_export*.csv
+*shopify*orders*.csv
+
+# vitest browser failure screenshots
+.vitest/
