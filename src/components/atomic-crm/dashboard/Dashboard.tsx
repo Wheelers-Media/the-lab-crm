@@ -1,6 +1,6 @@
 import { useGetList } from "ra-core";
 
-import type { Contact, ContactNote } from "../types";
+import type { Contact } from "../types";
 import { DashboardActivityLog } from "./DashboardActivityLog";
 import { DashboardStepper } from "./DashboardStepper";
 import { DealsChart } from "./DealsChart";
@@ -10,16 +10,8 @@ import { Welcome } from "./Welcome";
 import { CommandCenter } from "../operations/CommandCenter";
 
 export const Dashboard = () => {
-  const {
-    data: dataContact,
-    total: totalContact,
-    isPending: isPendingContact,
-  } = useGetList<Contact>("contacts", {
-    pagination: { page: 1, perPage: 1 },
-  });
-
-  const { total: totalContactNotes, isPending: isPendingContactNotes } =
-    useGetList<ContactNote>("contact_notes", {
+  const { total: totalContact, isPending: isPendingContact } =
+    useGetList<Contact>("contacts", {
       pagination: { page: 1, perPage: 1 },
     });
 
@@ -30,7 +22,7 @@ export const Dashboard = () => {
     },
   );
 
-  const isPending = isPendingContact || isPendingContactNotes || isPendingDeal;
+  const isPending = isPendingContact || isPendingDeal;
 
   if (isPending) {
     return null;
@@ -38,10 +30,6 @@ export const Dashboard = () => {
 
   if (!totalContact) {
     return <DashboardStepper step={1} />;
-  }
-
-  if (!totalContactNotes) {
-    return <DashboardStepper step={2} contactId={dataContact?.[0]?.id} />;
   }
 
   return (

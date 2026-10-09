@@ -103,6 +103,60 @@ export type Contact = {
   phone_jsonb: PhoneNumberAndType[];
   nb_tasks?: number;
   company_name?: string;
+  preferred_contact?: PreferredContact | null;
+  sms_consent?: boolean;
+  sms_consent_at?: string | null;
+  lead_source?: string | null;
+  membership?: Membership | null;
+  membership_since?: string | null;
+  city?: string | null;
+  province?: string | null;
+  vehicles_fts?: string | null;
+  /** Main vehicle, "2021 Ram 3500", from contacts_summary. */
+  vehicle_label?: string | null;
+} & Pick<RaRecord, "id">;
+
+export type PreferredContact = "text" | "call" | "email";
+export type Membership = "monthly-signature" | "lab-syndicate";
+
+export type VehiclePlatform =
+  | "cummins"
+  | "duramax"
+  | "powerstroke"
+  | "half-ton"
+  | "kenworth"
+  | "gas"
+  | "sxs"
+  | "other";
+
+export type VehicleSizeClass =
+  | "car"
+  | "suv-5-6"
+  | "suv-7-8"
+  | "truck"
+  | "sxs"
+  | "commercial";
+
+export type Vehicle = {
+  contact_id?: Identifier | null;
+  company_id?: Identifier | null;
+  year?: number | null;
+  make?: string | null;
+  model?: string | null;
+  trim?: string | null;
+  platform?: VehiclePlatform | null;
+  engine?: string | null;
+  transmission?: string | null;
+  size_class?: VehicleSizeClass | null;
+  vin?: string | null;
+  plate?: string | null;
+  colour?: string | null;
+  mods?: string | null;
+  notes?: string | null;
+  is_primary: boolean;
+  created_at?: string;
+  updated_at?: string;
+  sales_id?: Identifier | null;
 } & Pick<RaRecord, "id">;
 
 export type ContactNote = {
@@ -130,6 +184,7 @@ export type Deal = {
   index: number;
   lead_source?: string | null;
   stage_changed_at?: string;
+  vehicle_id?: Identifier | null;
 } & Pick<RaRecord, "id">;
 
 export type DealNote = {
@@ -300,6 +355,7 @@ export type Appointment = {
   status: AppointmentStatus;
   deposit_paid: boolean;
   vehicle: string | null;
+  vehicle_id?: Identifier | null;
   notes: string | null;
   created_at: string;
   updated_at: string;

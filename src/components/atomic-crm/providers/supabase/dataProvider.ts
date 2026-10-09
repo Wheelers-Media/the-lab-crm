@@ -344,6 +344,8 @@ const lifeCycleCallbacks: ResourceCallbacks[] = [
         "email",
         "phone",
         "background",
+        "city",
+        "vehicles_fts",
       ])(params);
     },
   },

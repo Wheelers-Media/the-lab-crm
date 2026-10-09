@@ -1,7 +1,7 @@
 import { BellRing, CalendarCheck } from "lucide-react";
 import { useGetIdentity } from "ra-core";
 import { useMemo } from "react";
-import { useSearchParams } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { Card } from "@/components/ui/card";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
@@ -29,6 +29,7 @@ import {
   shopDayKey,
 } from "./shopTime";
 import { money } from "./format";
+import { PipelineSnapshot } from "./PipelineSnapshot";
 import { useOperationsData, useRunAutomations } from "./useOperationsData";
 
 const PERIODS: Array<{ value: Period; label: string; vs: string }> = [
@@ -53,7 +54,11 @@ const usePeriod = (): [Period, (p: Period) => void] => {
 };
 
 /** Home screen: the shop's numbers, today's schedule and what needs doing. */
-export const CommandCenter = () => {
+export const CommandCenter = ({
+  variant = "desktop",
+}: {
+  variant?: "desktop" | "phone";
+}) => {
   useRunAutomations();
   const { identity } = useGetIdentity();
   const [period, setPeriod] = usePeriod();
@@ -101,8 +106,8 @@ export const CommandCenter = () => {
 
   const firstName = identity?.fullName?.split(" ")[0];
 
-  return (
-    <div className="flex flex-col gap-4 mt-1">
+  const headerBlock = (
+    <>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-sm text-muted-foreground">
@@ -132,7 +137,10 @@ export const CommandCenter = () => {
           ))}
         </ToggleGroup>
       </div>
-
+    </>
+  );
+  const kpiBlock = (
+    <>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <KpiTile
           label="Revenue (Shopify)"
@@ -159,52 +167,94 @@ export const CommandCenter = () => {
         <KpiTile
           label="Open pipeline"
           value={money(kpis.pipeline.amount)}
-          detail={`${kpis.pipeline.count} open deals`}
+          detail={`${kpis.pipeline.count} open jobs`}
         />
       </div>
+    </>
+  );
+  const todayCard = (
+    <>
+      <Card className="p-4 gap-0">
+        <SectionTitle
+          icon={CalendarCheck}
+          action={
+            <Link
+              to="/calendar"
+              className="text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground"
+            >
+              Calendar
+            </Link>
+          }
+        >
+          Today
+        </SectionTitle>
+        {today.length ? (
+          <div className="divide-y divide-border">
+            {today.map((a) => (
+              <AppointmentRow
+                key={a.id}
+                appointment={a}
+                contact={
+                  a.contact_id != null
+                    ? data.contactsById.get(a.contact_id)
+                    : undefined
+                }
+              />
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground py-2">
+            No drop-offs or appointments today. Cal.com bookings appear here
+            automatically.
+          </p>
+        )}
+      </Card>
+    </>
+  );
+  const attentionCard = (
+    <>
+      <Card className="p-4 gap-0">
+        <SectionTitle icon={BellRing}>Needs attention</SectionTitle>
+        {attention.length ? (
+          <div className="divide-y divide-border">
+            {attention.map((item) => (
+              <AttentionRow key={item.kind} item={item} now={now} />
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground py-2">
+            All caught up. New requests, waiting quotes, unpaid deposits and big
+            abandoned carts show up here.
+          </p>
+        )}
+      </Card>
+    </>
+  );
+  const weekBlock = <WeekStrip loads={weekKeys} todayKey={todayKey} />;
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card className="p-4 gap-0">
-          <SectionTitle icon={CalendarCheck}>Today</SectionTitle>
-          {today.length ? (
-            <div className="divide-y divide-border">
-              {today.map((a) => (
-                <AppointmentRow
-                  key={a.id}
-                  appointment={a}
-                  contact={
-                    a.contact_id != null
-                      ? data.contactsById.get(a.contact_id)
-                      : undefined
-                  }
-                />
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground py-2">
-              No drop-offs or appointments today. Cal.com bookings appear here
-              automatically.
-            </p>
-          )}
-        </Card>
-        <Card className="p-4 gap-0">
-          <SectionTitle icon={BellRing}>Needs attention</SectionTitle>
-          {attention.length ? (
-            <div className="divide-y divide-border">
-              {attention.map((item) => (
-                <AttentionRow key={item.kind} item={item} now={now} />
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground py-2">
-              All caught up. New requests, waiting quotes, unpaid deposits and
-              big abandoned carts show up here.
-            </p>
-          )}
-        </Card>
+  if (variant === "phone") {
+    // Eric's phone: what needs him first, then today, then the numbers
+    return (
+      <div className="flex flex-col gap-4 mt-1">
+        {headerBlock}
+        {attentionCard}
+        {todayCard}
+        <PipelineSnapshot deals={data.deals} />
+        {kpiBlock}
+        {weekBlock}
       </div>
+    );
+  }
 
-      <WeekStrip loads={weekKeys} todayKey={todayKey} />
+  return (
+    <div className="flex flex-col gap-4 mt-1">
+      {headerBlock}
+      {kpiBlock}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {todayCard}
+        {attentionCard}
+      </div>
+      {weekBlock}
     </div>
   );
 };

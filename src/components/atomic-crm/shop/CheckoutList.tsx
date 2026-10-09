@@ -29,7 +29,7 @@ const CheckoutListActions = () => {
   );
 };
 
-const RecoveryLink = ({ url }: { url: string | null }) => {
+export const RecoveryLink = ({ url }: { url: string | null }) => {
   const translate = useTranslate();
   // Webhook data: only ever link to a real https address
   if (!url || !/^https:\/\//i.test(url)) return null;

@@ -26,7 +26,9 @@ import { NoteCreate } from "../notes/NoteCreate";
 import { NotesIterator } from "../notes/NotesIterator";
 import { useConfigurationContext } from "../root/ConfigurationContext";
 import type { Deal } from "../types";
+import { VehicleDetailField } from "../vehicles/VehicleField";
 import { ContactList } from "./ContactList";
+import { DealStageSelect } from "./DealStageSelect";
 import { findDealLabel, formatISODateString } from "./dealUtils";
 
 export const DealShow = ({ open, id }: { open: boolean; id?: string }) => {
@@ -59,8 +61,8 @@ const DealShowContent = () => {
       <div className="space-y-2">
         {record.archived_at ? <ArchivedTitle /> : null}
         <div className="flex-1">
-          <div className="flex justify-between items-start mb-8">
-            <div className="flex items-center gap-4">
+          <div className="flex flex-wrap justify-between items-start gap-3 mb-6">
+            <div className="flex items-center gap-4 min-w-0">
               <ReferenceField
                 source="company_id"
                 reference="companies"
@@ -68,7 +70,9 @@ const DealShowContent = () => {
               >
                 <CompanyAvatar />
               </ReferenceField>
-              <h2 className="text-2xl font-semibold">{record.name}</h2>
+              <h2 className="text-2xl font-semibold break-words">
+                {record.name}
+              </h2>
             </div>
             <div className={`flex gap-2 ${record.archived_at ? "" : "pr-12"}`}>
               {record.archived_at ? (
@@ -85,8 +89,8 @@ const DealShowContent = () => {
             </div>
           </div>
 
-          <div className="flex gap-8 m-4">
-            <div className="flex flex-col mr-10">
+          <div className="flex flex-wrap gap-x-8 gap-y-4 m-4">
+            <div className="flex flex-col">
               <span className="text-xs text-muted-foreground tracking-wide">
                 {translate("resources.deals.fields.expected_closing_date")}
               </span>
@@ -104,7 +108,7 @@ const DealShowContent = () => {
               </div>
             </div>
 
-            <div className="flex flex-col mr-10">
+            <div className="flex flex-col">
               <span className="text-xs text-muted-foreground tracking-wide">
                 {translate("resources.deals.fields.amount")}
               </span>
@@ -119,7 +123,7 @@ const DealShowContent = () => {
             </div>
 
             {record.category && (
-              <div className="flex flex-col mr-10">
+              <div className="flex flex-col">
                 <span className="text-xs text-muted-foreground tracking-wide">
                   {translate("resources.deals.fields.category")}
                 </span>
@@ -130,19 +134,23 @@ const DealShowContent = () => {
               </div>
             )}
 
-            <div className="flex flex-col mr-10">
+            <div className="flex flex-col">
               <span className="text-xs text-muted-foreground tracking-wide">
                 {translate("resources.deals.fields.stage")}
               </span>
-              <span className="text-sm">
-                {findDealLabel(dealStages, record.stage)}
-              </span>
+              {record.archived_at ? (
+                <span className="text-sm">
+                  {findDealLabel(dealStages, record.stage)}
+                </span>
+              ) : (
+                <DealStageSelect deal={record} />
+              )}
             </div>
           </div>
 
           {!!record.contact_ids?.length && (
             <div className="m-4">
-              <div className="flex flex-col min-h-12 mr-10">
+              <div className="flex flex-col min-h-12">
                 <span className="text-xs text-muted-foreground tracking-wide">
                   {translate("resources.deals.fields.contact_ids")}
                 </span>
@@ -155,6 +163,15 @@ const DealShowContent = () => {
               </div>
             </div>
           )}
+
+          {record.vehicle_id ? (
+            <div className="m-4">
+              <span className="text-xs text-muted-foreground tracking-wide">
+                Vehicle
+              </span>
+              <VehicleDetailField />
+            </div>
+          ) : null}
 
           {record.description && (
             <div className="m-4 whitespace-pre-line">

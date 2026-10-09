@@ -128,6 +128,7 @@ create table public.appointments (
     deposit_paid boolean not null default false,
     vehicle text,
     notes text,
+    vehicle_id bigint,
     created_at timestamp with time zone not null default now(),
     updated_at timestamp with time zone not null default now(),
     sales_id bigint references public.sales(id),

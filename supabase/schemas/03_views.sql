@@ -118,10 +118,28 @@ select
     co.linkedin_url,
     co.email_jsonb,
     co.phone_jsonb,
+    co.preferred_contact,
+    co.sms_consent,
+    co.sms_consent_at,
+    co.lead_source,
+    co.membership,
+    co.membership_since,
+    co.city,
+    co.province,
     (jsonb_path_query_array(co.email_jsonb, '$[*]."email"'))::text as email_fts,
     (jsonb_path_query_array(co.phone_jsonb, '$[*]."number"'))::text as phone_fts,
     c.name as company_name,
-    count(distinct t.id) filter (where t.done_date is null) as nb_tasks
+    count(distinct t.id) filter (where t.done_date is null) as nb_tasks,
+    (
+        select string_agg(concat_ws(' ', v.year, v.make, v.model, v.trim, v.engine, v.vin, v.plate), ' | ')
+        from public.vehicles v where v.contact_id = co.id
+    ) as vehicles_fts,
+    (
+        select concat_ws(' ', v.year, v.make, v.model)
+        from public.vehicles v where v.contact_id = co.id
+        order by v.is_primary desc, v.id
+        limit 1
+    ) as vehicle_label
 from public.contacts co
     left join public.tasks t on co.id = t.contact_id
     left join public.companies c on co.company_id = c.id

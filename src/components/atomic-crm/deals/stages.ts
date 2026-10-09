@@ -1,5 +1,6 @@
 import type { ConfigurationContextValue } from "../root/ConfigurationContext";
 import type { Deal } from "../types";
+import { isClosedStage, lastMovedAt } from "./pipelineView";
 
 export type DealsByStage = Record<Deal["stage"], Deal[]>;
 
@@ -22,10 +23,13 @@ export const getDealsByStage = (
       {} as Record<Deal["stage"], Deal[]>,
     ),
   );
-  // order each column by index
+  // order open columns by index; closed ones newest first, so the board can
+  // show only recent closed jobs as the start of the column
   dealStages.forEach((stage) => {
     dealsByStage[stage.value] = dealsByStage[stage.value].sort(
-      (recordA: Deal, recordB: Deal) => recordA.index - recordB.index,
+      isClosedStage(stage.value)
+        ? (a: Deal, b: Deal) => lastMovedAt(b) - lastMovedAt(a)
+        : (recordA: Deal, recordB: Deal) => recordA.index - recordB.index,
     );
   });
   return dealsByStage;

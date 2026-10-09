@@ -66,6 +66,7 @@ export type WebsiteLead = {
   service: string;
   category: string;
   vehicle: string;
+  vehicleParts: { year: number | null; make: string; model: string };
   vin: string;
   estimateTotal: number;
   estimateText: string;
@@ -113,7 +114,13 @@ export const parseWebsiteLead = (body: unknown): ParseResult<WebsiteLead> => {
   if (!firstName && !lastName && b.name)
     ({ firstName, lastName } = splitName(String(b.name)));
 
-  const vehicle = [clip(b.year, 4), clip(b.make, 40), clip(b.model, 60)]
+  const year = Number(clip(b.year, 4));
+  const vehicleParts = {
+    year: Number.isInteger(year) && year >= 1900 && year <= 2100 ? year : null,
+    make: capName(clip(b.make, 40)),
+    model: clip(b.model, 60),
+  };
+  const vehicle = [vehicleParts.year, vehicleParts.make, vehicleParts.model]
     .filter(Boolean)
     .join(" ");
   const service = clip(b.service, MAX.short) || "General request";
@@ -132,6 +139,7 @@ export const parseWebsiteLead = (body: unknown): ParseResult<WebsiteLead> => {
       service,
       category: serviceToCategory(service),
       vehicle,
+      vehicleParts,
       vin: clip(b.vin, 17).toUpperCase(),
       estimateTotal: Math.round(parseAmount(estimateText)),
       estimateText,

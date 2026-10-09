@@ -6,9 +6,35 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { Home, ListTodo, Plus, Settings, Users } from "lucide-react";
+import {
+  Building2,
+  CalendarDays,
+  ChevronRight,
+  Home,
+  KanbanSquare,
+  ListTodo,
+  Menu,
+  Plus,
+  Receipt,
+  Settings,
+  ShoppingCart,
+  Users,
+} from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { useTranslate } from "ra-core";
-import { Link, matchPath, useLocation, useMatch } from "react-router";
+import {
+  Link,
+  matchPath,
+  useLocation,
+  useMatch,
+  useNavigate,
+} from "react-router";
 import { ContactCreateSheet } from "../contacts/ContactCreateSheet";
 import { useState } from "react";
 import { NoteCreateSheet } from "../notes/NoteCreateSheet";
@@ -61,6 +87,13 @@ export const MobileNavigation = () => {
             isActive={currentPath === "/"}
           />
           <NavigationButton
+            href="/deals"
+            Icon={KanbanSquare}
+            label={translate("resources.deals.name", { smart_count: 2 })}
+            isActive={currentPath === "/deals"}
+          />
+          <CreateButton />
+          <NavigationButton
             href="/contacts"
             Icon={Users}
             label={translate("resources.contacts.name", {
@@ -68,14 +101,13 @@ export const MobileNavigation = () => {
             })}
             isActive={currentPath === "/contacts"}
           />
-          <CreateButton />
-          <NavigationButton
-            href="/tasks"
-            Icon={ListTodo}
-            label={translate("resources.tasks.name", { smart_count: 2 })}
-            isActive={currentPath === "/tasks"}
+          <MoreButton
+            isActive={
+              currentPath === false ||
+              currentPath === "/companies" ||
+              currentPath === "/tasks"
+            }
           />
-          <SettingsButton />
         </>
       </div>
     </nav>
@@ -114,6 +146,7 @@ const CreateButton = () => {
   const [contactCreateOpen, setContactCreateOpen] = useState(false);
   const [noteCreateOpen, setNoteCreateOpen] = useState(false);
   const [taskCreateOpen, setTaskCreateOpen] = useState(false);
+  const navigate = useNavigate();
 
   return (
     <>
@@ -153,6 +186,12 @@ const CreateButton = () => {
           </DropdownMenuItem>
           <DropdownMenuItem
             className="h-12 px-4 text-base"
+            onSelect={() => navigate("/deals/create")}
+          >
+            {translate("resources.deals.forcedCaseName", { _: "Job" })}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="h-12 px-4 text-base"
             onSelect={() => {
               setNoteCreateOpen(true);
             }}
@@ -173,7 +212,100 @@ const CreateButton = () => {
   );
 };
 
-const SettingsButton = () => {
+const MORE_LINKS = [
+  {
+    href: "/calendar",
+    label: "Calendar",
+    hint: "Drop-offs and Eric's bookings",
+    Icon: CalendarDays,
+  },
+  {
+    href: "/orders",
+    label: "Orders",
+    hint: "Shopify orders and deposits",
+    Icon: Receipt,
+  },
+  {
+    href: "/shopify_checkouts",
+    label: "Abandoned carts",
+    hint: "Call or text to recover",
+    Icon: ShoppingCart,
+  },
+  {
+    href: "/companies",
+    label: "Businesses",
+    hint: "Fleets and commercial accounts",
+    Icon: Building2,
+  },
+  {
+    href: "/tasks",
+    label: "Tasks",
+    hint: "Calls and follow-ups",
+    Icon: ListTodo,
+  },
+  {
+    href: "/settings",
+    label: "Settings",
+    hint: "Profile, team and app",
+    Icon: Settings,
+  },
+];
+
+const MoreButton = ({ isActive }: { isActive: boolean }) => {
+  const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+  return (
+    <>
+      <Button
+        variant="ghost"
+        onClick={() => setOpen(true)}
+        className={cn(
+          "flex-col gap-1 h-auto py-2 px-1 rounded-md w-16",
+          isActive ? null : "text-muted-foreground",
+        )}
+      >
+        <Menu className="size-6" />
+        <span className="text-[0.6rem] font-medium">More</span>
+      </Button>
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent side="bottom" className="pb-8 rounded-t-lg">
+          <SheetHeader>
+            <SheetTitle className="font-display uppercase tracking-wide">
+              All pages
+            </SheetTitle>
+            <SheetDescription className="sr-only">
+              Every part of the CRM
+            </SheetDescription>
+          </SheetHeader>
+          <nav className="flex flex-col px-2">
+            {MORE_LINKS.map(({ href, label, hint, Icon }) => (
+              <button
+                key={href}
+                type="button"
+                onClick={() => {
+                  setOpen(false);
+                  navigate(href);
+                }}
+                className="flex items-center gap-3 rounded-md px-3 py-3 text-left hover:bg-accent min-h-14"
+              >
+                <Icon className="size-5 text-muted-foreground" />
+                <span className="flex-1">
+                  <span className="block font-medium">{label}</span>
+                  <span className="block text-xs text-muted-foreground">
+                    {hint}
+                  </span>
+                </span>
+                <ChevronRight className="size-4 text-muted-foreground" />
+              </button>
+            ))}
+          </nav>
+        </SheetContent>
+      </Sheet>
+    </>
+  );
+};
+
+export const SettingsButton = () => {
   const translate = useTranslate();
   const location = useLocation();
   const isActive = !!matchPath("/settings", location.pathname);
