@@ -14,6 +14,7 @@ import { AsideSection } from "../misc/AsideSection";
 import type { Contact } from "../types";
 import { ContactMergeButton } from "./ContactMergeButton";
 import { ExportVCardButton } from "./ExportVCardButton";
+import { ContactOrders } from "../shop/ContactOrders";
 
 export const ContactAside = ({ link = "edit" }: { link?: "edit" | "show" }) => {
   const record = useRecordContext<Contact>();
@@ -45,6 +46,12 @@ export const ContactAside = ({ link = "edit" }: { link?: "edit" | "show" }) => {
         title={translate("resources.contacts.field_categories.background_info")}
       >
         <ContactBackgroundInfo />
+      </AsideSection>
+
+      <AsideSection
+        title={translate("resources.orders.purchases", { _: "Purchases" })}
+      >
+        <ContactOrders contactId={record.id} />
       </AsideSection>
 
       <AsideSection

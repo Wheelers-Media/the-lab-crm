@@ -146,6 +146,38 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/shop/shopFormat.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/shop/index.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/shop/QuickFilter.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/shop/OrderList.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/shop/ContactOrders.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/shop/ContactLink.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/shop/CheckoutList.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/shop/AppointmentList.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/settings/SettingsTags.tsx",
           "type": "registry:component"
         },
@@ -279,6 +311,10 @@
         },
         {
           "path": "src/components/atomic-crm/providers/fakerest/dataGenerator/tags.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/providers/fakerest/dataGenerator/shop.ts",
           "type": "registry:component"
         },
         {

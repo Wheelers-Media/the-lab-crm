@@ -31,6 +31,7 @@ import {
   getDataProvider as defaultDataProviderBuilder,
 } from "../providers/supabase";
 import sales from "../sales";
+import { AppointmentList, CheckoutList, OrderList } from "../shop";
 import { SettingsPageMobile } from "../settings/SettingsPageMobile";
 import { ProfilePage } from "../settings/ProfilePage";
 import { SettingsPage } from "../settings/SettingsPage";
@@ -268,6 +269,9 @@ const DesktopAdmin = (
       <Resource name="contact_notes" />
       <Resource name="deal_notes" />
       <Resource name="tasks" />
+      <Resource name="orders" list={OrderList} />
+      <Resource name="shopify_checkouts" list={CheckoutList} />
+      <Resource name="appointments" list={AppointmentList} />
       <Resource name="sales" {...sales} />
       <Resource name="tags" />
     </Admin>

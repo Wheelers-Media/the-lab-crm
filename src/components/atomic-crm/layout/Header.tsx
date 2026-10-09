@@ -24,6 +24,12 @@ const Header = () => {
     currentPath = "/companies";
   } else if (matchPath("/deals/*", location.pathname)) {
     currentPath = "/deals";
+  } else if (matchPath("/appointments/*", location.pathname)) {
+    currentPath = "/appointments";
+  } else if (matchPath("/orders/*", location.pathname)) {
+    currentPath = "/orders";
+  } else if (matchPath("/shopify_checkouts/*", location.pathname)) {
+    currentPath = "/shopify_checkouts";
   } else {
     currentPath = false;
   }
@@ -79,6 +85,27 @@ const Header = () => {
                     })}
                     to="/deals"
                     isActive={currentPath === "/deals"}
+                  />
+                  <NavigationTab
+                    label={translate("resources.appointments.name", {
+                      smart_count: 2,
+                    })}
+                    to="/appointments"
+                    isActive={currentPath === "/appointments"}
+                  />
+                  <NavigationTab
+                    label={translate("resources.orders.name", {
+                      smart_count: 2,
+                    })}
+                    to="/orders"
+                    isActive={currentPath === "/orders"}
+                  />
+                  <NavigationTab
+                    label={translate("resources.shopify_checkouts.name", {
+                      smart_count: 2,
+                    })}
+                    to="/shopify_checkouts"
+                    isActive={currentPath === "/shopify_checkouts"}
                   />
                 </nav>
               </div>

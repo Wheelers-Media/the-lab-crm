@@ -229,3 +229,75 @@ export interface ContactGender {
   label: string;
   icon: ComponentType<{ className?: string }>;
 }
+
+// THE LAB operations (Shopify orders and checkouts, appointments).
+// Rows are written by the shopify_webhook / calcom_webhook edge functions.
+
+export type OrderLineItem = {
+  name: string;
+  quantity: number;
+  price: number;
+  sku?: string;
+};
+
+export type Order = {
+  shopify_order_id: string | null;
+  order_number: string;
+  contact_id: Identifier | null;
+  deal_id: Identifier | null;
+  source: string | null;
+  financial_status: string | null;
+  fulfillment_status: string | null;
+  currency: string;
+  subtotal: number | null;
+  total: number;
+  refunded_amount: number;
+  line_items: OrderLineItem[];
+  categories: string[];
+  is_deposit: boolean;
+  ordered_at: string;
+  cancelled_at: string | null;
+  created_at: string;
+  sales_id?: Identifier;
+} & Pick<RaRecord, "id">;
+
+export type ShopifyCheckout = {
+  checkout_token: string;
+  contact_id: Identifier | null;
+  email: string | null;
+  phone: string | null;
+  customer_name: string | null;
+  total: number;
+  line_items: OrderLineItem[];
+  recovery_url: string | null;
+  completed_at: string | null;
+  task_id: Identifier | null;
+  checkout_updated_at: string;
+  created_at: string;
+} & Pick<RaRecord, "id">;
+
+export type AppointmentStatus =
+  | "booked"
+  | "rescheduled"
+  | "cancelled"
+  | "completed"
+  | "no_show";
+
+export type Appointment = {
+  external_id: string | null;
+  source: string;
+  contact_id: Identifier | null;
+  deal_id: Identifier | null;
+  task_id: Identifier | null;
+  title: string;
+  resource: "detailing-bay" | "eric";
+  start_at: string;
+  end_at: string;
+  status: AppointmentStatus;
+  deposit_paid: boolean;
+  vehicle: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+  sales_id?: Identifier;
+} & Pick<RaRecord, "id">;

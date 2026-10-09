@@ -278,6 +278,75 @@ export const frenchCrmMessages = {
         note_or_attachment_required: "Une note ou une pièce jointe est requise",
       },
     },
+    orders: {
+      name: "Commande |||| Commandes",
+      fields: {
+        ordered_at: "Date",
+        order_number: "Commande",
+        contact_id: "Client",
+        line_items: "Achats",
+        total: "Total",
+        financial_status: "Paiement",
+      },
+      filters: {
+        deposits: "Acomptes seulement",
+        no_contact: "Sans contact",
+      },
+      purchases: "Achats",
+      lifetime: "%{smart_count} commande |||| %{smart_count} commandes",
+      see_all: "Voir les %{smart_count} commandes",
+      empty_contact: "Aucune commande Shopify.",
+      deposit: "Acompte",
+      cancelled: "Annulée",
+    },
+    shopify_checkouts: {
+      name: "Panier abandonné |||| Paniers abandonnés",
+      fields: {
+        checkout_updated_at: "Dernière activité",
+        customer: "Client",
+        line_items: "Dans le panier",
+        total: "Total",
+        follow_up: "Suivi",
+      },
+      filters: {
+        big: "2 000 $ et plus",
+      },
+      action: {
+        open_cart: "Ouvrir le panier",
+      },
+      call_task: "Appel prévu",
+    },
+    appointments: {
+      name: "Rendez-vous |||| Rendez-vous",
+      fields: {
+        start_at: "Quand",
+        title: "Service",
+        contact_id: "Client",
+        vehicle: "Véhicule",
+        resource: "Avec",
+        deposit_paid: "Acompte",
+        status: "Statut",
+      },
+      filters: {
+        upcoming: "À venir",
+        deposit_unpaid: "Acompte impayé",
+      },
+      resources: {
+        "detailing-bay": "Baie d'esthétique",
+        eric: "Eric",
+      },
+      deposit: {
+        paid: "Payé",
+        unpaid: "Impayé",
+      },
+      statuses: {
+        booked: "Réservé",
+        rescheduled: "Reporté",
+        cancelled: "Annulé",
+        completed: "Terminé",
+        no_show: "Absent",
+      },
+    },
     sales: {
       name: "Utilisateur |||| Utilisateurs",
       fields: {

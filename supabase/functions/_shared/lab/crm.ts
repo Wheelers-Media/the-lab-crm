@@ -135,10 +135,15 @@ type ContactRow = {
   email_jsonb: Array<{ email: string; type: string }> | null;
   phone_jsonb: Array<{ number: string; type: string }> | null;
   tags: number[] | null;
+  first_seen: string | null;
+  last_seen: string | null;
 };
 
 const CONTACT_FIELDS =
-  "id, first_name, last_name, email_jsonb, phone_jsonb, tags";
+  "id, first_name, last_name, email_jsonb, phone_jsonb, tags, first_seen, last_seen";
+
+const earlier = (a: string | null, b: string) => (a && a < b ? a : b);
+const later = (a: string | null, b: string) => (a && a > b ? a : b);
 
 export const findContact = async (
   input: ContactInput,
@@ -174,17 +179,21 @@ export const findContact = async (
 export const findOrCreateContact = async (
   input: ContactInput,
   tagNames: string[] = [],
+  // When the customer was seen; history imports pass the order date
+  seenAt: string = new Date().toISOString(),
 ): Promise<{ id: number; created: boolean } | null> => {
   if (!input.email && !input.phone && !input.firstName && !input.lastName)
     return null;
   const tagIds = tagNames.length ? await ensureTagIds(tagNames) : [];
   const existing = await findContact(input);
-  const now = new Date().toISOString();
 
   if (existing) {
     const emails = existing.email_jsonb ?? [];
     const phones = existing.phone_jsonb ?? [];
-    const update: Record<string, unknown> = { last_seen: now };
+    const update: Record<string, unknown> = {
+      first_seen: earlier(existing.first_seen, seenAt),
+      last_seen: later(existing.last_seen, seenAt),
+    };
     if (
       input.email &&
       !emails.some((e) => e.email?.toLowerCase() === input.email)
@@ -219,8 +228,8 @@ export const findOrCreateContact = async (
       email_jsonb: input.email ? [{ email: input.email, type: "Home" }] : [],
       phone_jsonb: input.phone ? [{ number: input.phone, type: "Home" }] : [],
       tags: tagIds,
-      first_seen: now,
-      last_seen: now,
+      first_seen: seenAt,
+      last_seen: seenAt,
       has_newsletter: false,
       sales_id: await defaultSalesId(),
     })

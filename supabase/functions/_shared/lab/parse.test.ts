@@ -114,6 +114,27 @@ describe("categorizeLines", () => {
       ]),
     ).toEqual(["Detailing", "Tint"]);
   });
+
+  it("sorts memberships, Signature packages and ozone into Detailing", () => {
+    for (const name of [
+      "THE LAB - The Monthly Signature Membership (1 Month)",
+      "Standard Signature (Small SUV/Truck)",
+      "Universal Fit - THE LAB - Odour Elimination (Ozone)",
+    ]) {
+      expect(categorizeLines([name])).toEqual(["Detailing"]);
+    }
+  });
+
+  it("files a light truck tire rotation as Mechanical, not Lighting", () => {
+    expect(
+      categorizeLines([
+        "Universal Fit - THE LAB - Light Truck tire rotation (LTR)",
+      ]),
+    ).toEqual(["Mechanical"]);
+    expect(categorizeLines(["20 inch LED Light Bar - Combo beam"])).toEqual([
+      "Lighting",
+    ]);
+  });
 });
 
 describe("parseShopifyOrder", () => {
