@@ -5,14 +5,14 @@ import { generateDealNotes } from "./dealNotes";
 import { generateDeals } from "./deals";
 import { finalize } from "./finalize";
 import { generateSales } from "./sales";
-import { generateTags } from "./tags";
-import { generateTasks } from "./tasks";
-import type { Db } from "./types";
 import {
   generateAppointments,
   generateCheckouts,
   generateOrders,
-} from "./operations";
+} from "./shop";
+import { generateTags } from "./tags";
+import { generateTasks } from "./tasks";
+import type { Db } from "./types";
 
 export default (): Db => {
   const db = {} as Db;
@@ -25,8 +25,8 @@ export default (): Db => {
   db.deal_notes = generateDealNotes(db);
   db.tasks = generateTasks(db);
   db.orders = generateOrders(db);
-  db.appointments = generateAppointments(db);
   db.shopify_checkouts = generateCheckouts(db);
+  db.appointments = generateAppointments(db);
   db.configuration = [
     {
       id: 1,

@@ -146,6 +146,38 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/shop/shopFormat.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/shop/index.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/shop/QuickFilter.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/shop/OrderList.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/shop/ContactOrders.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/shop/ContactLink.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/shop/CheckoutList.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/shop/AppointmentList.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/settings/SettingsTags.tsx",
           "type": "registry:component"
         },
@@ -282,6 +314,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/providers/fakerest/dataGenerator/shop.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/providers/fakerest/dataGenerator/sales.ts",
           "type": "registry:component"
         },
@@ -347,6 +383,30 @@
         },
         {
           "path": "src/components/atomic-crm/providers/commons/activity.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/operations/useOperationsData.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/operations/shopTime.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/operations/metrics.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/operations/format.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/operations/OperationsWidgets.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/operations/CommandCenter.tsx",
           "type": "registry:component"
         },
         {
@@ -431,6 +491,10 @@
         },
         {
           "path": "src/components/atomic-crm/misc/isLinkedInUrl.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/misc/importOrder.ts",
           "type": "registry:component"
         },
         {
@@ -867,6 +931,18 @@
         },
         {
           "path": "src/components/atomic-crm/companies/AutocompleteCompanyInput.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/calendar/toAppointment.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/calendar/CalendarPage.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/calendar/AddAppointment.tsx",
           "type": "registry:component"
         },
         {

@@ -2,6 +2,8 @@
 // Paid orders are saved to the orders table and the customer's history; a
 // $50 booking deposit moves the customer's open deal to Converted.
 // Checkouts are stored so the follow-up rules can flag big abandoned carts.
+// "history/order" is our own topic, sent by scripts/shopify-backfill.ts: past
+// orders are recorded on the customer, with no deal moves or tasks.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { supabaseAdmin } from "../_shared/supabaseAdmin.ts";
 import { createErrorResponse } from "../_shared/utils.ts";
@@ -26,6 +28,13 @@ import {
 } from "../_shared/lab/crm.ts";
 
 const SOURCE = "shopify";
+const HISTORY_TOPIC = "history/order";
+const HISTORY_STATUSES = new Set([
+  "paid",
+  "partially_paid",
+  "partially_refunded",
+  "refunded",
+]);
 
 const ok = (body: Record<string, unknown> = { ok: true }) =>
   new Response(JSON.stringify(body), {
@@ -33,7 +42,10 @@ const ok = (body: Record<string, unknown> = { ok: true }) =>
     headers: { "Content-Type": "application/json" },
   });
 
-const handleOrder = async (order: ShopifyOrder) => {
+const handleOrder = async (
+  order: ShopifyOrder,
+  { history = false }: { history?: boolean } = {},
+) => {
   const { data: existing } = await supabaseAdmin
     .from("orders")
     .select("id")
@@ -41,13 +53,15 @@ const handleOrder = async (order: ShopifyOrder) => {
     .limit(1);
   const isNew = !existing?.[0];
 
-  const contact = await findOrCreateContact(order.contact, [
-    "Shopify customer",
-    ...order.categories,
-  ]);
+  const contact = await findOrCreateContact(
+    order.contact,
+    ["Shopify customer", ...order.categories],
+    history ? order.orderedAt : undefined,
+  );
   let dealId: number | null = null;
 
-  if (order.isDeposit && contact && isNew) {
+  // A past deposit belongs to a job that is long done: never move today's deals
+  if (order.isDeposit && contact && isNew && !history) {
     const deal = await findOpenDeal(contact.id);
     if (deal) {
       dealId = deal.id;
@@ -185,6 +199,14 @@ Deno.serve(async (req: Request) => {
         return ok();
       }
       await handleOrder(parsed.value);
+    } else if (topic === HISTORY_TOPIC) {
+      const parsed = parseShopifyOrder(payload);
+      if (!parsed.ok) throw new Error(parsed.error);
+      if (!HISTORY_STATUSES.has(parsed.value.financialStatus)) {
+        await finishEvent(eventId, "ignored", "order never paid");
+        return ok();
+      }
+      await handleOrder(parsed.value, { history: true });
     } else if (topic.startsWith("checkouts/")) {
       await handleCheckout(payload);
     } else {

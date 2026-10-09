@@ -23,7 +23,7 @@ export interface Db {
   tags: Tag[];
   tasks: Task[];
   orders: Order[];
-  appointments: Appointment[];
   shopify_checkouts: ShopifyCheckout[];
+  appointments: Appointment[];
   configuration: Array<{ id: number; config: ConfigurationContextValue }>;
 }
