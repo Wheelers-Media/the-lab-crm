@@ -1,8 +1,11 @@
-mode: dry
+mode: send
 exit: 0
 orders: 2347 export lines
 customers: 549 export lines
 carts: 16 export lines
 ready: 549 customers, 753 orders ($582836.16 net), 8 open carts
   skipped 1: status pending
-Dry run. Nothing was written.
+customers: {"created":106,"skipped":62,"updated":381}
+orders: {"new":6,"updated":747,"without_customer":138,"customers_created":0}
+carts: {"new":8,"already_there":0}
+CRM now has: {"customers":987,"orders":754,"open_carts":8}
