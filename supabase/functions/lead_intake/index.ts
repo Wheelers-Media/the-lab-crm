@@ -22,8 +22,9 @@ const SOURCE = "website";
 const MAX_BODY_BYTES = 32_000;
 const MAX_REQUESTS_PER_10_MIN = 5;
 
+// The live site, any preview on Nathan's Vercel team, and local testing
 const ALLOWED_ORIGIN =
-  /^https:\/\/((www\.)?thelabfsj\.ca|the-lab-[a-z0-9-]+\.vercel\.app)$|^http:\/\/localhost(:\d+)?$/;
+  /^https:\/\/((www\.)?thelabfsj\.ca|[a-z0-9-]+-nathans-projects-e8dc0632\.vercel\.app)$|^http:\/\/localhost(:\d+)?$/;
 
 const json = (status: number, body: Record<string, unknown>) =>
   new Response(JSON.stringify(body), {
