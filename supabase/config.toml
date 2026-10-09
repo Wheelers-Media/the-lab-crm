@@ -172,3 +172,9 @@ verify_jwt = false
 verify_jwt = false
 [functions.mcp]
 verify_jwt = false
+[functions.lead_intake]
+verify_jwt = false
+[functions.shopify_webhook]
+verify_jwt = false
+[functions.calcom_webhook]
+verify_jwt = false
