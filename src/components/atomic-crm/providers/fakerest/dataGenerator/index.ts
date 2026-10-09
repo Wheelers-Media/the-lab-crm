@@ -8,6 +8,11 @@ import { generateSales } from "./sales";
 import { generateTags } from "./tags";
 import { generateTasks } from "./tasks";
 import type { Db } from "./types";
+import {
+  generateAppointments,
+  generateCheckouts,
+  generateOrders,
+} from "./operations";
 
 export default (): Db => {
   const db = {} as Db;
@@ -19,6 +24,9 @@ export default (): Db => {
   db.deals = generateDeals(db);
   db.deal_notes = generateDealNotes(db);
   db.tasks = generateTasks(db);
+  db.orders = generateOrders(db);
+  db.appointments = generateAppointments(db);
+  db.shopify_checkouts = generateCheckouts(db);
   db.configuration = [
     {
       id: 1,

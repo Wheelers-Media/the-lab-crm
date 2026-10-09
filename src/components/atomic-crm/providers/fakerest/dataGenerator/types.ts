@@ -1,10 +1,13 @@
 import type {
+  Appointment,
   Company,
   Contact,
   ContactNote,
   Deal,
   DealNote,
+  Order,
   Sale,
+  ShopifyCheckout,
   Tag,
   Task,
 } from "../../../types";
@@ -19,5 +22,8 @@ export interface Db {
   sales: Sale[];
   tags: Tag[];
   tasks: Task[];
+  orders: Order[];
+  appointments: Appointment[];
+  shopify_checkouts: ShopifyCheckout[];
   configuration: Array<{ id: number; config: ConfigurationContextValue }>;
 }

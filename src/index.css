@@ -261,3 +261,40 @@ h2 {
     overscroll-behavior-y: none;
   }
 }
+
+/* Status chips for the operations dashboard and calendar.
+   Tinted backgrounds keep the text readable in both themes. */
+.lab-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 0.375rem;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.lab-chip-bay {
+  background: color-mix(in oklab, #3fb27f 18%, transparent);
+  color: color-mix(in oklab, #3fb27f 70%, var(--foreground));
+}
+.lab-chip-eric {
+  background: color-mix(in oklab, var(--lab-blue) 18%, transparent);
+  color: color-mix(in oklab, var(--lab-blue) 65%, var(--foreground));
+}
+.lab-chip-warn {
+  background: color-mix(in oklab, var(--lab-amber) 20%, transparent);
+  color: color-mix(in oklab, var(--lab-amber) 70%, var(--foreground));
+}
+.lab-chip-danger {
+  background: color-mix(in oklab, #e5484d 18%, transparent);
+  color: color-mix(in oklab, #e5484d 70%, var(--foreground));
+}
+.lab-chip-muted {
+  background: var(--muted);
+  color: var(--muted-foreground);
+}
+.lab-num {
+  font-variant-numeric: tabular-nums;
+}

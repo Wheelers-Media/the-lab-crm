@@ -273,6 +273,7 @@ export const createDataProvider = ({
       });
       return { ...sale, user_id: sale.id.toString() };
     },
+    runAutomations: async (): Promise<number> => 0,
     isInitialized: async (): Promise<boolean> => {
       const sales = await dataProvider.getList<Sale>("sales", {
         filter: {},

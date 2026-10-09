@@ -5,6 +5,7 @@ import type { Contact, ContactNote } from "../types";
 import { DashboardActivityLog } from "./DashboardActivityLog";
 import { DashboardStepper } from "./DashboardStepper";
 import { Welcome } from "./Welcome";
+import { CommandCenter } from "../operations/CommandCenter";
 import MobileHeader from "../layout/MobileHeader";
 import { MobileContent } from "../layout/MobileContent";
 import { useConfigurationContext } from "../root/ConfigurationContext";
@@ -83,6 +84,7 @@ export const MobileDashboard = () => {
     <Wrapper>
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mt-1">
         {import.meta.env.VITE_IS_DEMO === "true" ? <Welcome /> : null}
+        <CommandCenter />
         <DashboardActivityLog />
       </div>
     </Wrapper>

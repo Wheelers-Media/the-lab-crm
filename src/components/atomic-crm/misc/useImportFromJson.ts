@@ -14,6 +14,12 @@ import { colors } from "../tags/colors";
 import { mapSizeToCategory } from "../companies/sizes";
 import { useConfigurationContext } from "../root/ConfigurationContext";
 import { contactGender } from "../contacts/contactModel";
+import {
+  type ContactIndex,
+  importOrder,
+  isOrder,
+  loadContactIndex,
+} from "./importOrder";
 
 export type ImportFromJsonStats = {
   sales: number;
@@ -21,6 +27,7 @@ export type ImportFromJsonStats = {
   contacts: number;
   notes: number;
   tasks: number;
+  orders: number;
 };
 
 export type ImportFromJsonFailures = {
@@ -29,6 +36,7 @@ export type ImportFromJsonFailures = {
   contacts: Array<JsonTypes.JsonPrimitive | JsonTypes.JsonStruct | undefined>;
   notes: Array<JsonTypes.JsonPrimitive | JsonTypes.JsonStruct | undefined>;
   tasks: Array<JsonTypes.JsonPrimitive | JsonTypes.JsonStruct | undefined>;
+  orders: Array<JsonTypes.JsonPrimitive | JsonTypes.JsonStruct | undefined>;
 };
 
 export type ImportFromJsonIdleState = {
@@ -76,6 +84,7 @@ const defaultFailedImports = {
   contacts: [],
   notes: [],
   tasks: [],
+  orders: [],
 };
 
 const defaultStats = {
@@ -84,6 +93,7 @@ const defaultStats = {
   contacts: 0,
   notes: 0,
   tasks: 0,
+  orders: 0,
 };
 
 /**
@@ -591,6 +601,45 @@ export const useImportFromJson = (): [
       }
     };
 
+    let contactIndex: Promise<ContactIndex> | null = null;
+    const importOrderRow = async (
+      dataToImport: JsonTypes.JsonPrimitive | JsonTypes.JsonStruct | undefined,
+    ) => {
+      const fail = (error: string) =>
+        setState((old) => ({
+          ...old,
+          status: "importing",
+          failedImports: {
+            ...old.failedImports,
+            orders: [
+              ...old.failedImports.orders,
+              { ...(dataToImport as any), error },
+            ],
+          },
+          error: null,
+        }));
+      if (!isOrder(dataToImport)) return fail("Invalid format");
+      try {
+        // Contacts are all imported before orders, so load the index once
+        contactIndex ??= loadContactIndex(dataProvider);
+        await importOrder(
+          dataProvider,
+          dataToImport,
+          idsMaps.contacts,
+          await contactIndex,
+        );
+        setState((old) => ({
+          ...old,
+          status: "importing",
+          stats: { ...old.stats, orders: old.stats.orders + 1 },
+          error: null,
+        }));
+      } catch (err) {
+        console.error(err);
+        fail((err as Error).message);
+      }
+    };
+
     let currentTask: Promise<any> | null = null;
     let currentBatch: Array<Promise<void>> = [];
     const BATCH_SIZE = 50;
@@ -602,6 +651,7 @@ export const useImportFromJson = (): [
         "$.contacts.*",
         "$.notes.*",
         "$.tasks.*",
+        "$.orders.*",
       ],
       keepStack: false,
     });
@@ -660,6 +710,10 @@ export const useImportFromJson = (): [
           currentBatch.push(importTask(value));
           break;
         }
+        case "orders": {
+          currentBatch.push(importOrderRow(value));
+          break;
+        }
       }
       try {
         await proccesBatchIfPossible();
@@ -687,7 +741,14 @@ export const useImportFromJson = (): [
   return [state, importFile, reset];
 };
 
-const TYPES = ["sales", "companies", "contacts", "notes", "tasks"] as const;
+const TYPES = [
+  "sales",
+  "companies",
+  "contacts",
+  "notes",
+  "tasks",
+  "orders",
+] as const;
 type Types = (typeof TYPES)[number];
 
 const getType = (value: string | undefined): Types | undefined => {

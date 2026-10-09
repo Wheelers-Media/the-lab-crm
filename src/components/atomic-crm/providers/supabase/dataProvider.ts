@@ -232,6 +232,13 @@ const getDataProviderWithCustomMethods = () => {
     async isInitialized() {
       return getIsInitialized();
     },
+    // Creates follow-up tasks (quotes waiting, unpaid deposits, big abandoned
+    // carts). Safe to call often: each rule fires once per deal.
+    async runAutomations(): Promise<number> {
+      const { data, error } = await getSupabaseClient().rpc("run_automations");
+      if (error) throw new Error(`run_automations: ${error.message}`);
+      return (data as number) ?? 0;
+    },
     async mergeContacts(sourceId: Identifier, targetId: Identifier) {
       const { data, error } = await getSupabaseClient().functions.invoke(
         "merge_contacts",

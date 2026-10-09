@@ -128,6 +128,8 @@ export type Deal = {
   expected_closing_date: string;
   sales_id: Identifier;
   index: number;
+  lead_source?: string | null;
+  stage_changed_at?: string;
 } & Pick<RaRecord, "id">;
 
 export type DealNote = {
@@ -154,6 +156,66 @@ export type Task = {
   due_date: string;
   done_date?: string | null;
   sales_id?: Identifier;
+} & Pick<RaRecord, "id">;
+
+export type OrderLineItem = {
+  name: string;
+  quantity: number;
+  price: number;
+  sku?: string;
+};
+
+export type Order = {
+  shopify_order_id?: string | null;
+  order_number: string;
+  contact_id?: Identifier | null;
+  deal_id?: Identifier | null;
+  source?: string | null;
+  financial_status?: string | null;
+  currency: string;
+  total: number;
+  refunded_amount: number;
+  line_items: OrderLineItem[];
+  categories: string[];
+  is_deposit: boolean;
+  ordered_at: string;
+  cancelled_at?: string | null;
+} & Pick<RaRecord, "id">;
+
+export type AppointmentResource = "detailing-bay" | "eric";
+export type AppointmentStatus =
+  | "booked"
+  | "rescheduled"
+  | "cancelled"
+  | "completed"
+  | "no_show";
+
+export type Appointment = {
+  external_id?: string | null;
+  source: string;
+  contact_id?: Identifier | null;
+  deal_id?: Identifier | null;
+  task_id?: Identifier | null;
+  title: string;
+  resource: AppointmentResource;
+  start_at: string;
+  end_at: string;
+  status: AppointmentStatus;
+  deposit_paid: boolean;
+  vehicle?: string | null;
+  notes?: string | null;
+} & Pick<RaRecord, "id">;
+
+export type ShopifyCheckout = {
+  checkout_token: string;
+  contact_id?: Identifier | null;
+  email?: string | null;
+  customer_name?: string | null;
+  total: number;
+  recovery_url?: string | null;
+  completed_at?: string | null;
+  task_id?: Identifier | null;
+  checkout_updated_at: string;
 } & Pick<RaRecord, "id">;
 
 export type ActivityCompanyCreated = {

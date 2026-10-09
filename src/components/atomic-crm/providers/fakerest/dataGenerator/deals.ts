@@ -74,6 +74,14 @@ export const generateDeals = (db: Db): Deal[] => {
       expected_closing_date,
       sales_id: company.sales_id!,
       index: 0,
+      lead_source: random.arrayElement([
+        "website",
+        "website",
+        "phone",
+        "walk-in",
+        "cal.com",
+      ]),
+      stage_changed_at: randomDate(new Date(created_at)).toISOString(),
     };
   });
   // compute index based on stage

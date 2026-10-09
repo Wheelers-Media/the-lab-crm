@@ -24,6 +24,8 @@ const Header = () => {
     currentPath = "/companies";
   } else if (matchPath("/deals/*", location.pathname)) {
     currentPath = "/deals";
+  } else if (matchPath("/calendar", location.pathname)) {
+    currentPath = "/calendar";
   } else {
     currentPath = false;
   }
@@ -58,6 +60,11 @@ const Header = () => {
                     label={translate("ra.page.dashboard")}
                     to="/"
                     isActive={currentPath === "/"}
+                  />
+                  <NavigationTab
+                    label="Calendar"
+                    to="/calendar"
+                    isActive={currentPath === "/calendar"}
                   />
                   <NavigationTab
                     label={translate("resources.contacts.name", {

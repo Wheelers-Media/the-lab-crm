@@ -25,6 +25,7 @@ import { MobileLayout } from "../layout/MobileLayout";
 import { SignupPage } from "../login/SignupPage";
 import { ConfirmationRequired } from "../login/ConfirmationRequired";
 import { ImportPage } from "../misc/ImportPage";
+import { CalendarPage } from "../calendar/CalendarPage";
 import { ChangelogPage } from "../misc/ChangelogPage";
 import {
   getAuthProvider as defaultAuthProviderBuilder,
@@ -261,6 +262,7 @@ const DesktopAdmin = (
         <Route path={SettingsPage.path} element={<SettingsPage />} />
         <Route path={ImportPage.path} element={<ImportPage />} />
         <Route path={ChangelogPage.path} element={<ChangelogPage />} />
+        <Route path={CalendarPage.path} element={<CalendarPage />} />
       </CustomRoutes>
       <Resource name="deals" {...deals} />
       <Resource name="contacts" {...contacts} />
@@ -270,6 +272,9 @@ const DesktopAdmin = (
       <Resource name="tasks" />
       <Resource name="sales" {...sales} />
       <Resource name="tags" />
+      <Resource name="orders" />
+      <Resource name="appointments" />
+      <Resource name="shopify_checkouts" />
     </Admin>
   );
 };
@@ -325,6 +330,7 @@ const MobileAdmin = (
             element={<SettingsPageMobile />}
           />
           <Route path={ChangelogPage.path} element={<ChangelogPage />} />
+          <Route path={CalendarPage.path} element={<CalendarPage />} />
         </CustomRoutes>
         <Resource
           name="contacts"
