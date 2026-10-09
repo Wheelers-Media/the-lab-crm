@@ -78,18 +78,31 @@ export const countRecentEvents = async (
   return count ?? 0;
 };
 
+// Automatic records belong to the shop account Eric and Christine use; until
+// that account exists they fall back to the first active admin.
+const SHOP_ACCOUNT_EMAIL = "info@luxxautomotiveboutique.com";
+
 let cachedSalesId: number | null = null;
 export const defaultSalesId = async (): Promise<number | null> => {
   if (cachedSalesId) return cachedSalesId;
   const { data } = await supabaseAdmin
     .from("sales")
-    .select("id")
-    .eq("administrator", true)
+    .select("id, email, administrator")
     .eq("disabled", false)
-    .order("id")
-    .limit(1);
-  cachedSalesId = (data?.[0]?.id as number) ?? null;
-  return cachedSalesId;
+    .order("id");
+  const rows = (data ?? []) as Array<{
+    id: number;
+    email: string | null;
+    administrator: boolean;
+  }>;
+  const owner =
+    rows.find((r) => r.email?.toLowerCase() === SHOP_ACCOUNT_EMAIL) ??
+    rows.find((r) => r.administrator) ??
+    rows[0];
+  // Only cache the shop account, so creating it later takes effect
+  if (owner?.email?.toLowerCase() === SHOP_ACCOUNT_EMAIL)
+    cachedSalesId = owner.id;
+  return owner?.id ?? null;
 };
 
 export const ensureTagIds = async (names: string[]): Promise<number[]> => {

@@ -244,7 +244,10 @@ create or replace function public.lab_default_sales_id()
  security definer
  set search_path to ''
 as $function$
-  select id from public.sales where administrator and not disabled order by id limit 1
+  select id from public.sales
+  where not disabled
+  order by (lower(email) = 'info@luxxautomotiveboutique.com') desc, administrator desc, id
+  limit 1
 $function$;
 
 create or replace function public.lab_add_task(p_rule text, p_subject_id bigint, p_contact_id bigint, p_type text, p_text text, p_sales_id bigint)
