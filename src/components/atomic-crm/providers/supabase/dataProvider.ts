@@ -76,6 +76,19 @@ const getDataProviderWithCustomMethods = () => {
 
       return baseDataProvider.getList(resource, params);
     },
+    async create(resource: string, params: any) {
+      if (resource === "tags") {
+        // Reuses a tag that only differs by capitals or spacing instead of
+        // making a duplicate (imports, the tag picker and settings all land here)
+        const { data, error } = await getSupabaseClient().rpc(
+          "get_or_create_tag",
+          { p_name: params.data.name, p_color: params.data.color },
+        );
+        if (error) throw new Error(error.message);
+        return { data };
+      }
+      return baseDataProvider.create(resource, params);
+    },
     async getOne(resource: string, params: any) {
       if (resource === "companies") {
         return baseDataProvider.getOne("companies_summary", params);
