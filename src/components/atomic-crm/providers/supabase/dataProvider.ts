@@ -6,6 +6,11 @@ import {
   type Identifier,
   type ResourceCallbacks,
 } from "ra-core";
+import {
+  QuoteCheckoutError,
+  type QuoteCheckoutMode,
+  type QuoteCheckoutResult,
+} from "../commons/quoteCheckout";
 import type {
   ContactNote,
   Deal,
@@ -267,6 +272,27 @@ const getDataProviderWithCustomMethods = () => {
       const { data, error } = await getSupabaseClient().rpc("run_automations");
       if (error) throw new Error(`run_automations: ${error.message}`);
       return (data as number) ?? 0;
+    },
+    // A Shopify checkout link for a job's quote, under the customer's name
+    async createQuoteCheckout(
+      dealId: Identifier,
+      mode: QuoteCheckoutMode,
+      email: boolean,
+    ): Promise<QuoteCheckoutResult> {
+      const { data, error } = await getSupabaseClient().functions.invoke(
+        "quote_checkout",
+        { method: "POST", body: { dealId, mode, email } },
+      );
+      if (error) {
+        const body = await (error as { context?: Response }).context
+          ?.json()
+          .catch(() => null);
+        throw new QuoteCheckoutError(
+          body?.message ?? "Could not create the checkout link.",
+          body?.code,
+        );
+      }
+      return data as QuoteCheckoutResult;
     },
     async mergeContacts(sourceId: Identifier, targetId: Identifier) {
       const { data, error } = await getSupabaseClient().functions.invoke(

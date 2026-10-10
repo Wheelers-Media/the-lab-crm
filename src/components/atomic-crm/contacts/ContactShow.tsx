@@ -35,6 +35,7 @@ import { MobileBackButton } from "../misc/MobileBackButton";
 import { ContactOrders } from "../shop/ContactOrders";
 import { ContactVehicles } from "../vehicles/ContactVehicles";
 import { CustomerPackages } from "../packages/CustomerPackages";
+import { ContactQuotes } from "../packages/ContactQuotes";
 
 export const ContactShow = (props: ShowBaseProps = {}) => {
   const isMobile = useIsMobile();
@@ -132,6 +133,10 @@ const ContactShowContentMobile = () => {
               </ReferenceField>
             </div>
           </div>
+        </div>
+
+        <div className="mb-6">
+          <ContactQuotes contact={record} />
         </div>
 
         <Tabs defaultValue="notes" className="w-full">
@@ -305,6 +310,9 @@ const ContactShowContent = () => {
                   <CompanyAvatar />
                 </ReferenceField>
               </div>
+            </div>
+            <div className="mt-6">
+              <ContactQuotes contact={record} />
             </div>
             <InfiniteListBase
               resource="contact_notes"

@@ -25,6 +25,10 @@ import { getActivityLog } from "../commons/activity";
 import { getCompanyAvatar } from "../commons/getCompanyAvatar";
 import { getContactAvatar } from "../commons/getContactAvatar";
 import { mergeContacts } from "../commons/mergeContacts";
+import {
+  QuoteCheckoutError,
+  type QuoteCheckoutResult,
+} from "../commons/quoteCheckout";
 import type { CrmDataProvider } from "../types";
 import {
   authProvider as defaultAuthProvider,
@@ -274,6 +278,13 @@ export const createDataProvider = ({
       return { ...sale, user_id: sale.id.toString() };
     },
     runAutomations: async (): Promise<number> => 0,
+    // The demo has no Shopify store to make a checkout link in
+    createQuoteCheckout: async (): Promise<QuoteCheckoutResult> => {
+      throw new QuoteCheckoutError(
+        "Checkout links are not connected to Shopify yet.",
+        "not_connected",
+      );
+    },
     isInitialized: async (): Promise<boolean> => {
       const sales = await dataProvider.getList<Sale>("sales", {
         filter: {},
@@ -594,6 +605,8 @@ export const createDataProvider = ({
           };
         },
         afterCreate: async (result) => {
+          // Website and quote jobs can have no company
+          if (result.data.company_id == null) return result;
           await updateCompany(result.data.company_id, (company) => ({
             nb_deals: (company.nb_deals ?? 0) + 1,
           }));
@@ -610,6 +623,7 @@ export const createDataProvider = ({
           };
         },
         afterDelete: async (result) => {
+          if (result.data.company_id == null) return result;
           await updateCompany(result.data.company_id, (company) => ({
             nb_deals: (company.nb_deals ?? 1) - 1,
           }));

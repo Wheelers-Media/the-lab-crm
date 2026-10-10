@@ -60,6 +60,7 @@ import { MobileTasksList } from "../tasks/MobileTasksList.tsx";
 import { MobileCompanyList } from "../companies/MobileCompanyList";
 import { MobileDealList } from "../deals/MobileDealList";
 import { MobileProductList, ProductList } from "../packages/ProductList";
+import { QuoteBuilderPage } from "../packages/QuoteBuilderPage";
 import { ProductShow } from "../packages/ProductShow";
 import { MobileCheckoutList, MobileOrderList } from "../shop/MobileShopLists";
 import { ContactListMobile } from "../contacts/ContactList.tsx";
@@ -269,6 +270,7 @@ const DesktopAdmin = (
         <Route path={ImportPage.path} element={<ImportPage />} />
         <Route path={ChangelogPage.path} element={<ChangelogPage />} />
         <Route path={CalendarPage.path} element={<CalendarPage />} />
+        <Route path={QuoteBuilderPage.path} element={<QuoteBuilderPage />} />
       </CustomRoutes>
       <Resource name="deals" {...deals} />
       <Resource name="contacts" {...contacts} />
@@ -344,6 +346,7 @@ const MobileAdmin = (
             element={<SettingsPageMobile />}
           />
           <Route path={ChangelogPage.path} element={<ChangelogPage />} />
+          <Route path={QuoteBuilderPage.path} element={<QuoteBuilderPage />} />
           <Route
             path={CalendarPage.path}
             element={

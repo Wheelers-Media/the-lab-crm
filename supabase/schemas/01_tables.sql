@@ -92,6 +92,8 @@ create table public.deals (
     vehicle_id bigint,
     packages jsonb not null default '[]'::jsonb,
     quote jsonb,
+    -- The latest Shopify checkout link sent for the job's quote (quote_checkout)
+    checkout jsonb,
     constraint deals_packages_is_array check (jsonb_typeof(packages) = 'array')
 );
 

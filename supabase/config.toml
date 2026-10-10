@@ -178,3 +178,5 @@ verify_jwt = false
 verify_jwt = false
 [functions.calcom_webhook]
 verify_jwt = false
+[functions.quote_checkout]
+verify_jwt = false

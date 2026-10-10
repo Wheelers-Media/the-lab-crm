@@ -187,7 +187,19 @@ export type Deal = {
   vehicle_id?: Identifier | null;
   packages?: DealPackageLine[];
   quote?: WebsiteQuote | null;
+  checkout?: DealCheckout | null;
 } & Pick<RaRecord, "id">;
+
+/** The latest Shopify checkout link made for the job's quote. */
+export type DealCheckout = {
+  url: string;
+  draft_order_name: string;
+  mode: "parts" | "all";
+  due_now: number;
+  due_at_pickup: number;
+  emailed: boolean;
+  created_at: string;
+};
 
 /** A package on a job; price is what this customer was quoted. */
 export type DealPackageLine = {
@@ -195,6 +207,10 @@ export type DealPackageLine = {
   title: string;
   price: number;
   quantity: number;
+  /** The Shopify variant a checkout link sells; none for labour and custom lines. */
+  variant_id?: string | null;
+  /** Parts are paid up front; labour can wait until pickup. */
+  kind?: "part" | "labour";
 };
 
 /** What the customer saw and chose on thelabfsj.ca (lead_intake). */

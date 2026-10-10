@@ -390,6 +390,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/providers/commons/quoteCheckout.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/providers/commons/mergeContacts.ts",
           "type": "registry:component"
         },
@@ -426,7 +430,27 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/packages/quoteModel.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/packages/packageModel.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/packages/QuoteSuggestions.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/packages/QuoteLines.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/packages/QuoteCheckout.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/packages/QuoteBuilderPage.tsx",
           "type": "registry:component"
         },
         {
@@ -451,6 +475,10 @@
         },
         {
           "path": "src/components/atomic-crm/packages/CustomerPackages.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/packages/ContactQuotes.tsx",
           "type": "registry:component"
         },
         {
@@ -667,6 +695,10 @@
         },
         {
           "path": "src/components/atomic-crm/layout/TopToolbar.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/layout/ScrollMemory.tsx",
           "type": "registry:component"
         },
         {

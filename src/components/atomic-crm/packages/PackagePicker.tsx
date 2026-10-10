@@ -67,7 +67,13 @@ export const PackagePicker = ({
   return (
     <Popover open={open} onOpenChange={setOpen} modal>
       <PopoverTrigger asChild>
-        <Button type="button" variant="outline" size="sm">
+        {/* The popover trigger replaces the button's data-slot, so restate the site button type */}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="uppercase font-bold tracking-[0.07em] text-[0.8125rem]"
+        >
           <Plus className="size-4" />
           {label}
         </Button>
