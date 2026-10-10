@@ -14,6 +14,7 @@ import { generateTags } from "./tags";
 import { generateTasks } from "./tasks";
 import type { Db } from "./types";
 import { generateVehicles, vehiclesFts } from "./vehicles";
+import { generatePackages } from "./packages";
 
 export default (): Db => {
   const db = {} as Db;
@@ -41,6 +42,7 @@ export default (): Db => {
   db.deal_notes = generateDealNotes(db);
   db.tasks = generateTasks(db);
   db.orders = generateOrders(db);
+  db.packages = generatePackages();
   db.shopify_checkouts = generateCheckouts(db);
   db.appointments = generateAppointments(db);
   db.configuration = [

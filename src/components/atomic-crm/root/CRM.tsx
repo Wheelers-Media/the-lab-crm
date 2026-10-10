@@ -59,6 +59,8 @@ import { useIsMobile } from "@/hooks/use-mobile.ts";
 import { MobileTasksList } from "../tasks/MobileTasksList.tsx";
 import { MobileCompanyList } from "../companies/MobileCompanyList";
 import { MobileDealList } from "../deals/MobileDealList";
+import { MobileProductList, ProductList } from "../packages/ProductList";
+import { ProductShow } from "../packages/ProductShow";
 import { MobileCheckoutList, MobileOrderList } from "../shop/MobileShopLists";
 import { ContactListMobile } from "../contacts/ContactList.tsx";
 import { ContactShow } from "../contacts/ContactShow.tsx";
@@ -280,6 +282,13 @@ const DesktopAdmin = (
       <Resource name="sales" {...sales} />
       <Resource name="tags" />
       <Resource name="vehicles" />
+      <Resource
+        name="packages"
+        list={ProductList}
+        show={ProductShow}
+        recordRepresentation="title"
+      />
+      <Resource name="order_lines" />
     </Admin>
   );
 };
@@ -369,6 +378,13 @@ const MobileAdmin = (
         <Resource name="sales" />
         <Resource name="tags" />
         <Resource name="vehicles" />
+        <Resource
+          name="packages"
+          list={MobileProductList}
+          show={ProductShow}
+          recordRepresentation="title"
+        />
+        <Resource name="order_lines" />
       </Admin>
     </PersistQueryClientProvider>
   );

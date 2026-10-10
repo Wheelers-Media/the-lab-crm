@@ -34,6 +34,7 @@ import { ContactAside } from "./ContactAside";
 import { MobileBackButton } from "../misc/MobileBackButton";
 import { ContactOrders } from "../shop/ContactOrders";
 import { ContactVehicles } from "../vehicles/ContactVehicles";
+import { CustomerPackages } from "../packages/CustomerPackages";
 
 export const ContactShow = (props: ShowBaseProps = {}) => {
   const isMobile = useIsMobile();
@@ -228,6 +229,13 @@ const ContactShowContentMobile = () => {
                 <Separator />
                 <div className="mt-3">
                   <ContactBackgroundInfo />
+                </div>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold">Packages</h3>
+                <Separator />
+                <div className="mt-3">
+                  <CustomerPackages contact={record} />
                 </div>
               </div>
               <div>

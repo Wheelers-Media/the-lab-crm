@@ -15,6 +15,10 @@ import {
   type ShopifyCheckout,
   type ShopifyOrder,
 } from "../../supabase/functions/_shared/lab/parse.ts";
+import {
+  packageFromProduct,
+  type PackageRow,
+} from "../../supabase/functions/_shared/lab/packages.ts";
 
 type Json = Record<string, unknown>;
 
@@ -181,7 +185,32 @@ export const checkoutFromBulk = (
   return parsed.ok ? parsed.value : null;
 };
 
+/** A bulk product with its variants, as a catalog row (or null). */
+export const packageFromBulk = (
+  node: Json,
+  variants: Json[],
+): PackageRow | null =>
+  packageFromProduct({
+    id: legacyId(node.id),
+    title: node.title,
+    vendor: node.vendor,
+    status: node.status,
+    updated_at: node.updatedAt,
+    handle: node.handle,
+    product_type: node.productType,
+    image: { src: rec(rec(rec(node.featuredMedia).preview).image).url },
+    variants: variants.map((v) => ({
+      id: legacyId(v.id),
+      title: v.title,
+      price: v.price,
+      sku: v.sku,
+      inventory_management: node.tracksInventory ? "shopify" : null,
+      inventory_quantity: v.inventoryQuantity,
+    })),
+  });
+
 export type PreloadPayload = {
+  packages: PackageRow[];
   customers: PreloadCustomer[];
   orders: PreloadOrder[];
   checkouts: ShopifyCheckout[];
@@ -192,10 +221,12 @@ export const buildPayload = ({
   orders: orderRows,
   customers: customerRows,
   checkouts: checkoutRows,
+  products: productRows = [],
 }: {
   orders: Json[];
   customers: Json[];
   checkouts: Json[];
+  products?: Json[];
 }): PreloadPayload => {
   const skipped: Record<string, number> = {};
   const skip = (reason: string) => {
@@ -241,5 +272,16 @@ export const buildPayload = ({
     else skip("completed or unreadable cart");
   }
 
-  return { customers, orders, checkouts, skipped };
+  const groupedProducts = groupChildren(productRows);
+  const packages: PackageRow[] = [];
+  for (const node of groupedProducts.parents) {
+    const row = packageFromBulk(
+      node,
+      groupedProducts.children.get(String(node.id)) ?? [],
+    );
+    if (row) packages.push(row);
+    else skip("unreadable product");
+  }
+
+  return { packages, customers, orders, checkouts, skipped };
 };

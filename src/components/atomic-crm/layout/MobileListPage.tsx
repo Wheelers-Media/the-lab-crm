@@ -89,7 +89,9 @@ export const MobileFilterChip = ({
 }) => {
   const { filterValues, setFilters } = useListContext();
   const keys = Object.keys(value);
-  const active = keys.every((k) => k in (filterValues ?? {}));
+  const active = keys.every(
+    (k) => JSON.stringify((filterValues ?? {})[k]) === JSON.stringify(value[k]),
+  );
   const toggle = () => {
     const next = { ...(filterValues ?? {}) };
     if (active) keys.forEach((k) => delete next[k]);

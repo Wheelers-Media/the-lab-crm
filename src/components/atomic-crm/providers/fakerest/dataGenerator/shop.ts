@@ -11,7 +11,11 @@ import type { Db } from "./types";
 import { randomDate, weightedBoolean } from "./utils";
 
 // Demo catalogue: real THE LAB product names and starting prices (CAD).
-const CATALOGUE: Array<{ name: string; price: number; category: string }> = [
+export const CATALOGUE: Array<{
+  name: string;
+  price: number;
+  category: string;
+}> = [
   {
     name: "Universal Fit - Suntek - Ceramic Tint - Front Roll Ups",
     price: 260,

@@ -185,6 +185,55 @@ export type Deal = {
   lead_source?: string | null;
   stage_changed_at?: string;
   vehicle_id?: Identifier | null;
+  packages?: DealPackageLine[];
+  quote?: WebsiteQuote | null;
+} & Pick<RaRecord, "id">;
+
+/** A package on a job; price is what this customer was quoted. */
+export type DealPackageLine = {
+  package_id: Identifier | null;
+  title: string;
+  price: number;
+  quantity: number;
+};
+
+/** What the customer saw and chose on thelabfsj.ca (lead_intake). */
+export type WebsiteQuote = {
+  total: string;
+  lines: Array<{ label: string; price: number; priceText: string }>;
+  choices: Array<{ label: string; value: string }>;
+  summary: string;
+  source: "quote" | "walkthrough" | "form";
+  page: string;
+};
+
+/** The Shopify catalog in the CRM (shopify_webhook keeps it in sync). */
+export type Package = {
+  shopify_product_id: string;
+  title: string;
+  shopify_title: string;
+  vendor: string | null;
+  category: string | null;
+  bay: "boutique" | "parts" | null;
+  price: number | null;
+  price_max: number | null;
+  variants: Array<{
+    id: string;
+    title: string;
+    price: number;
+    sku?: string;
+    inventory?: number | null;
+  }>;
+  status: "active" | "unlisted" | "draft" | "archived" | "deleted";
+  shopify_updated_at: string | null;
+  synced_at: string;
+  /** "package": a shop service (goes on jobs); "product": parts and the rest */
+  kind: "package" | "product";
+  product_type: string | null;
+  handle: string | null;
+  image_url: string | null;
+  /** Units in stock; null when Shopify does not track stock */
+  inventory: number | null;
 } & Pick<RaRecord, "id">;
 
 export type DealNote = {

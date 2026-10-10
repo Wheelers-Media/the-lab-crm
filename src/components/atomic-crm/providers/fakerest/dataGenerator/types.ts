@@ -6,6 +6,7 @@ import type {
   Deal,
   DealNote,
   Order,
+  Package,
   Sale,
   ShopifyCheckout,
   Tag,
@@ -27,5 +28,6 @@ export interface Db {
   shopify_checkouts: ShopifyCheckout[];
   appointments: Appointment[];
   vehicles: Vehicle[];
+  packages: Package[];
   configuration: Array<{ id: number; config: ConfigurationContextValue }>;
 }

@@ -1,7 +1,9 @@
-// Receives Shopify webhooks (Order payment, Checkout creation/update).
+// Receives Shopify webhooks (Order payment, Checkout creation/update,
+// Product creation/update/deletion).
 // Paid orders are saved to the orders table and the customer's history; a
 // $50 booking deposit moves the customer's open deal to Converted.
 // Checkouts are stored so the follow-up rules can flag big abandoned carts.
+// Products keep the CRM's catalog (packages and parts) in step with Shopify.
 // "history/order" is our own topic, sent by scripts/shopify-backfill.ts: past
 // orders are recorded on the customer, with no deal moves or tasks.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
@@ -14,6 +16,7 @@ import {
   type ShopifyOrder,
 } from "../_shared/lab/parse.ts";
 import { verifyShopifySignature } from "../_shared/lab/signatures.ts";
+import { packageFromProduct } from "../_shared/lab/packages.ts";
 import {
   addContactNote,
   addDealNote,
@@ -159,6 +162,29 @@ const handleCheckout = async (payload: unknown) => {
   }
 };
 
+/** Keeps the catalog in step with Shopify; deleted products are marked so. */
+const handleProduct = async (topic: string, payload: unknown) => {
+  const id = String((payload as { id?: unknown })?.id ?? "");
+  if (!id) throw new Error("Missing product id");
+  const row = topic === "products/delete" ? null : packageFromProduct(payload);
+  if (!row) {
+    // Deleted in Shopify (or unreadable): keep the row for old jobs, mark it
+    const { error } = await supabaseAdmin
+      .from("packages")
+      .update({ status: "deleted", synced_at: new Date().toISOString() })
+      .eq("shopify_product_id", id);
+    if (error) throw new Error(`remove package: ${error.message}`);
+    return;
+  }
+  const { error } = await supabaseAdmin
+    .from("packages")
+    .upsert(
+      { ...row, synced_at: new Date().toISOString() },
+      { onConflict: "shopify_product_id" },
+    );
+  if (error) throw new Error(`save package: ${error.message}`);
+};
+
 Deno.serve(async (req: Request) => {
   if (req.method !== "POST")
     return createErrorResponse(405, "Method not allowed");
@@ -209,6 +235,8 @@ Deno.serve(async (req: Request) => {
       await handleOrder(parsed.value, { history: true });
     } else if (topic.startsWith("checkouts/")) {
       await handleCheckout(payload);
+    } else if (topic.startsWith("products/")) {
+      await handleProduct(topic, payload);
     } else {
       await finishEvent(eventId, "ignored", `unhandled topic ${topic}`);
       return ok();

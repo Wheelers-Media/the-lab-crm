@@ -118,6 +118,14 @@ Deno.serve(async (req: Request) => {
           leadSource: SOURCE,
           vehicleId,
           description: lead.vin ? `VIN ${lead.vin}` : undefined,
+          // The priced lines the customer saw become the job's packages
+          packages: lead.quote.lines.map((line) => ({
+            package_id: null,
+            title: line.label,
+            price: line.price,
+            quantity: 1,
+          })),
+          quote: lead.quote,
         });
 
     if (sameService && vehicleId) {
@@ -126,6 +134,13 @@ Deno.serve(async (req: Request) => {
         .update({ vehicle_id: vehicleId })
         .eq("id", dealId)
         .is("vehicle_id", null);
+    }
+    if (sameService) {
+      // The latest request is what the customer wants now
+      await supabaseAdmin
+        .from("deals")
+        .update({ quote: lead.quote })
+        .eq("id", dealId);
     }
 
     const header =

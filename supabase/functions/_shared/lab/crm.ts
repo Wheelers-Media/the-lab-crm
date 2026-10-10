@@ -316,6 +316,15 @@ export type NewDeal = {
   amount: number;
   leadSource: string;
   description?: string;
+  /** Package lines: [{ package_id, title, price, quantity }] */
+  packages?: Array<{
+    package_id: number | null;
+    title: string;
+    price: number;
+    quantity: number;
+  }>;
+  /** The website quote that started the job */
+  quote?: unknown;
 };
 
 export const createDeal = async (deal: NewDeal): Promise<number> => {
@@ -334,6 +343,8 @@ export const createDeal = async (deal: NewDeal): Promise<number> => {
       lead_source: deal.leadSource,
       vehicle_id: deal.vehicleId ?? null,
       description: deal.description ?? null,
+      packages: deal.packages ?? [],
+      quote: deal.quote ?? null,
       expected_closing_date: new Date().toISOString().slice(0, 10),
       sales_id: await defaultSalesId(),
       index: count ?? 0,

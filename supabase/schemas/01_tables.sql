@@ -89,7 +89,10 @@ create table public.deals (
     index smallint,
     lead_source text,
     stage_changed_at timestamp with time zone not null default now(),
-    vehicle_id bigint
+    vehicle_id bigint,
+    packages jsonb not null default '[]'::jsonb,
+    quote jsonb,
+    constraint deals_packages_is_array check (jsonb_typeof(packages) = 'array')
 );
 
 create table public.deal_notes (

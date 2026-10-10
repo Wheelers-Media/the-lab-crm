@@ -13,12 +13,14 @@ import { contactOptionText } from "../misc/ContactOption";
 import { useConfigurationContext } from "../root/ConfigurationContext";
 import { AutocompleteCompanyInput } from "../companies/AutocompleteCompanyInput.tsx";
 import { DealVehicleInput } from "../vehicles/DealVehicleInput";
+import { DealPackagesInput } from "../packages/DealPackagesInput";
 
 export const DealInputs = () => {
   const isMobile = useIsMobile();
   return (
     <div className="flex flex-col gap-8">
       <DealInfoInputs />
+      <DealPackagesInput />
 
       <div className={`flex gap-6 ${isMobile ? "flex-col" : "flex-row"}`}>
         <DealLinkedToInputs />

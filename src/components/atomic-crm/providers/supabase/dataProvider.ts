@@ -377,6 +377,17 @@ const lifeCycleCallbacks: ResourceCallbacks[] = [
     },
   },
   {
+    resource: "packages",
+    beforeGetList: async (params) => {
+      return applyFullTextSearch([
+        "title",
+        "shopify_title",
+        "vendor",
+        "product_type",
+      ])(params);
+    },
+  },
+  {
     resource: "contacts_summary",
     beforeGetList: async (params) => {
       return applyFullTextSearch(["first_name", "last_name"])(params);

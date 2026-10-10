@@ -27,6 +27,7 @@ import { NotesIterator } from "../notes/NotesIterator";
 import { useConfigurationContext } from "../root/ConfigurationContext";
 import type { Deal } from "../types";
 import { VehicleDetailField } from "../vehicles/VehicleField";
+import { DealPackagesShow } from "../packages/DealPackagesShow";
 import { ContactList } from "./ContactList";
 import { DealStageSelect } from "./DealStageSelect";
 import { findDealLabel, formatISODateString } from "./dealUtils";
@@ -163,6 +164,8 @@ const DealShowContent = () => {
               </div>
             </div>
           )}
+
+          <DealPackagesShow deal={record} />
 
           {record.vehicle_id ? (
             <div className="m-4">

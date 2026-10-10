@@ -65,6 +65,47 @@ describe("parseWebsiteLead", () => {
     expect(result.ok && result.value.vehicle).toBe("2022 Ram 3500 Laramie");
   });
 
+  it("keeps the priced lines, choices and summary of the website quote", () => {
+    const result = parseWebsiteLead({
+      ...base,
+      estimate: {
+        total: "$440 CAD",
+        lines: [
+          { label: "Ceramic front roll-ups", price: "$260" },
+          { label: "Windshield brow (1-piece)", price: "$180" },
+          { label: "", price: "$5" },
+        ],
+      },
+      details:
+        "Tint Shade Preference: 18%\nWindow Tint Preference: Premium Ceramic",
+      summary: "Ceramic fronts and a brow",
+      source: "quote",
+    });
+    expect(result.ok && result.value.quote).toEqual({
+      total: "$440 CAD",
+      lines: [
+        { label: "Ceramic front roll-ups", price: 260, priceText: "$260" },
+        { label: "Windshield brow (1-piece)", price: 180, priceText: "$180" },
+      ],
+      choices: [
+        { label: "Tint Shade Preference", value: "18%" },
+        { label: "Window Tint Preference", value: "Premium Ceramic" },
+      ],
+      summary: "Ceramic fronts and a brow",
+      source: "quote",
+      page: "",
+    });
+  });
+
+  it("still files requests from the older form with only a total", () => {
+    const result = parseWebsiteLead(base);
+    expect(result.ok && result.value.quote).toMatchObject({
+      total: "$850 CAD",
+      lines: [],
+      source: "form",
+    });
+  });
+
   it("drops a year that is not a real model year", () => {
     const result = parseWebsiteLead({ ...base, year: "22" });
     expect(result.ok && result.value.vehicleParts.year).toBeNull();

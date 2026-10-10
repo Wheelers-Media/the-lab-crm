@@ -28,6 +28,8 @@ const Header = () => {
     currentPath = "/calendar";
   } else if (matchPath("/appointments/*", location.pathname)) {
     currentPath = "/calendar";
+  } else if (matchPath("/packages/*", location.pathname)) {
+    currentPath = "/packages";
   } else if (matchPath("/orders/*", location.pathname)) {
     currentPath = "/orders";
   } else if (matchPath("/shopify_checkouts/*", location.pathname)) {
@@ -92,6 +94,11 @@ const Header = () => {
                     })}
                     to="/deals"
                     isActive={currentPath === "/deals"}
+                  />
+                  <NavigationTab
+                    label="Packages"
+                    to="/packages"
+                    isActive={currentPath === "/packages"}
                   />
                   <NavigationTab
                     label={translate("resources.orders.name", {

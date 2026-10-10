@@ -14,6 +14,7 @@ import {
   KanbanSquare,
   ListTodo,
   Menu,
+  Package,
   Plus,
   Receipt,
   Settings,
@@ -218,6 +219,12 @@ const MORE_LINKS = [
     label: "Calendar",
     hint: "Drop-offs and Eric's bookings",
     Icon: CalendarDays,
+  },
+  {
+    href: "/packages",
+    label: "Packages and products",
+    hint: "The Shopify catalog, prices and stock",
+    Icon: Package,
   },
   {
     href: "/orders",
