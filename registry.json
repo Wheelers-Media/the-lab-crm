@@ -202,6 +202,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/settings/passwordRules.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/settings/SettingsTags.tsx",
           "type": "registry:component"
         },
@@ -211,6 +215,10 @@
         },
         {
           "path": "src/components/atomic-crm/settings/SettingsPage.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/settings/SetPasswordDialog.tsx",
           "type": "registry:component"
         },
         {
@@ -459,6 +467,10 @@
         },
         {
           "path": "src/components/atomic-crm/operations/format.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/operations/ShopifyMetrics.tsx",
           "type": "registry:component"
         },
         {
