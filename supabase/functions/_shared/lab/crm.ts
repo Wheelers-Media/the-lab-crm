@@ -108,24 +108,16 @@ export const defaultSalesId = async (): Promise<number | null> => {
 export const ensureTagIds = async (names: string[]): Promise<number[]> => {
   const ids: number[] = [];
   for (const [i, name] of names.entries()) {
-    const { data } = await supabaseAdmin
-      .from("tags")
-      .select("id")
-      .eq("name", name)
-      .limit(1);
-    if (data?.[0]) {
-      ids.push(data[0].id as number);
-      continue;
-    }
-    const { data: created, error } = await supabaseAdmin
-      .from("tags")
-      .insert({ name, color: TAG_COLORS[i % TAG_COLORS.length] })
-      .select("id")
-      .single();
-    if (error) fail("create tag", error);
-    ids.push(created!.id as number);
+    // Matches an existing tag regardless of capitals or spacing, so
+    // "Shopify customer" and "shopify customer " stay one tag
+    const { data, error } = await supabaseAdmin.rpc("get_or_create_tag", {
+      p_name: name,
+      p_color: TAG_COLORS[i % TAG_COLORS.length],
+    });
+    if (error || !data) fail("create tag", error);
+    ids.push((data as { id: number }).id);
   }
-  return ids;
+  return [...new Set(ids)];
 };
 
 type ContactRow = {
