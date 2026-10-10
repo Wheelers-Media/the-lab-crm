@@ -350,6 +350,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/providers/fakerest/dataGenerator/packages.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/providers/fakerest/dataGenerator/index.ts",
           "type": "registry:component"
         },
@@ -411,6 +415,34 @@
         },
         {
           "path": "src/components/atomic-crm/providers/commons/activity.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/packages/packageModel.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/packages/ProductShow.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/packages/ProductList.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/packages/PackagePicker.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/packages/DealPackagesShow.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/packages/DealPackagesInput.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/packages/CustomerPackages.tsx",
           "type": "registry:component"
         },
         {
