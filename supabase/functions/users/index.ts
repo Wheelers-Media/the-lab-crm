@@ -406,6 +406,50 @@ async function patchUser(req: Request, currentUserSale: any) {
   }
 }
 
+const MIN_PASSWORD_LENGTH = 8;
+
+/**
+ * An administrator sets another user's password directly (for example a new
+ * team member whose email link expired). No email is sent.
+ */
+async function setUserPassword(
+  body: { sales_id?: unknown; password?: unknown },
+  currentUserSale: any,
+) {
+  if (!currentUserSale.administrator) {
+    return createErrorResponse(401, "Not Authorized");
+  }
+  const password = typeof body.password === "string" ? body.password : "";
+  if (password.length < MIN_PASSWORD_LENGTH) {
+    return createErrorResponse(
+      400,
+      `Use at least ${MIN_PASSWORD_LENGTH} characters.`,
+      { code: "password_too_short" },
+    );
+  }
+  const { data: sale } = await supabaseAdmin
+    .from("sales")
+    .select("id, user_id")
+    .eq("id", body.sales_id)
+    .single();
+  if (!sale) {
+    return createErrorResponse(404, "Not Found");
+  }
+  const { error } = await supabaseAdmin.auth.admin.updateUserById(
+    sale.user_id,
+    { password, email_confirm: true },
+  );
+  if (error) {
+    console.error("Error setting password:", error.message);
+    return createErrorResponse(500, "Could not set the password", {
+      code: error.code,
+    });
+  }
+  return new Response(JSON.stringify({ data: { id: sale.id } }), {
+    headers: { "Content-Type": "application/json", ...corsHeaders },
+  });
+}
+
 Deno.serve(async (req: Request) =>
   OptionsMiddleware(req, async (req) =>
     AuthMiddleware(req, async (req) =>
@@ -421,6 +465,10 @@ Deno.serve(async (req: Request) =>
           }
 
           if (req.method === "PATCH") {
+            const body = await req.clone().json();
+            if (body?.action === "set_password") {
+              return await setUserPassword(body, currentUserSale);
+            }
             return await patchUser(req, currentUserSale);
           }
         } catch (e) {

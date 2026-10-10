@@ -285,6 +285,12 @@ export const createDataProvider = ({
       }
       return true;
     },
+    // The demo has no passwords; accept and move on
+    setOwnPassword: async (_password: string): Promise<true> => true,
+    salesSetPassword: async (
+      _id: Identifier,
+      _password: string,
+    ): Promise<true> => true,
     updatePassword: async (id: Identifier): Promise<true> => {
       const currentUser = await getIdentity();
       if (!currentUser) {

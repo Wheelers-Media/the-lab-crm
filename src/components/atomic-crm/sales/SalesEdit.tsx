@@ -17,10 +17,22 @@ import type { CrmDataProvider } from "../providers/types";
 import type { Sale, SalesFormData } from "../types";
 import { getSalesErrorNotification } from "./salesErrorNotification";
 import { SalesInputs } from "./SalesInputs";
+import { SetPasswordButton } from "../settings/SetPasswordDialog";
 
 function EditToolbar() {
+  const record = useRecordContext<Sale>();
+  const dataProvider = useDataProvider<CrmDataProvider>();
   return (
-    <div className="flex justify-end gap-4">
+    <div className="flex flex-wrap justify-end gap-4">
+      {record ? (
+        <SetPasswordButton
+          className="mr-auto"
+          title={`Set a password for ${record.first_name}`}
+          onSave={(password) =>
+            dataProvider.salesSetPassword(record.id, password)
+          }
+        />
+      ) : null}
       <CancelButton />
       <SaveButton />
     </div>

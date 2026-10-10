@@ -188,6 +188,35 @@ const getDataProviderWithCustomMethods = () => {
 
       return updatedData.data;
     },
+    /** An administrator sets another user's password, no email needed. */
+    async salesSetPassword(id: Identifier, password: string) {
+      const { data, error } = await getSupabaseClient().functions.invoke(
+        "users",
+        {
+          method: "PATCH",
+          body: { action: "set_password", sales_id: id, password },
+        },
+      );
+      if (!data || error) {
+        const details = await (async () => {
+          try {
+            return (await error?.context?.json()) ?? {};
+          } catch {
+            return {};
+          }
+        })();
+        throw new Error(details?.message || "Could not set the password");
+      }
+      return true;
+    },
+    /** Sets the signed-in user's password directly, no email needed. */
+    async setOwnPassword(password: string) {
+      const { error } = await getSupabaseClient().auth.updateUser({
+        password,
+      });
+      if (error) throw new Error(error.message);
+      return true;
+    },
     async updatePassword(id: Identifier) {
       const { data: passwordUpdated, error } =
         await getSupabaseClient().functions.invoke<boolean>("update_password", {

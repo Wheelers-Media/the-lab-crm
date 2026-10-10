@@ -36,6 +36,7 @@ import {
 
 import ImageEditorField from "../misc/ImageEditorField";
 import type { CrmDataProvider } from "../providers/types";
+import { SetPasswordButton } from "./SetPasswordDialog";
 import { getSalesErrorNotification } from "../sales/salesErrorNotification";
 import type { Sale, SalesFormData } from "../types";
 
@@ -205,12 +206,13 @@ const ProfileForm = ({
           <div className="flex flex-row justify-end gap-2">
             {!isEditMode && (
               <>
+                <SetPasswordButton />
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   type="button"
                   onClick={handleClickOpenPasswordChange}
                 >
-                  {translate("crm.profile.password.change")}
+                  Email me a reset link
                 </Button>
               </>
             )}
