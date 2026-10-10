@@ -36,6 +36,35 @@ const users = await sql(`
 log("users:");
 for (const u of users) log("  " + JSON.stringify(u));
 
+const eric = await sql(`
+  select s.id, u.updated_at, u.last_sign_in_at, u.email_confirmed_at, u.banned_until,
+         u.recovery_sent_at, u.email_change, u.phone, u.is_sso_user, u.deleted_at,
+         (select count(*) from auth.identities i where i.user_id = u.id) as identities,
+         (select string_agg(i.provider, ',') from auth.identities i where i.user_id = u.id) as providers,
+         lower(u.email) = lower(s.email) as sales_email_matches_login
+  from public.sales s join auth.users u on u.id = s.user_id where s.first_name = 'Eric'`);
+log("eric login: " + JSON.stringify(eric));
+
+const fnLogs = await api(`/analytics/endpoints/logs.all?sql=${encodeURIComponent(
+  "select timestamp, m.function_id, r.method, resp.status_code from function_edge_logs cross join unnest(metadata) as m cross join unnest(m.request) as r cross join unnest(m.response) as resp where r.url like '%/users%' order by timestamp desc limit 15",
+)}`).catch((e) => ({ error: String(e).slice(0, 200) }));
+log("users function calls: " + JSON.stringify(fnLogs?.result ?? fnLogs).slice(0, 1500));
+
+const authLogs = await api(`/analytics/endpoints/logs.all?sql=${encodeURIComponent(
+  "select timestamp, event_message from auth_logs order by timestamp desc limit 25",
+)}`).catch((e) => ({ error: String(e).slice(0, 200) }));
+const rows = authLogs?.result ?? [];
+log("auth log:");
+for (const r of rows) {
+  let msg = r.event_message ?? "";
+  try {
+    const j = JSON.parse(msg);
+    msg = [j.level, j.msg, j.error, j.path, j.status, j.action].filter(Boolean).join(" | ");
+  } catch {}
+  log(`  ${r.timestamp} ${String(msg).replace(/\S+@\S+/g, "[email]").slice(0, 200)}`);
+}
+if (!rows.length) log("  " + JSON.stringify(authLogs).slice(0, 300));
+
 const audit = await sql(`
   select created_at, payload->>'action' as action, payload->>'log_type' as type,
          payload->'traits'->>'provider' as provider
