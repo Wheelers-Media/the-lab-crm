@@ -68,6 +68,8 @@ export const MobileListPage = <T extends RaRecord>({
     sort={sort}
     filter={filter}
     disableSyncWithLocation
+    // Keep search, chips and "show more" when coming back to the list
+    storeKey={`mobile.${resource}.${title}`}
   >
     <MobileHeader>
       <h1 className="text-xl">{title}</h1>

@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { isValid } from "date-fns";
-import { Archive, ArchiveRestore } from "lucide-react";
+import { Archive, ArchiveRestore, FileText } from "lucide-react";
+import { Link } from "react-router";
 import {
   InfiniteListBase,
   ShowBase,
@@ -35,7 +36,8 @@ import { findDealLabel, formatISODateString } from "./dealUtils";
 export const DealShow = ({ open, id }: { open: boolean; id?: string }) => {
   const redirect = useRedirect();
   const handleClose = () => {
-    redirect("list", "deals");
+    // Back to the board where it was, not scrolled to the top
+    redirect("list", "deals", undefined, undefined, { _scrollToTop: false });
   };
 
   return (
@@ -83,6 +85,12 @@ const DealShowContent = () => {
                 </>
               ) : (
                 <>
+                  <Button asChild size="sm">
+                    <Link to={`/quotes/${record.id}`}>
+                      <FileText className="size-4" />
+                      {record.packages?.length ? "Open quote" : "Build quote"}
+                    </Link>
+                  </Button>
                   <ArchiveButton record={record} />
                   <EditButton />
                 </>

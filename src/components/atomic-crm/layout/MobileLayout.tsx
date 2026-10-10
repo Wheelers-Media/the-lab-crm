@@ -8,12 +8,14 @@ import { DataImportProvider } from "../dataImport/DataImportProvider";
 import { useConfigurationLoader } from "../root/useConfigurationLoader";
 import { MobileNavigation } from "./MobileNavigation";
 import { PullToRefresh } from "./PullToRefresh";
+import { ScrollMemory } from "./ScrollMemory";
 
 export const MobileLayout = ({ children }: { children: ReactNode }) => {
   useConfigurationLoader();
   return (
     <DataImportProvider>
       <PullToRefresh />
+      <ScrollMemory />
       <ErrorBoundary FallbackComponent={Error}>
         <Suspense fallback={<Skeleton className="h-12 w-12 rounded-full" />}>
           {children}

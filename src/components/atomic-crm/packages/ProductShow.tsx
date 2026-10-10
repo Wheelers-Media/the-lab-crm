@@ -130,16 +130,6 @@ const ProductDetail = () => {
             Synced from Shopify {shortDate(pkg.synced_at)}
           </p>
         </div>
-        <Button asChild variant="outline" size="sm">
-          <a
-            href={`${SHOPIFY_ADMIN}/products/${pkg.shopify_product_id}`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <ExternalLink className="size-3.5" />
-            Edit in Shopify
-          </a>
-        </Button>
       </div>
 
       {hasOptions ? (
@@ -176,10 +166,27 @@ const ProductDetail = () => {
 
       <Buyers pkg={pkg} />
 
-      <p className="text-xs text-muted-foreground">
-        Names, prices and stock come from Shopify. Change them there and the CRM
-        updates on its own.
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-4">
+        <p className="text-xs text-muted-foreground">
+          Names, prices and stock come from Shopify. Change them there and the
+          CRM updates on its own.
+        </p>
+        <Button
+          asChild
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground"
+        >
+          <a
+            href={`${SHOPIFY_ADMIN}/products/${pkg.shopify_product_id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <ExternalLink className="size-3.5" />
+            Edit in Shopify
+          </a>
+        </Button>
+      </div>
     </div>
   );
 };
