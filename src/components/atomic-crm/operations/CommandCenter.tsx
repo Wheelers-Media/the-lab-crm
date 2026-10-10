@@ -30,6 +30,7 @@ import {
 } from "./shopTime";
 import { money } from "./format";
 import { PipelineSnapshot } from "./PipelineSnapshot";
+import { ShopifyMetrics } from "./ShopifyMetrics";
 import { useOperationsData, useRunAutomations } from "./useOperationsData";
 
 const PERIODS: Array<{ value: Period; label: string; vs: string }> = [
@@ -231,6 +232,16 @@ export const CommandCenter = ({
     </>
   );
   const weekBlock = <WeekStrip loads={weekKeys} todayKey={todayKey} />;
+  const shopifyBlock = (
+    <ShopifyMetrics
+      orders={data.orders}
+      checkouts={data.checkouts}
+      range={range}
+      previous={previous}
+      vs={periodLabel.vs}
+      now={now}
+    />
+  );
 
   if (variant === "phone") {
     // Eric's phone: what needs him first, then today, then the numbers
@@ -241,6 +252,7 @@ export const CommandCenter = ({
         {todayCard}
         <PipelineSnapshot deals={data.deals} />
         {kpiBlock}
+        {shopifyBlock}
         {weekBlock}
       </div>
     );
@@ -250,6 +262,7 @@ export const CommandCenter = ({
     <div className="flex flex-col gap-4 mt-1">
       {headerBlock}
       {kpiBlock}
+      {shopifyBlock}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {todayCard}
         {attentionCard}

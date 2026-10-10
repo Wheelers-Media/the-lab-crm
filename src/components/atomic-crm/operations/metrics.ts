@@ -9,14 +9,14 @@ export const BIG_CART_THRESHOLD = 2000;
 
 const DAY_MS = 86_400_000;
 
+const countedOrders = (orders: Order[], range: DateRange): Order[] =>
+  orders.filter((o) => !o.cancelled_at && inRange(o.ordered_at, range));
+
+const netTotal = (o: Order): number =>
+  Math.max(0, Number(o.total) - Number(o.refunded_amount ?? 0));
+
 export const orderRevenue = (orders: Order[], range: DateRange): number =>
-  orders
-    .filter((o) => !o.cancelled_at && inRange(o.ordered_at, range))
-    .reduce(
-      (sum, o) =>
-        sum + Math.max(0, Number(o.total) - Number(o.refunded_amount ?? 0)),
-      0,
-    );
+  countedOrders(orders, range).reduce((sum, o) => sum + netTotal(o), 0);
 
 /** Change between two values as a whole percentage, or null when there is no base. */
 export const percentChange = (
@@ -187,4 +187,134 @@ export const needsAttention = ({
   }
 
   return items;
+};
+
+export interface ShopifyStats {
+  orders: number; // sales orders, booking deposits left out
+  averageOrder: number | null;
+  customers: number; // distinct linked contacts with a sales order
+  refunded: number;
+  refundedOrders: number;
+  deposits: number;
+  depositAmount: number;
+}
+
+/** Order counts and values for the period. Deposits are counted on their own so they don't drag the average down. */
+export const shopifyStats = (
+  orders: Order[],
+  range: DateRange,
+): ShopifyStats => {
+  const inPeriod = countedOrders(orders, range);
+  const sales = inPeriod.filter((o) => !o.is_deposit);
+  const deposits = inPeriod.filter((o) => o.is_deposit);
+  const salesTotal = sales.reduce((s, o) => s + netTotal(o), 0);
+  const refunds = inPeriod.filter((o) => Number(o.refunded_amount) > 0);
+  return {
+    orders: sales.length,
+    averageOrder: sales.length ? salesTotal / sales.length : null,
+    customers: new Set(
+      sales.map((o) => o.contact_id).filter((id) => id != null),
+    ).size,
+    refunded: refunds.reduce((s, o) => s + Number(o.refunded_amount), 0),
+    refundedOrders: refunds.length,
+    deposits: deposits.length,
+    depositAmount: deposits.reduce((s, o) => s + netTotal(o), 0),
+  };
+};
+
+export interface CartStats {
+  started: number;
+  completed: number;
+  abandoned: number;
+  abandonedValue: number;
+  completionRate: number | null; // completed / started, whole percent
+}
+
+/** Checkouts last touched in the period; open ones under an hour old are still in progress and left out. */
+export const cartStats = (
+  checkouts: ShopifyCheckout[],
+  range: DateRange,
+  now: Date = new Date(),
+): CartStats => {
+  const settled = checkouts.filter(
+    (c) =>
+      inRange(c.checkout_updated_at, range) &&
+      (c.completed_at ||
+        now.getTime() - new Date(c.checkout_updated_at).getTime() > 3_600_000),
+  );
+  const open = settled.filter((c) => !c.completed_at);
+  const completed = settled.length - open.length;
+  return {
+    started: settled.length,
+    completed,
+    abandoned: open.length,
+    abandonedValue: open.reduce((s, c) => s + Number(c.total), 0),
+    completionRate: settled.length
+      ? Math.round((completed / settled.length) * 100)
+      : null,
+  };
+};
+
+export interface ProductSales {
+  name: string;
+  quantity: number;
+  revenue: number;
+}
+
+// Fees and adjustments that are not products
+const NOT_A_PRODUCT =
+  /^(shop supplies.*|mechanical shop supplies|shipping.*|duty fees.*|tip|custom sale|test amount)$/i;
+
+export const cleanProductName = (name: string): string =>
+  name
+    // "Universal Fit - THE LAB - X", "Universal Fit - Suntek - X", "Universal – X"
+    .replace(/^Universal(?: Fit)?\s*[-–]\s*(?:THE LAB\s*[-–]\s*)?/i, "")
+    .trim();
+
+/** Best sellers by line revenue in the period (list price × quantity, before refunds). */
+export const topProducts = (
+  orders: Order[],
+  range: DateRange,
+  limit = 5,
+): ProductSales[] => {
+  const byName = new Map<string, ProductSales>();
+  for (const o of countedOrders(orders, range)) {
+    if (o.is_deposit) continue;
+    for (const line of o.line_items ?? []) {
+      const name = cleanProductName(line.name);
+      if (!name || NOT_A_PRODUCT.test(name)) continue;
+      const row = byName.get(name) ?? { name, quantity: 0, revenue: 0 };
+      const qty = Number(line.quantity) || 0;
+      row.quantity += qty;
+      row.revenue += qty * (Number(line.price) || 0);
+      byName.set(name, row);
+    }
+  }
+  return [...byName.values()]
+    .sort((a, b) => b.revenue - a.revenue || b.quantity - a.quantity)
+    .slice(0, limit);
+};
+
+export interface CategoryCount {
+  category: string;
+  orders: number;
+}
+
+/** How many sales orders included each kind of work or product. An order with two kinds counts in both. */
+export const ordersByCategory = (
+  orders: Order[],
+  range: DateRange,
+): CategoryCount[] => {
+  const counts = new Map<string, number>();
+  for (const o of countedOrders(orders, range)) {
+    if (o.is_deposit) continue;
+    for (const c of o.categories ?? []) {
+      counts.set(c, (counts.get(c) ?? 0) + 1);
+    }
+  }
+  return [...counts.entries()]
+    .map(([category, n]) => ({ category, orders: n }))
+    .sort(
+      (a, b) => b.orders - a.orders || a.category.localeCompare(b.category),
+    );
 };

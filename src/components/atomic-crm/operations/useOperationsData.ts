@@ -110,8 +110,10 @@ export const useOperationsData = (period: Period) => {
       pagination: BIG,
       sort: { field: "checkout_updated_at", order: "DESC" },
       filter: {
+        // Back to the previous period's start (and at least 14 days, for
+        // the abandoned-cart follow-up)
         "checkout_updated_at@gte": new Date(
-          now.getTime() - 14 * DAY_MS,
+          Math.min(previous.start.getTime(), now.getTime() - 14 * DAY_MS),
         ).toISOString(),
       },
     },

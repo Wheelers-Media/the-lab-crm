@@ -2,12 +2,17 @@ import { describe, expect, it } from "vitest";
 
 import type { Appointment, Deal, Order, ShopifyCheckout, Task } from "../types";
 import {
+  cartStats,
+  cleanProductName,
   dayLoads,
   leadStats,
   needsAttention,
   openPipeline,
   orderRevenue,
+  ordersByCategory,
   percentChange,
+  shopifyStats,
+  topProducts,
 } from "./metrics";
 import {
   addDays,
@@ -200,5 +205,122 @@ describe("needs attention", () => {
         tasks: [],
       }),
     ).toEqual([]);
+  });
+});
+
+const order = (over: Partial<Order>): Order =>
+  ({
+    id: Math.random(),
+    order_number: "#1",
+    contact_id: null,
+    total: 0,
+    refunded_amount: 0,
+    line_items: [],
+    categories: [],
+    is_deposit: false,
+    cancelled_at: null,
+    ordered_at: "2026-10-02T18:00:00Z",
+    ...over,
+  }) as Order;
+
+describe("shopify metrics", () => {
+  const month = periodRange("month", NOW);
+
+  it("counts sales orders, average and customers without deposits or cancelled orders", () => {
+    const orders = [
+      order({ total: 400, contact_id: 1 }),
+      order({ total: 600, refunded_amount: 200, contact_id: 1 }),
+      order({ total: 50, is_deposit: true, contact_id: 2 }),
+      order({ total: 900, cancelled_at: "2026-10-03T18:00:00Z" }),
+      order({ total: 700, ordered_at: "2026-09-20T18:00:00Z" }),
+    ];
+    expect(shopifyStats(orders, month)).toEqual({
+      orders: 2,
+      averageOrder: 400,
+      customers: 1,
+      refunded: 200,
+      refundedOrders: 1,
+      deposits: 1,
+      depositAmount: 50,
+    });
+    expect(shopifyStats([], month).averageOrder).toBeNull();
+  });
+
+  it("measures checkout completion, leaving carts under an hour old out", () => {
+    const checkout = (over: Partial<ShopifyCheckout>) =>
+      ({
+        total: 100,
+        completed_at: null,
+        checkout_updated_at: "2026-10-05T18:00:00Z",
+        ...over,
+      }) as ShopifyCheckout;
+    const stats = cartStats(
+      [
+        checkout({ completed_at: "2026-10-05T18:10:00Z" }),
+        checkout({ total: 250 }),
+        checkout({ total: 300 }),
+        checkout({ checkout_updated_at: "2026-10-09T15:30:00Z" }), // in progress
+        checkout({ checkout_updated_at: "2026-09-05T18:00:00Z" }), // last month
+      ],
+      month,
+      NOW,
+    );
+    expect(stats).toEqual({
+      started: 3,
+      completed: 1,
+      abandoned: 2,
+      abandonedValue: 550,
+      completionRate: 33,
+    });
+  });
+
+  it("ranks best sellers by line revenue, merging names and skipping fees and deposits", () => {
+    const orders = [
+      order({
+        line_items: [
+          {
+            name: "Universal Fit - THE LAB - Odour Elimination (Ozone)",
+            quantity: 1,
+            price: 70,
+          },
+          { name: "Shipping", quantity: 1, price: 25 },
+        ],
+      }),
+      order({
+        line_items: [
+          { name: "Odour Elimination (Ozone)", quantity: 2, price: 70 },
+          { name: 'Polar 4" Exhaust', quantity: 1, price: 1083 },
+        ],
+      }),
+      order({
+        is_deposit: true,
+        line_items: [
+          { name: "$50 Secure Booking Deposit", quantity: 1, price: 50 },
+        ],
+      }),
+    ];
+    expect(topProducts(orders, month)).toEqual([
+      { name: 'Polar 4" Exhaust', quantity: 1, revenue: 1083 },
+      { name: "Odour Elimination (Ozone)", quantity: 3, revenue: 210 },
+    ]);
+    expect(topProducts(orders, month, 1)).toHaveLength(1);
+    expect(cleanProductName("Universal Fit - Suntek - SxS Ceramic Tint")).toBe(
+      "Suntek - SxS Ceramic Tint",
+    );
+    expect(cleanProductName('Universal – Hi-Lux 20" LED Light Bar')).toBe(
+      'Hi-Lux 20" LED Light Bar',
+    );
+  });
+
+  it("counts orders per type, an order with two types in both", () => {
+    const orders = [
+      order({ categories: ["Detailing"] }),
+      order({ categories: ["Detailing", "Lighting"] }),
+      order({ categories: ["Deposit"], is_deposit: true }),
+    ];
+    expect(ordersByCategory(orders, month)).toEqual([
+      { category: "Detailing", orders: 2 },
+      { category: "Lighting", orders: 1 },
+    ]);
   });
 });
