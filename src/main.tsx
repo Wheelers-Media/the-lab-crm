@@ -15,6 +15,28 @@ window.addEventListener("vite:preloadError", () => {
   }
 });
 
+// Supabase sends invite and password-reset links to the Site URL. When that
+// is the app root instead of auth-callback.html, the tokens arrive in the
+// hash ("#access_token=...&type=recovery") and the hash router would ignore
+// them. Hand them to the auth-callback route, which opens "Choose your
+// password". Runs before the Supabase client reads the URL.
+const authHash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+const authType = authHash.get("type");
+if (
+  authHash.get("access_token") &&
+  authHash.get("refresh_token") &&
+  (authType === "recovery" || authType === "invite")
+) {
+  const params = new URLSearchParams({
+    access_token: authHash.get("access_token")!,
+    refresh_token: authHash.get("refresh_token")!,
+    type: authType,
+  });
+  window.location.replace(
+    `${window.location.pathname}#/auth-callback?${params}`,
+  );
+}
+
 // Phones keep the CRM open for days. Check for a new version whenever the
 // app comes back to the screen, and switch to it once the new service
 // worker takes over, so a deploy shows up without closing the app.

@@ -28,6 +28,8 @@ export const ForgotPasswordPage = () => {
       setLoading(true);
       await resetPassword({
         email: values.email,
+        // Straight to the page that asks for the new password
+        redirectTo: new URL("auth-callback.html", window.location.href).href,
       });
     } catch (error: any) {
       notify(
