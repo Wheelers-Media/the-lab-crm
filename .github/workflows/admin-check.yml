@@ -1,0 +1,38 @@
+name: Admin login check
+
+# One-off diagnostics for sign-in problems. Runs on admin/* branches only and
+# commits admin/result.txt (settings and account states, no personal data).
+
+on:
+    push:
+        branches:
+            - "admin/**"
+        paths:
+            - "admin/check.mjs"
+            - ".github/workflows/admin-check.yml"
+
+permissions:
+    contents: write
+
+jobs:
+    check:
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+        env:
+            SUPABASE_PROJECT_ID: mxoqwwdpclfkoydfofug
+            SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 24
+            - name: Check
+              run: |
+                  set +e
+                  node admin/check.mjs > admin/result.txt 2>&1
+                  echo "exit: $?" >> admin/result.txt
+                  git config user.name "github-actions[bot]"
+                  git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+                  git add admin/result.txt
+                  git commit -m "Admin check result"
+                  git push
