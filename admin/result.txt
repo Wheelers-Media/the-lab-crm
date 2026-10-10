@@ -1,0 +1,12 @@
+site_url: https://the-lab-crm.vercel.app/auth-callback.html
+uri_allow_list: https://the-lab-crm.vercel.app/**
+mailer_otp_exp: 3600
+custom smtp: no
+email rate limit per hour: 2
+recovery template: <h2>Reset your password</h2> <p>We received a request to reset your password. Follow the link below to choose a new one.</p> <p><a href="{{ .ConfirmationURL }}">Reset password</a></p> <p>If you didn't request this, you can safely ignore this email.</p>
+invite template: <h2>You've been invited</h2> <p>You've been invited to create an account. Follow the link below to accept.</p> <p><a href="{{ .ConfirmationURL }}">Accept invitation</a></p>
+users:
+  {"id":1,"first_name":"Nathan","disabled":false,"administrator":true,"email_domain":"hotmail.com","created_at":"2026-10-09 04:26:55.014975+00","invited_at":null,"email_confirmed_at":"2026-10-09 04:27:16.435287+00","recovery_sent_at":null,"last_sign_in_at":"2026-10-10 02:30:30.116971+00","banned_until":null,"has_password":true}
+  {"id":2,"first_name":"Eric","disabled":false,"administrator":false,"email_domain":"luxxautomotiveboutique.com","created_at":"2026-10-10 02:13:03.733805+00","invited_at":"2026-10-10 02:13:03.872865+00","email_confirmed_at":"2026-10-10 02:13:12.549414+00","recovery_sent_at":null,"last_sign_in_at":"2026-10-10 02:15:55.57274+00","banned_until":null,"has_password":true}
+recent auth events:
+exit: 0
