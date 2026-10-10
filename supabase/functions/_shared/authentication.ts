@@ -64,7 +64,11 @@ export const UserMiddleware = async (
     const authHeader = req.headers.get("Authorization")!;
     const localClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SB_PUBLISHABLE_KEY") ?? "",
+      // SB_PUBLISHABLE_KEY is an optional project secret; Supabase always
+      // gives functions the anon key, which works the same for this check
+      Deno.env.get("SB_PUBLISHABLE_KEY") ||
+        Deno.env.get("SUPABASE_ANON_KEY") ||
+        "",
       { global: { headers: { Authorization: authHeader } } },
     );
 
