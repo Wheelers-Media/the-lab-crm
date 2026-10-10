@@ -4,8 +4,10 @@
 // POST { dealId, mode: "parts" | "all", email?: boolean }
 // -> { url, dueNow, dueAtPickup, emailed }
 //
-// Needs two function secrets: SHOPIFY_SHOP (xr6pmx-y0.myshopify.com) and
-// SHOPIFY_ADMIN_TOKEN (a custom app token with write_draft_orders).
+// Function secrets: SHOPIFY_SHOP (xr6pmx-y0.myshopify.com) plus either
+// SHOPIFY_CLIENT_ID and SHOPIFY_CLIENT_SECRET from a Dev Dashboard app
+// installed on the store (exchanged for a 24-hour token), or an older
+// SHOPIFY_ADMIN_TOKEN. The app needs write_draft_orders and write_customers.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { AuthMiddleware, UserMiddleware } from "../_shared/authentication.ts";
 import { corsHeaders, OptionsMiddleware } from "../_shared/cors.ts";
@@ -51,6 +53,40 @@ const shopify = async (
   return body.data;
 };
 
+// Client credentials tokens last 24 hours; reuse one until shortly before it ends
+let cachedToken: { value: string; expiresAt: number } | null = null;
+
+const accessToken = async (shop: string): Promise<string | null> => {
+  const fixed = Deno.env.get("SHOPIFY_ADMIN_TOKEN");
+  if (fixed) return fixed;
+  const clientId = Deno.env.get("SHOPIFY_CLIENT_ID");
+  const clientSecret = Deno.env.get("SHOPIFY_CLIENT_SECRET");
+  if (!clientId || !clientSecret) return null;
+  if (cachedToken && cachedToken.expiresAt > Date.now())
+    return cachedToken.value;
+  const res = await fetch(`https://${shop}/admin/oauth/access_token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "client_credentials",
+      client_id: clientId,
+      client_secret: clientSecret,
+    }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok || !body.access_token) {
+    throw new Error(
+      `Shopify token ${res.status}: ${JSON.stringify(body).slice(0, 200)}`,
+    );
+  }
+  const lifetime = (Number(body.expires_in) || 86399) * 1000;
+  cachedToken = {
+    value: body.access_token,
+    expiresAt: Date.now() + lifetime - 10 * 60 * 1000,
+  };
+  return cachedToken.value;
+};
+
 const CREATE = `mutation($input: DraftOrderInput!) {
   draftOrderCreate(input: $input) {
     draftOrder { id name invoiceUrl }
@@ -75,7 +111,7 @@ type Contact = {
 
 const handle = async (req: Request) => {
   const shop = Deno.env.get("SHOPIFY_SHOP");
-  const token = Deno.env.get("SHOPIFY_ADMIN_TOKEN");
+  const token = shop ? await accessToken(shop) : null;
   if (!shop || !token) {
     return createErrorResponse(
       503,
