@@ -59,6 +59,19 @@ export const parseAmount = (value: unknown): number => {
 // Website quote and booking form (thelabfsj.ca intake.js)
 // ---------------------------------------------------------------------------
 
+/** One priced line of the website estimate: "Ceramic front roll-ups", 260. */
+export type QuoteLine = { label: string; price: number; priceText: string };
+
+/** What the customer saw and chose on the website, kept on the job. */
+export type WebsiteQuote = {
+  total: string;
+  lines: QuoteLine[];
+  choices: Array<{ label: string; value: string }>;
+  summary: string;
+  source: "quote" | "walkthrough" | "form";
+  page: string;
+};
+
 export type WebsiteLead = {
   contact: ContactInput;
   intent: "quote" | "book";
@@ -66,12 +79,55 @@ export type WebsiteLead = {
   service: string;
   category: string;
   vehicle: string;
+  vehicleParts: { year: number | null; make: string; model: string };
   vin: string;
   estimateTotal: number;
   estimateText: string;
   details: string;
   smsConsent: boolean;
   page: string;
+  quote: WebsiteQuote;
+};
+
+const MAX_QUOTE_ITEMS = 40;
+
+const quoteLinesFrom = (value: unknown): QuoteLine[] =>
+  (Array.isArray(value) ? value : [])
+    .slice(0, MAX_QUOTE_ITEMS)
+    .map((raw) => {
+      const line = (raw ?? {}) as Record<string, unknown>;
+      const priceText = clip(String(line.price ?? ""), 40);
+      return {
+        label: clip(line.label, MAX.short),
+        price: Math.max(0, parseAmount(priceText)),
+        priceText,
+      };
+    })
+    .filter((line) => line.label);
+
+/** "Label: value" lines (what the form already sends as details) as pairs. */
+export const choicesFrom = (
+  value: unknown,
+  details: string,
+): Array<{ label: string; value: string }> => {
+  const pairs = Array.isArray(value)
+    ? value.map((raw) => {
+        const pair = (raw ?? {}) as Record<string, unknown>;
+        return {
+          label: clip(pair.label, MAX.short),
+          value: clip(pair.value, MAX.short * 5),
+        };
+      })
+    : details.split("\n").map((line) => {
+        const at = line.indexOf(":");
+        return at > 0
+          ? {
+              label: line.slice(0, at).trim(),
+              value: line.slice(at + 1).trim(),
+            }
+          : { label: "", value: line.trim() };
+      });
+  return pairs.filter((p) => p.value).slice(0, MAX_QUOTE_ITEMS);
 };
 
 const SERVICE_CATEGORY: Array<[RegExp, string]> = [
@@ -113,12 +169,21 @@ export const parseWebsiteLead = (body: unknown): ParseResult<WebsiteLead> => {
   if (!firstName && !lastName && b.name)
     ({ firstName, lastName } = splitName(String(b.name)));
 
-  const vehicle = [clip(b.year, 4), clip(b.make, 40), clip(b.model, 60)]
+  const year = Number(clip(b.year, 4));
+  const vehicleParts = {
+    year: Number.isInteger(year) && year >= 1900 && year <= 2100 ? year : null,
+    make: capName(clip(b.make, 40)),
+    model: clip(b.model, 60),
+  };
+  const vehicle = [vehicleParts.year, vehicleParts.make, vehicleParts.model]
     .filter(Boolean)
     .join(" ");
   const service = clip(b.service, MAX.short) || "General request";
   const estimate = (b.estimate ?? {}) as Record<string, unknown>;
   const estimateText = clip(estimate.total, 60);
+  const details = clip(b.details, MAX.text);
+  const source =
+    b.source === "quote" || b.source === "walkthrough" ? b.source : "form";
   const form = b.form === "build" ? "build" : "boutique";
   // Parts and tuning requests are always priced to the vehicle, so they are quotes.
   const intent = form === "boutique" && b.intent === "book" ? "book" : "quote";
@@ -132,12 +197,21 @@ export const parseWebsiteLead = (body: unknown): ParseResult<WebsiteLead> => {
       service,
       category: serviceToCategory(service),
       vehicle,
+      vehicleParts,
       vin: clip(b.vin, 17).toUpperCase(),
       estimateTotal: Math.round(parseAmount(estimateText)),
       estimateText,
-      details: clip(b.details, MAX.text),
+      details,
       smsConsent: b.sms_consent === true,
       page: clip(b.page, MAX.short),
+      quote: {
+        total: estimateText,
+        lines: quoteLinesFrom(estimate.lines),
+        choices: choicesFrom(b.choices, details),
+        summary: clip(b.summary, MAX.text),
+        source,
+        page: clip(b.page, MAX.short),
+      },
     },
   };
 };

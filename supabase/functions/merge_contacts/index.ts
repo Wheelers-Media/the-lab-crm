@@ -73,6 +73,14 @@ function mergeContactData(winner: Contact, loser: Contact) {
         : (winner.last_seen ?? loser.last_seen),
     sales_id: winner.sales_id ?? loser.sales_id,
     tags: mergeArraysUnique(winner.tags || [], loser.tags || []),
+    preferred_contact: winner.preferred_contact ?? loser.preferred_contact,
+    sms_consent: Boolean(winner.sms_consent || loser.sms_consent),
+    sms_consent_at: winner.sms_consent_at ?? loser.sms_consent_at,
+    lead_source: winner.lead_source ?? loser.lead_source,
+    membership: winner.membership ?? loser.membership,
+    membership_since: winner.membership_since ?? loser.membership_since,
+    city: winner.city ?? loser.city,
+    province: winner.province ?? loser.province,
   };
 }
 
@@ -118,6 +126,18 @@ async function mergeContacts(
         .set({ contact_id: winnerId })
         .where("contact_id", "=", loserId)
         .execute();
+
+      // 3b. THE LAB records that belong to a customer: vehicles, Shopify
+      // orders and checkouts, appointments
+      await sql`update vehicles set contact_id = ${winnerId}, is_primary = false where contact_id = ${loserId}`.execute(
+        trx,
+      );
+      await sql`update orders set contact_id = ${winnerId} where contact_id = ${loserId}`.execute(
+        trx,
+      );
+      await sql`update appointments set contact_id = ${winnerId} where contact_id = ${loserId}`.execute(
+        trx,
+      );
 
       // 4. Update deals - replace loserId with winnerId in contact_ids array
       const deals = await trx

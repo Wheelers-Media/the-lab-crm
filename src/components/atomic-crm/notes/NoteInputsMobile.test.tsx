@@ -24,7 +24,7 @@ describe("NoteInputsMobile", () => {
     const screen = await render(<Default />);
 
     await expect
-      .element(screen.getByRole("combobox", { name: "Contact" }))
+      .element(screen.getByRole("combobox", { name: "Customer" }))
       .not.toBeInTheDocument();
   });
 
@@ -32,7 +32,7 @@ describe("NoteInputsMobile", () => {
     const screen = await render(<WithSelectContact />);
 
     await expect
-      .element(screen.getByRole("combobox", { name: "Contact" }))
+      .element(screen.getByRole("combobox", { name: "Customer" }))
       .toBeVisible();
   });
 

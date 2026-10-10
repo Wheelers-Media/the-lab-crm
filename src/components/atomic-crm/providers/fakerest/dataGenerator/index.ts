@@ -13,6 +13,8 @@ import {
 import { generateTags } from "./tags";
 import { generateTasks } from "./tasks";
 import type { Db } from "./types";
+import { generateVehicles, vehiclesFts } from "./vehicles";
+import { generatePackages } from "./packages";
 
 export default (): Db => {
   const db = {} as Db;
@@ -20,11 +22,27 @@ export default (): Db => {
   db.tags = generateTags(db);
   db.companies = generateCompanies(db);
   db.contacts = generateContacts(db);
+  db.vehicles = generateVehicles(db);
+  db.contacts.forEach((contact) => {
+    const owned = db.vehicles.filter((v) => v.contact_id === contact.id);
+    contact.vehicles_fts = vehiclesFts(owned);
+    const main = owned.find((v) => v.is_primary) ?? owned[0];
+    contact.vehicle_label = main
+      ? [main.year, main.make, main.model].filter(Boolean).join(" ")
+      : null;
+  });
   db.contact_notes = generateContactNotes(db);
   db.deals = generateDeals(db);
+  db.deals.forEach((deal) => {
+    const vehicle = db.vehicles.find(
+      (v) => v.contact_id === deal.contact_ids?.[0] && v.is_primary,
+    );
+    deal.vehicle_id = vehicle?.id ?? null;
+  });
   db.deal_notes = generateDealNotes(db);
   db.tasks = generateTasks(db);
   db.orders = generateOrders(db);
+  db.packages = generatePackages();
   db.shopify_checkouts = generateCheckouts(db);
   db.appointments = generateAppointments(db);
   db.configuration = [

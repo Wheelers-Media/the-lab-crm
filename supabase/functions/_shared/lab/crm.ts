@@ -310,11 +310,21 @@ export const findOpenDeal = async (
 export type NewDeal = {
   name: string;
   contactId: number;
+  vehicleId?: number | null;
   stage: string;
   category: string;
   amount: number;
   leadSource: string;
   description?: string;
+  /** Package lines: [{ package_id, title, price, quantity }] */
+  packages?: Array<{
+    package_id: number | null;
+    title: string;
+    price: number;
+    quantity: number;
+  }>;
+  /** The website quote that started the job */
+  quote?: unknown;
 };
 
 export const createDeal = async (deal: NewDeal): Promise<number> => {
@@ -331,7 +341,10 @@ export const createDeal = async (deal: NewDeal): Promise<number> => {
       category: deal.category,
       amount: Math.max(0, Math.round(deal.amount)),
       lead_source: deal.leadSource,
+      vehicle_id: deal.vehicleId ?? null,
       description: deal.description ?? null,
+      packages: deal.packages ?? [],
+      quote: deal.quote ?? null,
       expected_closing_date: new Date().toISOString().slice(0, 10),
       sales_id: await defaultSalesId(),
       index: count ?? 0,
@@ -348,4 +361,123 @@ export const moveDeal = async (dealId: number, stage: string) => {
     .update({ stage, updated_at: new Date().toISOString() })
     .eq("id", dealId);
   if (error) fail("move deal", error);
+};
+
+export type VehicleInput = {
+  year: number | null;
+  make: string;
+  model: string;
+  vin?: string;
+};
+
+const sameText = (a: string | null | undefined, b: string) =>
+  (a ?? "").trim().toLowerCase() === b.trim().toLowerCase();
+
+/**
+ * The customer's vehicle for a request: matched on VIN, then on year, make and
+ * model; added to their profile when it is new. Returns null when the request
+ * names no vehicle. Existing details are only filled in, never overwritten.
+ */
+export const findOrCreateVehicle = async (
+  contactId: number,
+  input: VehicleInput,
+): Promise<number | null> => {
+  const vin = (input.vin ?? "").trim().toUpperCase();
+  if (!vin && !input.make && !input.model) return null;
+  const { data, error } = await supabaseAdmin
+    .from("vehicles")
+    .select("id, year, make, model, vin")
+    .eq("contact_id", contactId);
+  if (error) fail("find vehicle", error);
+  const rows = (data ?? []) as Array<{
+    id: number;
+    year: number | null;
+    make: string | null;
+    model: string | null;
+    vin: string | null;
+  }>;
+  const match =
+    (vin && rows.find((v) => (v.vin ?? "").toUpperCase() === vin)) ||
+    rows.find(
+      (v) =>
+        (input.year == null || v.year === input.year) &&
+        sameText(v.make, input.make) &&
+        sameText(v.model, input.model),
+    );
+  if (match) {
+    const fill: Record<string, unknown> = {};
+    if (!match.vin && vin) fill.vin = vin;
+    if (match.year == null && input.year != null) fill.year = input.year;
+    if (Object.keys(fill).length) {
+      await supabaseAdmin.from("vehicles").update(fill).eq("id", match.id);
+    }
+    return match.id;
+  }
+  const { data: created, error: createError } = await supabaseAdmin
+    .from("vehicles")
+    .insert({
+      contact_id: contactId,
+      year: input.year,
+      make: input.make || null,
+      model: input.model || null,
+      vin: vin || null,
+      is_primary: rows.length === 0,
+      sales_id: await defaultSalesId(),
+    })
+    .select("id")
+    .single();
+  if (createError) fail("create vehicle", createError);
+  return created!.id as number;
+};
+
+/** The vehicle to use when a booking does not say which: the primary, or the only one. */
+export const defaultVehicleFor = async (
+  contactId: number,
+): Promise<{ id: number; label: string } | null> => {
+  const { data } = await supabaseAdmin
+    .from("vehicles")
+    .select("id, year, make, model, is_primary")
+    .eq("contact_id", contactId)
+    .order("is_primary", { ascending: false })
+    .order("id");
+  const rows = (data ?? []) as Array<{
+    id: number;
+    year: number | null;
+    make: string | null;
+    model: string | null;
+    is_primary: boolean;
+  }>;
+  const pick = rows.length === 1 ? rows[0] : rows.find((r) => r.is_primary);
+  if (!pick) return null;
+  return {
+    id: pick.id,
+    label: [pick.year, pick.make, pick.model].filter(Boolean).join(" "),
+  };
+};
+
+/** Records SMS consent and where the customer first came from, without overwriting. */
+export const noteContactProfile = async (
+  contactId: number,
+  profile: { smsConsent?: boolean; leadSource?: string },
+) => {
+  const { data } = await supabaseAdmin
+    .from("contacts")
+    .select("sms_consent, lead_source")
+    .eq("id", contactId)
+    .single();
+  const update: Record<string, unknown> = {};
+  if (profile.smsConsent && !data?.sms_consent) {
+    update.sms_consent = true;
+    update.sms_consent_at = new Date().toISOString();
+  }
+  if (profile.leadSource && !data?.lead_source) {
+    update.lead_source = profile.leadSource;
+  }
+  if (Object.keys(update).length) {
+    const { error } = await supabaseAdmin
+      .from("contacts")
+      .update(update)
+      .eq("id", contactId);
+    if (error) fail("update contact profile", error);
+  }
 };

@@ -49,7 +49,17 @@ create table public.contacts (
     sales_id bigint,
     linkedin_url text,
     email_jsonb jsonb,
-    phone_jsonb jsonb
+    phone_jsonb jsonb,
+    preferred_contact text,
+    sms_consent boolean not null default false,
+    sms_consent_at timestamp with time zone,
+    lead_source text,
+    membership text,
+    membership_since date,
+    city text,
+    province text,
+    constraint contacts_preferred_contact_check check (preferred_contact is null or preferred_contact in ('text', 'call', 'email')),
+    constraint contacts_membership_check check (membership is null or membership in ('monthly-signature', 'lab-syndicate'))
 );
 
 create table public.contact_notes (
@@ -78,7 +88,11 @@ create table public.deals (
     sales_id bigint,
     index smallint,
     lead_source text,
-    stage_changed_at timestamp with time zone not null default now()
+    stage_changed_at timestamp with time zone not null default now(),
+    vehicle_id bigint,
+    packages jsonb not null default '[]'::jsonb,
+    quote jsonb,
+    constraint deals_packages_is_array check (jsonb_typeof(packages) = 'array')
 );
 
 create table public.deal_notes (

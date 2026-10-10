@@ -229,3 +229,37 @@ begin
   end loop;
   return jsonb_build_object('new', v_new, 'already_there', v_known);
 end $$;
+
+-- Catalog: Shopify owns it, so known products are overwritten
+create or replace function lab_preload.load_packages(p_rows jsonb) returns jsonb
+language plpgsql as $$
+declare
+  r jsonb;
+  v_inserted boolean;
+  v_new int := 0; v_updated int := 0;
+begin
+  if to_regclass('public.packages') is null then
+    return jsonb_build_object('skipped', jsonb_array_length(p_rows));
+  end if;
+  for r in select * from jsonb_array_elements(p_rows) loop
+    insert into public.packages (shopify_product_id, title, shopify_title, vendor, category, bay,
+      price, price_max, variants, status, shopify_updated_at, synced_at,
+      kind, product_type, handle, image_url, inventory)
+    values (r->>'shopify_product_id', r->>'title', r->>'shopify_title', r->>'vendor',
+      r->>'category', r->>'bay', (r->>'price')::numeric, (r->>'price_max')::numeric,
+      coalesce(r->'variants', '[]'::jsonb), r->>'status',
+      nullif(r->>'shopify_updated_at', '')::timestamptz, now(),
+      coalesce(r->>'kind', 'package'), r->>'product_type', r->>'handle', r->>'image_url',
+      (r->>'inventory')::integer)
+    on conflict (shopify_product_id) do update set
+      title = excluded.title, shopify_title = excluded.shopify_title, vendor = excluded.vendor,
+      category = excluded.category, bay = excluded.bay, price = excluded.price,
+      price_max = excluded.price_max, variants = excluded.variants, status = excluded.status,
+      shopify_updated_at = excluded.shopify_updated_at, synced_at = now(),
+      kind = excluded.kind, product_type = excluded.product_type, handle = excluded.handle,
+      image_url = excluded.image_url, inventory = excluded.inventory
+    returning (xmax = 0) into v_inserted;
+    if v_inserted then v_new := v_new + 1; else v_updated := v_updated + 1; end if;
+  end loop;
+  return jsonb_build_object('new', v_new, 'updated', v_updated);
+end $$;

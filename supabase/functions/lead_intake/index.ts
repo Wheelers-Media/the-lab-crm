@@ -4,6 +4,7 @@
 // protected by an origin allow-list, a honeypot field and a rate limit.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import { supabaseAdmin } from "../_shared/supabaseAdmin.ts";
 import { createErrorResponse } from "../_shared/utils.ts";
 import { parseWebsiteLead, websiteDealName } from "../_shared/lab/parse.ts";
 import { hashClient } from "../_shared/lab/signatures.ts";
@@ -15,6 +16,8 @@ import {
   finishEvent,
   findOpenDeal,
   findOrCreateContact,
+  findOrCreateVehicle,
+  noteContactProfile,
   recordEvent,
 } from "../_shared/lab/crm.ts";
 
@@ -90,6 +93,15 @@ Deno.serve(async (req: Request) => {
     const contact = await findOrCreateContact(lead.contact, tags);
     if (!contact) throw new Error("No way to reach the customer");
 
+    await noteContactProfile(contact.id, {
+      smsConsent: lead.smsConsent,
+      leadSource: SOURCE,
+    });
+    const vehicleId = await findOrCreateVehicle(contact.id, {
+      ...lead.vehicleParts,
+      vin: lead.vin,
+    });
+
     // Reuse a deal that is already in progress for the same customer and service
     const open = await findOpenDeal(contact.id);
     const sameService =
@@ -104,8 +116,32 @@ Deno.serve(async (req: Request) => {
           category: lead.category,
           amount: lead.estimateTotal,
           leadSource: SOURCE,
+          vehicleId,
           description: lead.vin ? `VIN ${lead.vin}` : undefined,
+          // The priced lines the customer saw become the job's packages
+          packages: lead.quote.lines.map((line) => ({
+            package_id: null,
+            title: line.label,
+            price: line.price,
+            quantity: 1,
+          })),
+          quote: lead.quote,
         });
+
+    if (sameService && vehicleId) {
+      await supabaseAdmin
+        .from("deals")
+        .update({ vehicle_id: vehicleId })
+        .eq("id", dealId)
+        .is("vehicle_id", null);
+    }
+    if (sameService) {
+      // The latest request is what the customer wants now
+      await supabaseAdmin
+        .from("deals")
+        .update({ quote: lead.quote })
+        .eq("id", dealId);
+    }
 
     const header =
       lead.intent === "book"

@@ -103,6 +103,60 @@ export type Contact = {
   phone_jsonb: PhoneNumberAndType[];
   nb_tasks?: number;
   company_name?: string;
+  preferred_contact?: PreferredContact | null;
+  sms_consent?: boolean;
+  sms_consent_at?: string | null;
+  lead_source?: string | null;
+  membership?: Membership | null;
+  membership_since?: string | null;
+  city?: string | null;
+  province?: string | null;
+  vehicles_fts?: string | null;
+  /** Main vehicle, "2021 Ram 3500", from contacts_summary. */
+  vehicle_label?: string | null;
+} & Pick<RaRecord, "id">;
+
+export type PreferredContact = "text" | "call" | "email";
+export type Membership = "monthly-signature" | "lab-syndicate";
+
+export type VehiclePlatform =
+  | "cummins"
+  | "duramax"
+  | "powerstroke"
+  | "half-ton"
+  | "kenworth"
+  | "gas"
+  | "sxs"
+  | "other";
+
+export type VehicleSizeClass =
+  | "car"
+  | "suv-5-6"
+  | "suv-7-8"
+  | "truck"
+  | "sxs"
+  | "commercial";
+
+export type Vehicle = {
+  contact_id?: Identifier | null;
+  company_id?: Identifier | null;
+  year?: number | null;
+  make?: string | null;
+  model?: string | null;
+  trim?: string | null;
+  platform?: VehiclePlatform | null;
+  engine?: string | null;
+  transmission?: string | null;
+  size_class?: VehicleSizeClass | null;
+  vin?: string | null;
+  plate?: string | null;
+  colour?: string | null;
+  mods?: string | null;
+  notes?: string | null;
+  is_primary: boolean;
+  created_at?: string;
+  updated_at?: string;
+  sales_id?: Identifier | null;
 } & Pick<RaRecord, "id">;
 
 export type ContactNote = {
@@ -130,6 +184,56 @@ export type Deal = {
   index: number;
   lead_source?: string | null;
   stage_changed_at?: string;
+  vehicle_id?: Identifier | null;
+  packages?: DealPackageLine[];
+  quote?: WebsiteQuote | null;
+} & Pick<RaRecord, "id">;
+
+/** A package on a job; price is what this customer was quoted. */
+export type DealPackageLine = {
+  package_id: Identifier | null;
+  title: string;
+  price: number;
+  quantity: number;
+};
+
+/** What the customer saw and chose on thelabfsj.ca (lead_intake). */
+export type WebsiteQuote = {
+  total: string;
+  lines: Array<{ label: string; price: number; priceText: string }>;
+  choices: Array<{ label: string; value: string }>;
+  summary: string;
+  source: "quote" | "walkthrough" | "form";
+  page: string;
+};
+
+/** The Shopify catalog in the CRM (shopify_webhook keeps it in sync). */
+export type Package = {
+  shopify_product_id: string;
+  title: string;
+  shopify_title: string;
+  vendor: string | null;
+  category: string | null;
+  bay: "boutique" | "parts" | null;
+  price: number | null;
+  price_max: number | null;
+  variants: Array<{
+    id: string;
+    title: string;
+    price: number;
+    sku?: string;
+    inventory?: number | null;
+  }>;
+  status: "active" | "unlisted" | "draft" | "archived" | "deleted";
+  shopify_updated_at: string | null;
+  synced_at: string;
+  /** "package": a shop service (goes on jobs); "product": parts and the rest */
+  kind: "package" | "product";
+  product_type: string | null;
+  handle: string | null;
+  image_url: string | null;
+  /** Units in stock; null when Shopify does not track stock */
+  inventory: number | null;
 } & Pick<RaRecord, "id">;
 
 export type DealNote = {
@@ -300,6 +404,7 @@ export type Appointment = {
   status: AppointmentStatus;
   deposit_paid: boolean;
   vehicle: string | null;
+  vehicle_id?: Identifier | null;
   notes: string | null;
   created_at: string;
   updated_at: string;

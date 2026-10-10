@@ -344,6 +344,8 @@ const lifeCycleCallbacks: ResourceCallbacks[] = [
         "email",
         "phone",
         "background",
+        "city",
+        "vehicles_fts",
       ])(params);
     },
   },
@@ -372,6 +374,17 @@ const lifeCycleCallbacks: ResourceCallbacks[] = [
     },
     beforeUpdate: async (params) => {
       return await processCompanyLogo(params);
+    },
+  },
+  {
+    resource: "packages",
+    beforeGetList: async (params) => {
+      return applyFullTextSearch([
+        "title",
+        "shopify_title",
+        "vendor",
+        "product_type",
+      ])(params);
     },
   },
   {

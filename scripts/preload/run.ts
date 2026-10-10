@@ -12,7 +12,12 @@ import { readFileSync } from "node:fs";
 
 import { buildPayload, parseJsonl } from "./shopifyBulk.ts";
 
-type Request = { orders: string; customers: string; checkouts?: string };
+type Request = {
+  orders?: string;
+  customers?: string;
+  checkouts?: string;
+  products?: string;
+};
 
 const log = (line: string) => process.stdout.write(`${line}\n`);
 const send = process.argv.includes("--send");
@@ -101,12 +106,13 @@ const main = async () => {
     orders: await download("orders", request.orders),
     customers: await download("customers", request.customers),
     checkouts: await download("carts", request.checkouts),
+    products: await download("products", request.products),
   });
   const revenue = payload.orders
     .filter((o) => !o.cancelledAt)
     .reduce((s, o) => s + Math.max(0, o.total - o.refundedAmount), 0);
   log(
-    `ready: ${payload.customers.length} customers, ${payload.orders.length} orders ($${revenue.toFixed(2)} net), ${payload.checkouts.length} open carts`,
+    `ready: ${payload.packages.length} packages, ${payload.customers.length} customers, ${payload.orders.length} orders ($${revenue.toFixed(2)} net), ${payload.checkouts.length} open carts`,
   );
   for (const [reason, count] of Object.entries(payload.skipped))
     log(`  skipped ${count}: ${reason}`);
@@ -117,6 +123,9 @@ const main = async () => {
 
   await sql(readFileSync(new URL("./preload.sql", import.meta.url), "utf8"));
   try {
+    log(
+      `packages: ${JSON.stringify(await load("load_packages", payload.packages, 100))}`,
+    );
     // Customers first so orders attach to the richer customer records
     log(
       `customers: ${JSON.stringify(await load("load_customers", payload.customers, 100))}`,
@@ -131,7 +140,7 @@ const main = async () => {
     await sql("drop schema if exists lab_preload cascade");
   }
   const totals = (await sql(
-    "select (select count(*) from public.contacts) as customers, (select count(*) from public.orders) as orders, (select count(*) from public.shopify_checkouts where completed_at is null) as open_carts",
+    "select (select count(*) from public.packages where status <> 'deleted') as packages, (select count(*) from public.contacts) as customers, (select count(*) from public.orders) as orders, (select count(*) from public.shopify_checkouts where completed_at is null) as open_carts",
   )) as Array<Record<string, number>>;
   log(`CRM now has: ${JSON.stringify(totals[0])}`);
 };

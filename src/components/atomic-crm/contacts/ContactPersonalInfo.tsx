@@ -4,13 +4,15 @@ import { ArrayField } from "@/components/admin/array-field";
 import { SingleFieldList } from "@/components/admin/single-field-list";
 import { TextField } from "@/components/admin/text-field";
 import { EmailField } from "@/components/admin/email-field";
-import { Mail, Phone, Linkedin, Check } from "lucide-react";
+import { BadgeCheck, Check, Mail, MapPin, Phone } from "lucide-react";
 import type { ReactNode } from "react";
+import { translatePersonalInfoTypeLabel } from "./contactModel";
 import {
-  contactGender,
-  translateContactGenderLabel,
-  translatePersonalInfoTypeLabel,
-} from "./contactModel";
+  customerPlace,
+  leadSourceName,
+  membershipName,
+  preferredContactName,
+} from "./customerProfile";
 import type { Contact } from "../types";
 
 export const ContactPersonalInfo = () => {
@@ -18,6 +20,7 @@ export const ContactPersonalInfo = () => {
   const translate = useTranslate();
 
   if (!record) return null;
+  const place = customerPlace(record);
 
   return (
     <div>
@@ -33,22 +36,6 @@ export const ContactPersonalInfo = () => {
         </p>
       )}
 
-      {record.linkedin_url && (
-        <PersonalInfoRow
-          icon={<Linkedin className="w-4 h-4 text-muted-foreground" />}
-          primary={
-            <a
-              className="underline hover:no-underline text-sm text-muted-foreground"
-              href={record.linkedin_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              title={record.linkedin_url}
-            >
-              LinkedIn
-            </a>
-          }
-        />
-      )}
       <ArrayField source="phone_jsonb">
         <SingleFieldList className="flex-col gap-y-0">
           <PersonalInfoRow
@@ -58,26 +45,41 @@ export const ContactPersonalInfo = () => {
           />
         </SingleFieldList>
       </ArrayField>
-      {contactGender
-        .map((genderOption) => {
-          if (record.gender === genderOption.value) {
-            return (
-              <PersonalInfoRow
-                key={genderOption.value}
-                icon={
-                  <genderOption.icon className="w-4 h-4 text-muted-foreground" />
-                }
-                primary={
-                  <div>
-                    {translateContactGenderLabel(genderOption, translate)}
-                  </div>
-                }
-              />
-            );
+      {place ? (
+        <PersonalInfoRow
+          icon={<MapPin className="w-4 h-4 text-muted-foreground" />}
+          primary={<span>{place}</span>}
+        />
+      ) : null}
+      <div className="flex flex-wrap gap-1 pt-2">
+        {record.preferred_contact ? (
+          <span className="lab-chip lab-chip-muted">
+            Prefers{" "}
+            {preferredContactName(record.preferred_contact).toLowerCase()}
+          </span>
+        ) : null}
+        <span
+          className={`lab-chip ${record.sms_consent ? "lab-chip-bay" : "lab-chip-muted"}`}
+          title={
+            record.sms_consent_at
+              ? `Agreed ${new Date(record.sms_consent_at).toLocaleDateString("en-CA")}`
+              : undefined
           }
-          return null;
-        })
-        .filter(Boolean)}
+        >
+          {record.sms_consent ? "OK to text" : "No texts"}
+        </span>
+        {record.membership ? (
+          <span className="lab-chip lab-chip-boutique">
+            <BadgeCheck className="w-3 h-3" />
+            {membershipName(record.membership)}
+          </span>
+        ) : null}
+        {record.lead_source ? (
+          <span className="lab-chip lab-chip-muted">
+            From {leadSourceName(record.lead_source)}
+          </span>
+        ) : null}
+      </div>
     </div>
   );
 };

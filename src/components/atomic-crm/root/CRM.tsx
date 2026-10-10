@@ -57,6 +57,11 @@ import { i18nProvider as defaulti18nProvider } from "../providers/commons/i18nPr
 import { StartPage } from "../login/StartPage.tsx";
 import { useIsMobile } from "@/hooks/use-mobile.ts";
 import { MobileTasksList } from "../tasks/MobileTasksList.tsx";
+import { MobileCompanyList } from "../companies/MobileCompanyList";
+import { MobileDealList } from "../deals/MobileDealList";
+import { MobileProductList, ProductList } from "../packages/ProductList";
+import { ProductShow } from "../packages/ProductShow";
+import { MobileCheckoutList, MobileOrderList } from "../shop/MobileShopLists";
 import { ContactListMobile } from "../contacts/ContactList.tsx";
 import { ContactShow } from "../contacts/ContactShow.tsx";
 import { CompanyShow } from "../companies/CompanyShow.tsx";
@@ -276,6 +281,14 @@ const DesktopAdmin = (
       <Resource name="appointments" list={AppointmentList} />
       <Resource name="sales" {...sales} />
       <Resource name="tags" />
+      <Resource name="vehicles" />
+      <Resource
+        name="packages"
+        list={ProductList}
+        show={ProductShow}
+        recordRepresentation="title"
+      />
+      <Resource name="order_lines" />
     </Admin>
   );
 };
@@ -331,7 +344,14 @@ const MobileAdmin = (
             element={<SettingsPageMobile />}
           />
           <Route path={ChangelogPage.path} element={<ChangelogPage />} />
-          <Route path={CalendarPage.path} element={<CalendarPage />} />
+          <Route
+            path={CalendarPage.path}
+            element={
+              <main className="px-4 pt-4 pb-24 min-h-screen">
+                <CalendarPage />
+              </main>
+            }
+          />
         </CustomRoutes>
         <Resource
           name="contacts"
@@ -341,8 +361,30 @@ const MobileAdmin = (
         >
           <Route path=":id/notes/:noteId" element={<NoteShowPage />} />
         </Resource>
-        <Resource name="companies" show={CompanyShow} />
+        <Resource
+          name="companies"
+          list={MobileCompanyList}
+          show={CompanyShow}
+          recordRepresentation="name"
+        />
         <Resource name="tasks" list={MobileTasksList} />
+        <Resource name="deals" list={MobileDealList} />
+        <Resource name="orders" list={MobileOrderList} />
+        <Resource name="shopify_checkouts" list={MobileCheckoutList} />
+        <Resource name="appointments" />
+        <Resource name="contacts_summary" />
+        <Resource name="contact_notes" />
+        <Resource name="deal_notes" />
+        <Resource name="sales" />
+        <Resource name="tags" />
+        <Resource name="vehicles" />
+        <Resource
+          name="packages"
+          list={MobileProductList}
+          show={ProductShow}
+          recordRepresentation="title"
+        />
+        <Resource name="order_lines" />
       </Admin>
     </PersistQueryClientProvider>
   );

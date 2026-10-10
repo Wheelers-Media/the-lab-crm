@@ -16,6 +16,7 @@ import {
   createDeal,
   createTask,
   defaultSalesId,
+  defaultVehicleFor,
   finishEvent,
   findOpenDeal,
   findOrCreateContact,
@@ -50,7 +51,7 @@ const findAppointment = async (uid: string) => {
   if (!uid) return null;
   const { data } = await supabaseAdmin
     .from("appointments")
-    .select("id, task_id, deal_id, contact_id")
+    .select("id, task_id, deal_id, contact_id, vehicle_id, vehicle")
     .eq("external_id", uid)
     .limit(1);
   return data?.[0] ?? null;
@@ -81,6 +82,7 @@ const handleCreated = async (b: CalBooking) => {
     taskTextFor(b),
     b.startAt,
   );
+  const vehicle = await defaultVehicleFor(contact.id);
   const { error } = await supabaseAdmin.from("appointments").insert({
     external_id: b.uid,
     source: SOURCE,
@@ -93,6 +95,8 @@ const handleCreated = async (b: CalBooking) => {
     end_at: b.endAt,
     status: "booked",
     notes: b.notes || null,
+    vehicle_id: vehicle?.id ?? null,
+    vehicle: vehicle?.label || null,
     sales_id: await defaultSalesId(),
   });
   if (error) throw new Error(`save appointment: ${error.message}`);
@@ -118,6 +122,8 @@ const handleRescheduled = async (b: CalBooking) => {
     contact_id: previous.contact_id,
     deal_id: previous.deal_id,
     task_id: previous.task_id,
+    vehicle_id: previous.vehicle_id,
+    vehicle: previous.vehicle,
     title: b.title,
     resource: b.resource,
     start_at: b.startAt,

@@ -152,6 +152,83 @@ describe("buildPayload", () => {
   });
 });
 
+describe("catalog", () => {
+  const build = () =>
+    buildPayload({
+      orders: [],
+      customers: [],
+      checkouts: [],
+      products: [
+        {
+          id: "gid://shopify/Product/1",
+          title: "Universal Fit - Suntek - Ceramic Tint - Full Windshield",
+          vendor: "The Lab",
+          status: "UNLISTED",
+          updatedAt: "2026-10-01T00:00:00Z",
+          tracksInventory: false,
+          featuredMedia: null,
+        },
+        {
+          id: "gid://shopify/ProductVariant/11",
+          title: "Default Title",
+          price: "300.00",
+          sku: "",
+          inventoryQuantity: 0,
+          __parentId: "gid://shopify/Product/1",
+        },
+        {
+          id: "gid://shopify/Product/2",
+          title: "5in Turbo-Back Exhaust",
+          vendor: "Polar Diesel",
+          handle: "5in-turbo-back",
+          productType: "",
+          status: "ACTIVE",
+          tracksInventory: true,
+          featuredMedia: {
+            preview: { image: { url: "https://cdn.shopify.com/x.jpg" } },
+          },
+        },
+        {
+          id: "gid://shopify/ProductVariant/21",
+          title: "Default Title",
+          price: "899.00",
+          sku: "PD-5TB",
+          inventoryQuantity: 2,
+          __parentId: "gid://shopify/Product/2",
+        },
+      ],
+    });
+
+  it("turns shop services into packages with Shopify prices", () => {
+    expect(build().packages[0]).toMatchObject({
+      shopify_product_id: "1",
+      title: "Ceramic Tint - Full Windshield",
+      category: "window-tint",
+      kind: "package",
+      price: 300,
+      status: "unlisted",
+      inventory: null,
+      image_url: null,
+    });
+  });
+
+  it("keeps parts as products with stock and picture", () => {
+    const { packages, skipped } = build();
+    expect(packages[1]).toMatchObject({
+      shopify_product_id: "2",
+      kind: "product",
+      bay: "parts",
+      category: "diesel-parts",
+      price: 899,
+      inventory: 2,
+      handle: "5in-turbo-back",
+      image_url: "https://cdn.shopify.com/x.jpg",
+    });
+    expect(packages[1].variants[0]).toMatchObject({ sku: "PD-5TB" });
+    expect(skipped).toEqual({});
+  });
+});
+
 describe("helpers", () => {
   it("falls back to the GraphQL id when a cart link has no token", () => {
     expect(checkoutToken("", "gid://shopify/AbandonedCheckout/9")).toBe(
