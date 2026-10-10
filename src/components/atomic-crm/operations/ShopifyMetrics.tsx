@@ -1,9 +1,10 @@
-import { ShoppingBag, Tags } from "lucide-react";
+import { ArrowRight, ShoppingBag, Tags } from "lucide-react";
+import { Link } from "react-router";
 import { useMemo } from "react";
 import { Card } from "@/components/ui/card";
 
 import type { Order, ShopifyCheckout } from "../types";
-import { money } from "./format";
+import { listLink, money } from "./format";
 import {
   cartStats,
   ordersByCategory,
@@ -45,18 +46,32 @@ export const ShopifyMetrics = ({
     [orders, range],
   );
   const maxCategory = Math.max(1, ...categories.map((c) => c.orders));
+  const ordered = {
+    "ordered_at@gte": range.start.toISOString(),
+    "ordered_at@lt": range.end.toISOString(),
+  };
+  const allOrders = (
+    <Link
+      to={listLink("orders", ordered)}
+      className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+    >
+      Orders <ArrowRight className="w-4 h-4" />
+    </Link>
+  );
 
   return (
     <div className="flex flex-col gap-3">
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <KpiTile
           label="Orders"
+          to={listLink("orders", { ...ordered, is_deposit: false })}
           value={String(stats.orders)}
           trend={percentChange(stats.orders, before.orders)}
           detail={`${stats.customers} customers`}
         />
         <KpiTile
           label="Average order"
+          to={listLink("orders", { ...ordered, is_deposit: false })}
           value={stats.averageOrder == null ? "-" : money(stats.averageOrder)}
           trend={
             stats.averageOrder != null && before.averageOrder != null
@@ -67,16 +82,19 @@ export const ShopifyMetrics = ({
         />
         <KpiTile
           label="Deposits"
+          to={listLink("orders", { ...ordered, is_deposit: true })}
           value={String(stats.deposits)}
           detail={`${money(stats.depositAmount)} collected`}
         />
         <KpiTile
           label="Refunds"
+          to={listLink("orders", { ...ordered, "refunded_amount@gt": 0 })}
           value={money(stats.refunded)}
           detail={`${stats.refundedOrders} ${stats.refundedOrders === 1 ? "order" : "orders"}`}
         />
         <KpiTile
           label="Checkout completion"
+          to="/shopify_checkouts"
           value={
             carts.completionRate == null ? "-" : `${carts.completionRate}%`
           }
@@ -89,7 +107,9 @@ export const ShopifyMetrics = ({
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card className="p-4 gap-0">
-          <SectionTitle icon={ShoppingBag}>Best sellers</SectionTitle>
+          <SectionTitle icon={ShoppingBag} action={allOrders}>
+            Best sellers
+          </SectionTitle>
           {products.length ? (
             <div className="divide-y divide-border">
               {products.map((p) => (
@@ -116,13 +136,19 @@ export const ShopifyMetrics = ({
           )}
         </Card>
         <Card className="p-4 gap-0">
-          <SectionTitle icon={Tags}>Orders by type</SectionTitle>
+          <SectionTitle icon={Tags} action={allOrders}>
+            Orders by type
+          </SectionTitle>
           {categories.length ? (
             <div className="flex flex-col">
               {categories.map((c) => (
-                <div
+                <Link
                   key={c.category}
-                  className="flex items-center gap-3 py-2 border-b border-border last:border-0 min-h-10"
+                  to={listLink("orders", {
+                    ...ordered,
+                    "categories@cs": `{"${c.category}"}`,
+                  })}
+                  className="flex items-center gap-3 py-2 px-2 -mx-2 rounded-md border-b border-border last:border-0 min-h-10 hover:bg-muted"
                 >
                   <span className="w-28 font-display uppercase tracking-wide text-sm">
                     {c.category}
@@ -134,7 +160,7 @@ export const ShopifyMetrics = ({
                     />
                   </span>
                   <span className="w-8 text-right lab-num">{c.orders}</span>
-                </div>
+                </Link>
               ))}
             </div>
           ) : (

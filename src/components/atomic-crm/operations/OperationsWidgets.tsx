@@ -45,28 +45,44 @@ export interface KpiTileProps {
   value: string;
   detail?: string;
   trend?: number | null;
+  /** Opens the list behind the number */
+  to?: string;
 }
 
-export const KpiTile = ({ label, value, detail, trend }: KpiTileProps) => (
-  <Card className="p-4 gap-1">
-    <p className="text-sm text-muted-foreground">{label}</p>
-    <p className="text-2xl font-semibold lab-num">{value}</p>
-    <p className="text-xs text-muted-foreground lab-num">
-      {trend != null ? (
-        <span
-          className={cn(
-            "mr-1",
-            trend >= 0 ? "text-[#3fb27f]" : "text-[#e5484d]",
-          )}
-        >
-          {trend >= 0 ? "+" : ""}
-          {trend}%
-        </span>
-      ) : null}
-      {detail}
-    </p>
-  </Card>
-);
+export const KpiTile = ({ label, value, detail, trend, to }: KpiTileProps) => {
+  const tile = (
+    <Card
+      className={cn(
+        "p-4 gap-1 h-full",
+        to && "transition-colors group-hover:bg-muted",
+      )}
+    >
+      <p className="text-sm text-muted-foreground">{label}</p>
+      <p className="text-2xl font-semibold lab-num">{value}</p>
+      <p className="text-xs text-muted-foreground lab-num">
+        {trend != null ? (
+          <span
+            className={cn(
+              "mr-1",
+              trend >= 0 ? "text-[#3fb27f]" : "text-[#e5484d]",
+            )}
+          >
+            {trend >= 0 ? "+" : ""}
+            {trend}%
+          </span>
+        ) : null}
+        {detail}
+      </p>
+    </Card>
+  );
+  return to ? (
+    <Link to={to} className="group block rounded-xl">
+      {tile}
+    </Link>
+  ) : (
+    tile
+  );
+};
 
 export const ResourceChip = ({
   resource,

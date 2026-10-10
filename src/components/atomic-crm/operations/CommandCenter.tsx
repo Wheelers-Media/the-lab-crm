@@ -28,7 +28,7 @@ import {
   type Period,
   shopDayKey,
 } from "./shopTime";
-import { money } from "./format";
+import { listLink, money } from "./format";
 import { PipelineSnapshot } from "./PipelineSnapshot";
 import { ShopifyMetrics } from "./ShopifyMetrics";
 import { useOperationsData, useRunAutomations } from "./useOperationsData";
@@ -140,11 +140,16 @@ export const CommandCenter = ({
       </div>
     </>
   );
+  const inPeriod = (field: string) => ({
+    [`${field}@gte`]: range.start.toISOString(),
+    [`${field}@lt`]: range.end.toISOString(),
+  });
   const kpiBlock = (
     <>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <KpiTile
           label="Revenue (Shopify)"
+          to={listLink("orders", inPeriod("ordered_at"))}
           value={money(kpis.revenue)}
           trend={percentChange(kpis.revenue, kpis.revenueBefore)}
           detail={
@@ -155,11 +160,13 @@ export const CommandCenter = ({
         />
         <KpiTile
           label="New leads"
+          to={listLink("deals", inPeriod("created_at"))}
           value={String(kpis.leads.total)}
           detail={`${kpis.leads.website} from the website`}
         />
         <KpiTile
           label="Lead to booked"
+          to={listLink("deals", inPeriod("created_at"))}
           value={
             kpis.leads.conversion == null ? "-" : `${kpis.leads.conversion}%`
           }
@@ -167,6 +174,7 @@ export const CommandCenter = ({
         />
         <KpiTile
           label="Open pipeline"
+          to="/deals"
           value={money(kpis.pipeline.amount)}
           detail={`${kpis.pipeline.count} open jobs`}
         />
