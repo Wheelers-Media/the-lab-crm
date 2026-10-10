@@ -50,6 +50,9 @@ export const SetPasswordButton = ({
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
+    // The dialog renders inside other forms (the user edit page); keep this
+    // submit from also saving that form
+    event.stopPropagation();
     const issue = passwordProblem(password, confirm);
     setProblem(issue);
     if (issue) return;
