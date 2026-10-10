@@ -19,8 +19,9 @@ import type {
 } from "../types";
 import { QuoteCheckout } from "./QuoteCheckout";
 import { QuoteLines } from "./QuoteLines";
-import { QuoteSuggestions } from "./QuoteSuggestions";
+import { QuoteParts } from "./QuoteParts";
 import {
+  enginesFor,
   lineFromCatalog,
   quoteContext,
   quoteTotals,
@@ -92,10 +93,33 @@ export const QuoteBuilderPage = () => {
     () => new Map(catalog.map((p) => [String(p.id), p])),
     [catalog],
   );
-  const ctx = useMemo(
-    () => quoteContext({ name: deal?.name, quote: deal?.quote, vehicle }),
-    [deal?.name, deal?.quote, vehicle],
+  // An engine picked here, until the truck record has it
+  const [pickedEngine, setPickedEngine] = useState<string | null>(null);
+  const ctx = useMemo(() => {
+    const base = quoteContext({
+      name: deal?.name,
+      quote: deal?.quote,
+      vehicle,
+    });
+    return pickedEngine && !base.engine
+      ? { ...base, engine: pickedEngine }
+      : base;
+  }, [deal?.name, deal?.quote, vehicle, pickedEngine]);
+  const engines = useMemo(
+    () => enginesFor(catalog, ctx.platform),
+    [catalog, ctx.platform],
   );
+  const [updateVehicle] = useUpdate<Vehicle>();
+  const pickEngine = (engine: string) => {
+    setPickedEngine(engine);
+    // Remember it on the truck so the next quote knows
+    if (vehicle && !vehicle.engine)
+      updateVehicle("vehicles", {
+        id: vehicle.id,
+        data: { engine: `${engine}L` },
+        previousData: vehicle,
+      });
+  };
   const suggestions = useMemo(
     () => suggestProducts(catalog, ctx),
     [catalog, ctx],
@@ -233,16 +257,14 @@ export const QuoteBuilderPage = () => {
             </details>
           ) : null}
 
-          <QuoteSuggestions
+          <QuoteParts
+            catalog={catalog}
             suggestions={suggestions}
+            ctx={ctx}
             addedIds={addedIds}
             reason={reason}
-            hasTruck={Boolean(vehicle)}
-            note={
-              ctx.platform && !ctx.engine
-                ? "Add the truck's engine to the job to see engine-specific parts."
-                : undefined
-            }
+            engines={engines}
+            onPickEngine={pickEngine}
             onAdd={(pkg) => edit([...lines, lineFromCatalog(pkg)])}
           />
 

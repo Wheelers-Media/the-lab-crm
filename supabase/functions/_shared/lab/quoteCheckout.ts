@@ -71,6 +71,19 @@ export const draftOrderPlan = (
         priceOverride: price,
       };
     }
+    // Shopify counts whole units; 1.5 hours becomes one line for the hours
+    const hours = Number(line.quantity);
+    if (!Number.isInteger(hours)) {
+      return {
+        title: `${line.title} (${hours} h)`,
+        quantity: 1,
+        originalUnitPriceWithCurrency: money(
+          Math.max(0, Number(line.price) || 0) * hours,
+        ),
+        requiresShipping: false,
+        taxable: true,
+      };
+    }
     return {
       title: line.title,
       quantity,

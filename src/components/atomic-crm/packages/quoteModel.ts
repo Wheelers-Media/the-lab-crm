@@ -25,6 +25,18 @@ export const quoteTotals = (lines: DealPackageLine[] | null | undefined) => {
   };
 };
 
+/** THE LAB's standard shop rate, per hour. */
+export const LABOUR_RATE = 125;
+
+/** A labour line at the shop rate; the quantity is the hours. */
+export const labourLine = (hours = 1): DealPackageLine => ({
+  package_id: null,
+  title: "Labour",
+  price: LABOUR_RATE,
+  quantity: hours,
+  kind: "labour",
+});
+
 /** A catalog item as a quote line, priced at its first variant. */
 export const lineFromCatalog = (pkg: Package): DealPackageLine => {
   const variant = pkg.variants[0];
@@ -206,59 +218,159 @@ const yearRange = (title: string): [number, number] | null => {
 const titleEngine = (title: string) =>
   title.match(/\b(\d\.\d)\s?l\b/i)?.[1] ?? null;
 
+/** Part types, in the order a diesel quote is usually built. */
+export const PART_TYPES: Array<[string, RegExp]> = [
+  ["Exhaust", /exhaust|muffler|\btip\b|elbow|clamp/i],
+  ["Delete pipes", /delete pipe/i],
+  ["Downpipes", /downpipe/i],
+  ["EGR", /\begr\b/i],
+  ["CCV", /\bccv\b|venturi/i],
+  ["Tuning", /ez lynk|hp tuners|efi ?live|tuner|\btune\b|sotf/i],
+  ["Cooling", /coolant/i],
+];
+
+const SERVICE_TYPE: Record<string, string> = {
+  exhaust: "Exhaust",
+  egr: "EGR",
+  ccv: "CCV",
+  tuning: "Tuning",
+  coolant: "Cooling",
+};
+
+/** "Delete pipes" for a delete pipe, "Exhaust" for a downpipe-back exhaust kit. */
+export const partType = (title: string): string => {
+  if (/delete pipe/i.test(title)) return "Delete pipes";
+  if (/downpipe/i.test(title) && !/exhaust/i.test(title)) return "Downpipes";
+  return PART_TYPES.find(([, re]) => re.test(title))?.[0] ?? "Other parts";
+};
+
+/** Whether a part can go on this truck: platform, years, engine and model all fit. */
+export const fitsTruck = (title: string, ctx: QuoteContext): boolean => {
+  const platformInTitle = (Object.keys(TITLE_WORDS) as Platform[]).filter((p) =>
+    TITLE_WORDS[p].test(title),
+  );
+  if (
+    platformInTitle.length &&
+    (!ctx.platform || !platformInTitle.includes(ctx.platform))
+  )
+    return false;
+  const range = yearRange(title);
+  if (range && ctx.year && (ctx.year < range[0] || ctx.year > range[1]))
+    return false;
+  const engine = titleEngine(title);
+  if (engine && engine !== ctx.engine) return false;
+  const modelOnly = MODEL_WORDS.find((re) => re.test(title));
+  if (modelOnly && !modelOnly.test(ctx.model)) return false;
+  return true;
+};
+
+/** The engines the catalog has parts for on this platform, for picking one. */
+export const enginesFor = (
+  catalog: Package[],
+  platform: QuoteContext["platform"],
+): string[] => {
+  if (!platform) return [];
+  const engines = new Set<string>();
+  for (const pkg of catalog) {
+    if (pkg.kind !== "product" || !TITLE_WORDS[platform].test(pkg.title))
+      continue;
+    const engine = titleEngine(pkg.title);
+    if (engine) engines.add(engine);
+  }
+  return [...engines].sort((a, b) => Number(a) - Number(b));
+};
+
 /**
- * Parts that fit the truck and match what was asked for, best first.
- * A part for another platform, engine, model or model year never shows,
- * and a part made for one engine only shows once the truck's engine is known.
+ * Parts that fit the truck, best first: what the customer asked for leads,
+ * then everything else made for this truck. Universal parts only show when
+ * they match the request. A part for another platform, engine, model or
+ * model year never shows, and a part made for one engine only shows once the
+ * truck's engine is known.
  */
 export const suggestProducts = (
   catalog: Package[],
   ctx: QuoteContext,
-  limit = 8,
+  limit = 40,
 ): Package[] => {
   if (!ctx.platform && !ctx.services.length) return [];
   const scored: Array<[number, Package]> = [];
   for (const pkg of catalog) {
     if (pkg.kind !== "product" || pkg.status !== "active") continue;
     const title = pkg.title;
-    const platformInTitle = (Object.keys(TITLE_WORDS) as Platform[]).filter(
-      (p) => TITLE_WORDS[p].test(title),
-    );
-    // Parts for a different truck are out; universal parts stay in
-    if (
-      platformInTitle.length &&
-      ctx.platform &&
-      !platformInTitle.includes(ctx.platform)
-    )
-      continue;
-    const range = yearRange(title);
-    if (range && ctx.year && (ctx.year < range[0] || ctx.year > range[1]))
-      continue;
-    // A part for one engine needs the truck's engine to be that engine
-    const engine = titleEngine(title);
-    if (engine && engine !== ctx.engine) continue;
-    const modelOnly = MODEL_WORDS.find((re) => re.test(title));
-    if (modelOnly && !modelOnly.test(ctx.model)) continue;
-
-    let score = 0;
-    if (ctx.platform && platformInTitle.includes(ctx.platform)) score += 3;
-    if (range && ctx.year) score += 2;
-    if (engine && ctx.engine) score += 1;
+    if (!fitsTruck(title, ctx)) continue;
+    const forThisTruck =
+      ctx.platform != null && TITLE_WORDS[ctx.platform].test(title);
     const serviceHits = SERVICE_WORDS.filter(
       ([service, , inTitle]) =>
         ctx.services.includes(service) && inTitle.test(title),
     ).length;
-    score += serviceHits * 4;
-    if (ctx.services.length && !serviceHits) continue;
+    if (!forThisTruck && !serviceHits) continue;
+
+    let score = forThisTruck ? 3 : 0;
+    if (yearRange(title) && ctx.year) score += 2;
+    if (titleEngine(title)) score += 1;
+    score += serviceHits * 10;
     if (ctx.services.includes("exhaust")) {
       if (ctx.diameter && title.includes(`${ctx.diameter}"`)) score += 1;
       if (/muffler/i.test(title) === ctx.wantsMuffler) score += 1;
     }
     if (pkg.inventory != null && pkg.inventory <= 0) score -= 1;
-    if (score > 0) scored.push([score, pkg]);
+    scored.push([score, pkg]);
   }
   return scored
     .sort((a, b) => b[0] - a[0] || a[1].title.localeCompare(b[1].title))
     .slice(0, limit)
     .map(([, pkg]) => pkg);
+};
+
+/** Suggestions grouped by part type; the types the customer asked for come first. */
+export const groupByType = (
+  parts: Package[],
+  services: string[],
+): Array<{ type: string; items: Package[]; asked: boolean }> => {
+  const asked = new Set(services.map((s) => SERVICE_TYPE[s]).filter(Boolean));
+  const groups = new Map<string, Package[]>();
+  for (const pkg of parts) {
+    const type = partType(pkg.title);
+    groups.set(type, [...(groups.get(type) ?? []), pkg]);
+  }
+  const order = [...PART_TYPES.map(([t]) => t), "Other parts"];
+  return [...groups.entries()]
+    .map(([type, items]) => ({ type, items, asked: asked.has(type) }))
+    .sort(
+      (a, b) =>
+        Number(b.asked) - Number(a.asked) ||
+        order.indexOf(a.type) - order.indexOf(b.type),
+    );
+};
+
+/**
+ * Catalog search for adding anything on the fly: every word must appear in
+ * the name, vendor or a SKU. Parts that fit the truck come first.
+ */
+export const searchCatalog = (
+  catalog: Package[],
+  query: string,
+  ctx: QuoteContext,
+  limit = 25,
+): Package[] => {
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+  if (!words.length) return [];
+  const hits = catalog.filter((pkg) => {
+    if (pkg.status === "deleted" || /secure booking deposit/i.test(pkg.title))
+      return false;
+    const text = [
+      pkg.title,
+      pkg.vendor,
+      ...pkg.variants.map((v) => `${v.title} ${v.sku ?? ""}`),
+    ]
+      .join(" ")
+      .toLowerCase();
+    return words.every((w) => text.includes(w));
+  });
+  const rank = (pkg: Package) =>
+    (fitsTruck(pkg.title, ctx) ? 0 : 2) + (pkg.status === "active" ? 0 : 1);
+  return hits
+    .sort((a, b) => rank(a) - rank(b) || a.title.localeCompare(b.title))
+    .slice(0, limit);
 };

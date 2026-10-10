@@ -46,11 +46,32 @@ const shopify = async (
   );
   const body = await res.json().catch(() => ({}));
   if (!res.ok || body.errors) {
-    throw new Error(
-      `Shopify ${res.status}: ${JSON.stringify(body.errors ?? body).slice(0, 300)}`,
+    const detail = Array.isArray(body.errors)
+      ? body.errors.map((e: { message?: string }) => e.message).join("; ")
+      : typeof body.errors === "string"
+        ? body.errors
+        : JSON.stringify(body.errors ?? body).slice(0, 200);
+    throw new CheckoutFailure(
+      res.status === 401 ||
+        res.status === 403 ||
+        /access denied|scope/i.test(detail)
+        ? `Shopify refused the request (${detail}). The app needs the write_draft_orders and write_customers scopes, released and approved on the store.`
+        : `Shopify error ${res.status}: ${detail}`,
     );
   }
   return body.data;
+};
+
+/** A failure whose message is safe and useful to show the CRM user. */
+class CheckoutFailure extends Error {}
+
+/** "https://xr6pmx-y0.myshopify.com/" or "xr6pmx-y0" -> "xr6pmx-y0.myshopify.com" */
+const shopDomain = (raw: string) => {
+  const host = raw
+    .trim()
+    .replace(/^https?:\/\//, "")
+    .replace(/\/.*$/, "");
+  return host.includes(".") ? host : `${host}.myshopify.com`;
 };
 
 // Client credentials tokens last 24 hours; reuse one until shortly before it ends
@@ -75,8 +96,8 @@ const accessToken = async (shop: string): Promise<string | null> => {
   });
   const body = await res.json().catch(() => ({}));
   if (!res.ok || !body.access_token) {
-    throw new Error(
-      `Shopify token ${res.status}: ${JSON.stringify(body).slice(0, 200)}`,
+    throw new CheckoutFailure(
+      `Shopify would not sign the CRM in (${res.status}${body.error ? `: ${body.error_description ?? body.error}` : ""}). Check the app is installed on the store and the Client ID and secret in Supabase are right.`,
     );
   }
   const lifetime = (Number(body.expires_in) || 86399) * 1000;
@@ -110,7 +131,8 @@ type Contact = {
 };
 
 const handle = async (req: Request) => {
-  const shop = Deno.env.get("SHOPIFY_SHOP");
+  const rawShop = Deno.env.get("SHOPIFY_SHOP");
+  const shop = rawShop ? shopDomain(rawShop) : null;
   const token = shop ? await accessToken(shop) : null;
   if (!shop || !token) {
     return createErrorResponse(
@@ -168,7 +190,9 @@ const handle = async (req: Request) => {
   if (errors.length || !draft?.invoiceUrl) {
     return createErrorResponse(
       502,
-      errors[0]?.message ?? "Shopify did not return a checkout link.",
+      errors[0]?.message
+        ? `Shopify: ${errors[0].message}`
+        : "Shopify did not return a checkout link.",
     );
   }
 
@@ -236,7 +260,9 @@ Deno.serve(async (req: Request) =>
           console.error("quote_checkout failed:", error);
           return createErrorResponse(
             500,
-            "Could not create the checkout link. Try again, or build the order in Shopify.",
+            error instanceof CheckoutFailure
+              ? error.message
+              : `Could not create the checkout link: ${error instanceof Error ? error.message : String(error)}`,
           );
         }
       }),

@@ -55,6 +55,29 @@ describe("draftOrderPlan", () => {
     });
   });
 
+  it("bills part hours of labour as one line for the hours", () => {
+    // Arrange
+    const halfHours = [
+      {
+        package_id: null,
+        title: "Labour",
+        price: 125,
+        quantity: 1.5,
+        kind: "labour" as const,
+      },
+    ];
+
+    // Act
+    const plan = draftOrderPlan(halfHours, "all");
+
+    // Assert
+    expect("lineItems" in plan && plan.lineItems[0]).toMatchObject({
+      title: "Labour (1.5 h)",
+      quantity: 1,
+      originalUnitPriceWithCurrency: { amount: "187.50", currencyCode: "CAD" },
+    });
+  });
+
   it("explains what to do when a parts-only link has no parts", () => {
     // Arrange
     const labourOnly = [lines[1]];

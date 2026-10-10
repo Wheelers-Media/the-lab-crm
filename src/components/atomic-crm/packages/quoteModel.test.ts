@@ -2,7 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import type { Package, WebsiteQuote } from "../types";
 import {
+  groupByType,
   inferEngine,
+  labourLine,
+  searchCatalog,
   lineFromCatalog,
   quoteContext,
   quoteTotals,
@@ -97,7 +100,7 @@ describe("quoteContext", () => {
 });
 
 describe("suggestProducts", () => {
-  it("suggests only parts that fit the truck's platform, year and engine", () => {
+  it("leads with what was asked for and never shows parts for another truck", () => {
     // Arrange
     const ctx = quoteContext({
       name: "EGR Solutions",
@@ -113,7 +116,16 @@ describe("suggestProducts", () => {
     const titles = suggestProducts(catalog, ctx).map((p) => p.title);
 
     // Assert
-    expect(titles).toEqual(["2017-2025 Duramax 6.6L - Polar - EGR Delete Kit"]);
+    expect(titles[0]).toBe("2017-2025 Duramax 6.6L - Polar - EGR Delete Kit");
+    expect(titles).not.toContain(
+      "2011-2016 Duramax 6.6L - Polar - EGR Delete Kit",
+    );
+    expect(titles).not.toContain(
+      "2020-2023 Duramax 3.0L - Polar - EGR Delete Kit",
+    );
+    expect(titles).not.toContain(
+      "2019-2024 Cummins 6.7L - Polar - EGR Delete Kit",
+    );
   });
 
   it("puts the muffler kit first when the customer said they need a muffler", () => {
@@ -143,7 +155,7 @@ describe("suggestProducts", () => {
     );
   });
 
-  it("suggests tuning devices that fit any truck for a tuning request", () => {
+  it("puts tuning devices first for a tuning request, then the truck's own parts", () => {
     // Arrange
     const ctx = quoteContext({
       name: "Custom Tuning - Ram 2500",
@@ -159,7 +171,10 @@ describe("suggestProducts", () => {
     const titles = suggestProducts(catalog, ctx).map((p) => p.title);
 
     // Assert
-    expect(titles).toEqual(["EZ LYNK Auto Agent 3"]);
+    expect(titles).toEqual([
+      "EZ LYNK Auto Agent 3",
+      "2019-2024 Cummins 6.7L - Polar - EGR Delete Kit",
+    ]);
   });
 
   it("suggests nothing when it cannot tell the truck or the service", () => {
@@ -264,6 +279,75 @@ describe("suggestions by vehicle", () => {
 
     // Assert
     expect(titles).toEqual([]);
+  });
+});
+
+describe("groupByType", () => {
+  it("groups a truck's parts by type with the requested type first", () => {
+    // Arrange
+    const parts = [
+      product('2017-2025 Duramax 6.6L - Polar - 5" Exhaust'),
+      product("2017-2025 Duramax 6.6L - Polar - Downpipe"),
+      product("2017-2025 Duramax 6.6L - Polar - Delete Pipe"),
+      product("2017-2025 Duramax 6.6L - Polar - EGR Delete Kit"),
+    ];
+
+    // Act
+    const groups = groupByType(parts, ["egr"]).map((g) => g.type);
+
+    // Assert
+    expect(groups).toEqual(["EGR", "Exhaust", "Delete pipes", "Downpipes"]);
+  });
+});
+
+describe("searchCatalog", () => {
+  it("finds parts by any words in the name or SKU, truck fits first", () => {
+    // Arrange
+    const ctx = quoteContext({
+      vehicle: {
+        year: 2018,
+        make: "Ram",
+        model: "2500",
+        engine: null,
+        platform: null,
+      },
+    });
+    const catalog = [
+      product("2019-2024 Cummins 6.7L - Polar - EGR Delete Kit"),
+      product("2010-2018 Cummins 6.7L - Polar - EGR Delete Kit", {
+        variants: [
+          {
+            id: "v1",
+            title: "Default Title",
+            price: 600,
+            sku: "PD-2-21934000",
+          },
+        ],
+      }),
+    ];
+
+    // Act
+    const byWords = searchCatalog(catalog, "egr cummins", ctx).map(
+      (p) => p.title,
+    );
+    const bySku = searchCatalog(catalog, "pd-2-2193", ctx).map((p) => p.title);
+
+    // Assert
+    expect(byWords).toEqual([
+      "2010-2018 Cummins 6.7L - Polar - EGR Delete Kit",
+      "2019-2024 Cummins 6.7L - Polar - EGR Delete Kit",
+    ]);
+    expect(bySku).toEqual(["2010-2018 Cummins 6.7L - Polar - EGR Delete Kit"]);
+  });
+});
+
+describe("labourLine", () => {
+  it("bills labour at $125 an hour with the hours as the quantity", () => {
+    // Arrange / Act
+    const totals = quoteTotals([labourLine(2.5)]);
+
+    // Assert
+    expect(totals).toEqual({ parts: 0, labour: 312.5, total: 312.5 });
   });
 });
 

@@ -1,11 +1,11 @@
 import { Trash2, Wrench } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import type { DealPackageLine, Package } from "../types";
-import { PackagePicker } from "./PackagePicker";
 import { ProductThumb } from "./ProductList";
-import { lineFromCatalog, lineKind, type LineKind } from "./quoteModel";
+import { LABOUR_RATE, labourLine, lineKind, type LineKind } from "./quoteModel";
 
 const KINDS: Array<[LineKind, string]> = [
   ["part", "Part"],
@@ -34,7 +34,7 @@ const KindSwitch = ({
         role="radio"
         aria-checked={value === kind}
         onClick={() => onChange(kind)}
-        className={`h-8 min-w-16 rounded-sm px-2 text-xs uppercase tracking-wider transition-colors ${
+        className={`h-8 min-w-14 rounded-sm px-2 text-xs uppercase tracking-wider transition-colors ${
           value === kind
             ? "bg-foreground text-background"
             : "text-muted-foreground hover:text-foreground"
@@ -45,6 +45,63 @@ const KindSwitch = ({
     ))}
   </div>
 );
+
+/**
+ * A number box that lets you type freely ("1.", "") and keeps the last good
+ * number, without the leading zero a plain number input leaves ("0125").
+ */
+const NumberField = ({
+  value,
+  onCommit,
+  min,
+  allowDecimals,
+  label,
+  prefix,
+  suffix,
+  className,
+}: {
+  value: number;
+  onCommit: (value: number) => void;
+  min: number;
+  allowDecimals?: boolean;
+  label: string;
+  prefix?: string;
+  suffix?: string;
+  className?: string;
+}) => {
+  const [text, setText] = useState(String(value));
+  useEffect(() => {
+    setText((current) => (Number(current) === value ? current : String(value)));
+  }, [value]);
+  return (
+    <label
+      className={`flex h-10 items-center gap-1 rounded-md border border-input px-2 focus-within:ring-2 focus-within:ring-ring dark:bg-input/30 ${className ?? ""}`}
+    >
+      {prefix ? (
+        <span className="text-sm text-muted-foreground">{prefix}</span>
+      ) : null}
+      <input
+        type="text"
+        inputMode={allowDecimals ? "decimal" : "numeric"}
+        value={text}
+        aria-label={label}
+        onChange={(e) => {
+          const cleaned = e.target.value
+            .replace(allowDecimals ? /[^\d.]/g : /\D/g, "")
+            .replace(/^0+(?=\d)/, "");
+          setText(cleaned);
+          const n = Number(cleaned);
+          if (cleaned !== "" && !Number.isNaN(n)) onCommit(Math.max(min, n));
+        }}
+        onBlur={() => setText(String(value))}
+        className="w-full min-w-0 bg-transparent text-base outline-none lab-num"
+      />
+      {suffix ? (
+        <span className="text-xs text-muted-foreground">{suffix}</span>
+      ) : null}
+    </label>
+  );
+};
 
 /** The lines of a quote: what is sold, how many, at what price, and whether it is a part or labour. */
 export const QuoteLines = ({
@@ -88,38 +145,38 @@ export const QuoteLines = ({
                     className="h-10 min-w-0 flex-1"
                   />
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="grid w-full grid-cols-[auto_minmax(0,1fr)_minmax(0,1.4fr)_auto] items-center gap-2 sm:flex sm:w-auto">
                   <KindSwitch
                     value={lineKind(line)}
                     label={line.title}
                     onChange={(kind) => change(i, { kind })}
                   />
-                  <Input
-                    type="number"
-                    inputMode="numeric"
-                    min={1}
+                  <NumberField
                     value={line.quantity}
-                    onChange={(e) =>
-                      change(i, {
-                        quantity: Math.max(1, Number(e.target.value) || 1),
-                      })
+                    allowDecimals={lineKind(line) === "labour"}
+                    min={lineKind(line) === "labour" ? 0.25 : 1}
+                    suffix={lineKind(line) === "labour" ? "h" : "qty"}
+                    label={
+                      lineKind(line) === "labour"
+                        ? `Hours of ${line.title}`
+                        : `Quantity of ${line.title}`
                     }
-                    aria-label={`Quantity of ${line.title}`}
-                    className="h-10 w-16 lab-num"
+                    onCommit={(quantity) => change(i, { quantity })}
+                    className="sm:w-20"
                   />
-                  <Input
-                    type="number"
-                    inputMode="decimal"
-                    min={0}
-                    step="0.01"
+                  <NumberField
                     value={line.price}
-                    onChange={(e) =>
-                      change(i, {
-                        price: Math.max(0, Number(e.target.value) || 0),
-                      })
+                    allowDecimals
+                    min={0}
+                    prefix="$"
+                    suffix={lineKind(line) === "labour" ? "/h" : undefined}
+                    label={
+                      lineKind(line) === "labour"
+                        ? `Rate for ${line.title}`
+                        : `Price of ${line.title}`
                     }
-                    aria-label={`Price of ${line.title}`}
-                    className="h-10 w-28 lab-num"
+                    onCommit={(price) => change(i, { price })}
+                    className="sm:w-32"
                   />
                   <Button
                     type="button"
@@ -138,33 +195,18 @@ export const QuoteLines = ({
         </ul>
       ) : (
         <p className="rounded-lg border border-dashed border-border p-6 text-center text-sm text-muted-foreground">
-          Add a suggested part, pick from the catalog, or add labour.
+          Add a suggested part, search for one, or add labour.
         </p>
       )}
       <div className="flex flex-wrap gap-2">
-        <PackagePicker
-          label="Add from catalog"
-          onPick={(pkg) => onChange([...lines, lineFromCatalog(pkg)])}
-        />
         <Button
           type="button"
           variant="outline"
           size="sm"
-          onClick={() =>
-            onChange([
-              ...lines,
-              {
-                package_id: null,
-                title: "Install labour",
-                price: 0,
-                quantity: 1,
-                kind: "labour",
-              },
-            ])
-          }
+          onClick={() => onChange([...lines, labourLine(1)])}
         >
           <Wrench className="size-4" />
-          Add labour
+          Add labour (${LABOUR_RATE}/h)
         </Button>
       </div>
     </div>
