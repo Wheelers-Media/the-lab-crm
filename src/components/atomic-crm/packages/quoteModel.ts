@@ -38,9 +38,16 @@ export const lineFromCatalog = (pkg: Package): DealPackageLine => {
   };
 };
 
-type Platform = "cummins" | "duramax" | "powerstroke" | "ecodiesel" | "titan";
+type Platform =
+  | "cummins"
+  | "duramax"
+  | "powerstroke"
+  | "ecodiesel"
+  | "titan"
+  | "sprinter";
 
 const PLATFORM_WORDS: Array<[Platform, RegExp]> = [
+  ["sprinter", /sprinter|mercedes/i],
   ["ecodiesel", /eco\s?diesel|grand cherokee|gladiator|ram 1500/i],
   ["titan", /titan/i],
   ["cummins", /cummins|\bram\b|dodge/i],
@@ -55,6 +62,51 @@ const TITLE_WORDS: Record<Platform, RegExp> = {
   powerstroke: /power\s?stroke/i,
   ecodiesel: /eco\s?diesel/i,
   titan: /titan/i,
+  sprinter: /sprinter/i,
+};
+
+// Parts made for one model only; the truck must be that model
+const MODEL_WORDS = [
+  /grand cherokee/i,
+  /gladiator/i,
+  /colorado|canyon/i,
+  /sprinter/i,
+  /cab\s*&\s*chassis/i,
+];
+
+/**
+ * The diesel engine a truck has, from its model and year when the engine was
+ * not written down: a 2019 Colorado is a 2.8L, a 2019 Sierra 2500 a 6.6L.
+ */
+export const inferEngine = (
+  model: string,
+  year: number | null,
+): string | null => {
+  const m = model.toLowerCase();
+  if (/colorado|canyon/.test(m)) return "2.8";
+  if (/(silverado|sierra)\s*1500|\blm2\b/.test(m)) return "3.0";
+  if (
+    /(silverado|sierra)\s*(2500|3500)|\bhd\b|kodiak|topkick|express|savana/.test(
+      m,
+    )
+  )
+    return "6.6";
+  if (/ram\s*1500|grand cherokee|gladiator|eco\s?diesel/.test(m)) return "3.0";
+  if (/sprinter/.test(m)) return "3.0";
+  if (/titan/.test(m)) return "5.0";
+  if (/f-?150/.test(m)) return "3.0";
+  if (/f-?(250|350|450|550)|super duty|excursion/.test(m)) {
+    if (year == null) return null;
+    if (year >= 2011) return "6.7";
+    if (year >= 2008) return "6.4";
+    if (year >= 2003) return "6.0";
+    return null;
+  }
+  if (/ram\s*(2500|3500|4500|5500)|cummins|dodge/.test(m)) {
+    if (year == null || year === 2007) return null; // 5.9L and 6.7L both built in 2007
+    return year >= 2008 ? "6.7" : "5.9";
+  }
+  return null;
 };
 
 const SERVICE_WORDS: Array<[string, RegExp, RegExp]> = [
@@ -74,6 +126,8 @@ export type QuoteContext = {
   platform: Platform | null;
   year: number | null;
   engine: string | null;
+  /** Make and model, to match parts made for one model. */
+  model: string;
   services: string[];
   wantsMuffler: boolean;
   diameter: string | null;
@@ -113,8 +167,10 @@ export const quoteContext = ({
 
   const yearMatch = text.match(/\b(19[89]\d|20[0-4]\d)\b/);
   const year = vehicle?.year ?? (yearMatch ? Number(yearMatch[1]) : null);
+  const model = [vehicle?.make, vehicle?.model].filter(Boolean).join(" ");
+  const written = (vehicle?.engine ?? text).match(/\b(\d\.\d)\s?l\b/i)?.[1];
   const engine =
-    (vehicle?.engine ?? text).match(/\b(\d\.\d)\s?l\b/i)?.[1] ?? null;
+    written ?? inferEngine(`${model} ${vehicle?.engine ?? ""}`, year);
   // Only what they asked for; "mods already on the truck" also mentions EGR
   const asked = [
     name,
@@ -132,6 +188,7 @@ export const quoteContext = ({
     platform,
     year,
     engine,
+    model,
     services,
     wantsMuffler: /need muffler|with muffler/i.test(text),
     diameter,
@@ -151,7 +208,8 @@ const titleEngine = (title: string) =>
 
 /**
  * Parts that fit the truck and match what was asked for, best first.
- * A part for another platform, engine or model year never shows.
+ * A part for another platform, engine, model or model year never shows,
+ * and a part made for one engine only shows once the truck's engine is known.
  */
 export const suggestProducts = (
   catalog: Package[],
@@ -176,8 +234,11 @@ export const suggestProducts = (
     const range = yearRange(title);
     if (range && ctx.year && (ctx.year < range[0] || ctx.year > range[1]))
       continue;
+    // A part for one engine needs the truck's engine to be that engine
     const engine = titleEngine(title);
-    if (engine && ctx.engine && engine !== ctx.engine) continue;
+    if (engine && engine !== ctx.engine) continue;
+    const modelOnly = MODEL_WORDS.find((re) => re.test(title));
+    if (modelOnly && !modelOnly.test(ctx.model)) continue;
 
     let score = 0;
     if (ctx.platform && platformInTitle.includes(ctx.platform)) score += 3;

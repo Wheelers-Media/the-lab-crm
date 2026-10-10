@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { Package, WebsiteQuote } from "../types";
 import {
+  inferEngine,
   lineFromCatalog,
   quoteContext,
   quoteTotals,
@@ -170,6 +171,118 @@ describe("suggestProducts", () => {
 
     // Assert
     expect(result).toEqual([]);
+  });
+});
+
+// Real Polar Diesel titles from the Shopify catalog
+const polar = [
+  product('2017-2025 Duramax 6.6L - Polar - 5" Exhaust'),
+  product("2017-2025 Duramax 6.6L - Polar - EGR Delete Kit"),
+  product("2016-2022 Duramax 2.8L - Polar - EGR Delete Kit"),
+  product('2016-2022 Duramax - Polar - 2.8L Colorado/Canyon 3" Exhaust'),
+  product("2020-2023 Duramax 3.0L - Polar - EGR Delete Kit"),
+  product("2020-2024 Duramax 3.0L - Polar - Delete Pipe"),
+  product("2008-2010 Ford Powerstroke 6.4L - Polar - EGR Delete Kit"),
+  product("2011-2026 Ford Powerstroke 6.7L - Polar - EGR Delete Kit"),
+  product(
+    "2014-2018 Ram 1500 - Polar - & 2019+ Classic 3.0L EcoDiesel Delete Pipe",
+  ),
+  product("2014-2018 - Polar - 3.0L EcoDiesel Jeep Grand Cherokee Delete Pipe"),
+  product("2019-2024 Cummins 6.7L - Polar - EGR Delete Kit"),
+  product("Polar - Diesel Universal Exhaust Clamp"),
+];
+
+const titlesFor = (vehicle: {
+  year: number | null;
+  make: string;
+  model: string;
+  engine?: string;
+}) =>
+  suggestProducts(
+    polar,
+    quoteContext({
+      name: "Quote",
+      vehicle: { engine: null, platform: null, ...vehicle },
+    }),
+    20,
+  ).map((p) => p.title);
+
+describe("suggestions by vehicle", () => {
+  it("never shows 6.6L or 3.0L parts for a 2.8L Colorado", () => {
+    // Arrange / Act
+    const titles = titlesFor({
+      year: 2019,
+      make: "Chevrolet",
+      model: "Colorado",
+    });
+
+    // Assert
+    expect(titles.sort()).toEqual([
+      '2016-2022 Duramax - Polar - 2.8L Colorado/Canyon 3" Exhaust',
+      "2016-2022 Duramax 2.8L - Polar - EGR Delete Kit",
+    ]);
+  });
+
+  it("knows a Sierra 2500 is a 6.6L even when the engine was not entered", () => {
+    // Arrange / Act
+    const titles = titlesFor({
+      year: 2021,
+      make: "GMC",
+      model: "Sierra 2500 HD",
+    });
+
+    // Assert
+    expect(titles.sort()).toEqual([
+      '2017-2025 Duramax 6.6L - Polar - 5" Exhaust',
+      "2017-2025 Duramax 6.6L - Polar - EGR Delete Kit",
+    ]);
+  });
+
+  it("uses the model year to tell a 6.4L Super Duty from a 6.7L", () => {
+    // Arrange / Act
+    const titles = titlesFor({ year: 2009, make: "Ford", model: "F-250" });
+
+    // Assert
+    expect(titles).toEqual([
+      "2008-2010 Ford Powerstroke 6.4L - Polar - EGR Delete Kit",
+    ]);
+  });
+
+  it("keeps Jeep parts off a Ram 1500 with the same 3.0L EcoDiesel", () => {
+    // Arrange / Act
+    const titles = titlesFor({ year: 2017, make: "Ram", model: "1500" });
+
+    // Assert
+    expect(titles).toEqual([
+      "2014-2018 Ram 1500 - Polar - & 2019+ Classic 3.0L EcoDiesel Delete Pipe",
+    ]);
+  });
+
+  it("shows no engine-specific parts when the engine cannot be worked out", () => {
+    // Arrange / Act
+    const titles = titlesFor({ year: 2007, make: "Dodge", model: "Ram 2500" });
+
+    // Assert
+    expect(titles).toEqual([]);
+  });
+});
+
+describe("inferEngine", () => {
+  it("reads the diesel engine from the model and year", () => {
+    // Arrange
+    const cases: Array<[string, number | null, string | null]> = [
+      ["Chevrolet Silverado 1500", 2021, "3.0"],
+      ["Ford F-350", 2005, "6.0"],
+      ["Ram 3500", 2006, "5.9"],
+      ["Nissan Titan XD", 2018, "5.0"],
+      ["Ford F-350", null, null],
+    ];
+
+    // Act
+    const results = cases.map(([model, year]) => inferEngine(model, year));
+
+    // Assert
+    expect(results).toEqual(cases.map(([, , engine]) => engine));
   });
 });
 

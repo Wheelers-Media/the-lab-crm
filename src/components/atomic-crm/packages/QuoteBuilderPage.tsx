@@ -153,9 +153,11 @@ export const QuoteBuilderPage = () => {
     : "";
   const back = contact ? `/contacts/${contact.id}/show` : "/deals";
   const stage = dealStages.find((s) => s.value === deal.stage)?.label;
+  const engineShown = vehicle?.engine ? "" : ctx.engine ? `${ctx.engine}L` : "";
   const reason =
     [
       vehicleName(vehicle),
+      engineShown,
       ctx.services.map((s) => SERVICE_NAMES[s] ?? s).join(", "),
     ]
       .filter(Boolean)
@@ -236,6 +238,11 @@ export const QuoteBuilderPage = () => {
             addedIds={addedIds}
             reason={reason}
             hasTruck={Boolean(vehicle)}
+            note={
+              ctx.platform && !ctx.engine
+                ? "Add the truck's engine to the job to see engine-specific parts."
+                : undefined
+            }
             onAdd={(pkg) => edit([...lines, lineFromCatalog(pkg)])}
           />
 
