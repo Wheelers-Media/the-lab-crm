@@ -438,7 +438,7 @@
           "type": "registry:component"
         },
         {
-          "path": "src/components/atomic-crm/packages/QuoteSuggestions.tsx",
+          "path": "src/components/atomic-crm/packages/QuoteParts.tsx",
           "type": "registry:component"
         },
         {

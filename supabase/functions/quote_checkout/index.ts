@@ -80,6 +80,13 @@ let cachedToken: { value: string; expiresAt: number } | null = null;
 const accessToken = async (shop: string): Promise<string | null> => {
   const fixed = Deno.env.get("SHOPIFY_ADMIN_TOKEN");
   if (fixed) return fixed;
+  // The permanent token saved by "Connect Shopify" (shopify_connect)
+  const { data: connection } = await supabaseAdmin
+    .from("shop_connections")
+    .select("access_token")
+    .eq("shop", shop)
+    .maybeSingle();
+  if (connection?.access_token) return connection.access_token;
   const clientId = Deno.env.get("SHOPIFY_CLIENT_ID");
   const clientSecret = Deno.env.get("SHOPIFY_CLIENT_SECRET");
   if (!clientId || !clientSecret) return null;
@@ -96,8 +103,13 @@ const accessToken = async (shop: string): Promise<string | null> => {
   });
   const body = await res.json().catch(() => ({}));
   if (!res.ok || !body.access_token) {
+    const said =
+      body.error_description ??
+      body.error ??
+      body.errors ??
+      (Object.keys(body).length ? JSON.stringify(body) : "no reason given");
     throw new CheckoutFailure(
-      `Shopify would not sign the CRM in (${res.status}${body.error ? `: ${body.error_description ?? body.error}` : ""}). Check the app is installed on the store and the Client ID and secret in Supabase are right.`,
+      `Shopify would not sign the CRM in (${res.status}: ${typeof said === "string" ? said : JSON.stringify(said)}). Connect the store once by opening ${Deno.env.get("SUPABASE_URL")}/functions/v1/shopify_connect while signed in to Shopify.`,
     );
   }
   const lifetime = (Number(body.expires_in) || 86399) * 1000;
