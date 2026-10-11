@@ -25,6 +25,13 @@ create table public.packages (
     image_url text,
     -- units in stock across variants; null when Shopify does not track stock
     inventory integer,
+    -- What the website's product page shows: the description as plain text
+    -- (bullets and paragraphs kept), up to eight image links, and the tags
+    -- (platform, "Shipping: Exhaust" and so on)
+    description text,
+    images jsonb not null default '[]'::jsonb,
+    tags text[] not null default '{}',
+    constraint packages_images_is_array check (jsonb_typeof(images) = 'array'),
     constraint packages_variants_is_array check (jsonb_typeof(variants) = 'array'),
     constraint packages_bay_check check (bay is null or bay in ('boutique', 'parts')),
     constraint packages_status_check check (status in ('active', 'unlisted', 'draft', 'archived', 'deleted')),

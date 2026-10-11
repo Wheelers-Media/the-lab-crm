@@ -1,10 +1,12 @@
-import { ImageOff } from "lucide-react";
+import { LayoutGrid, Table2 } from "lucide-react";
+import { useStore } from "ra-core";
 import { Link } from "react-router";
 import { DataTable } from "@/components/admin/data-table";
 import { List } from "@/components/admin/list";
 import { SearchInput } from "@/components/admin/search-input";
 import { SelectInput } from "@/components/admin/select-input";
 import { Card } from "@/components/ui/card";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 import { TopToolbar } from "../layout/TopToolbar";
 import {
@@ -16,81 +18,50 @@ import { useConfigurationContext } from "../root/ConfigurationContext";
 import { QuickFilter } from "../shop/QuickFilter";
 import type { Package } from "../types";
 import { packagePriceLabel } from "./packageModel";
-
-export const LOW_STOCK = 2;
-
-export const ProductThumb = ({
-  pkg,
-  size = 40,
-}: {
-  pkg: Pick<Package, "image_url" | "title">;
-  size?: number;
-}) =>
-  pkg.image_url ? (
-    <img
-      src={pkg.image_url}
-      alt=""
-      width={size}
-      height={size}
-      loading="lazy"
-      className="rounded-sm object-cover bg-muted shrink-0"
-      style={{ width: size, height: size }}
-    />
-  ) : (
-    <span
-      className="grid place-items-center rounded-sm bg-muted text-muted-foreground shrink-0"
-      style={{ width: size, height: size }}
-    >
-      <ImageOff className="size-4" aria-hidden />
-    </span>
-  );
-
-/** "3 in stock", "Out of stock", or nothing when Shopify does not track it. */
-export const stockLabel = (inventory: number | null): string | null =>
-  inventory == null
-    ? null
-    : inventory <= 0
-      ? "Out of stock"
-      : `${inventory} in stock`;
-
-export const StockChip = ({ inventory }: { inventory: number | null }) => {
-  const label = stockLabel(inventory);
-  if (!label) return null;
-  const tone =
-    inventory! <= 0
-      ? "lab-chip-danger"
-      : inventory! <= LOW_STOCK
-        ? "lab-chip-warn"
-        : "lab-chip-bay";
-  return <span className={`lab-chip ${tone}`}>{label}</span>;
-};
-
-export const KindChip = ({ pkg }: { pkg: Pick<Package, "kind" | "bay"> }) =>
-  pkg.kind === "package" ? (
-    <span className="lab-chip lab-chip-boutique">Package</span>
-  ) : (
-    <span
-      className={`lab-chip ${pkg.bay === "parts" ? "lab-chip-parts" : "lab-chip-muted"}`}
-    >
-      Product
-    </span>
-  );
+import { LOW_STOCK } from "./productModel";
+import { ProductGrid } from "./ProductCards";
+import { KindChip, ProductThumb, StockChip } from "./ProductParts";
+import { SyncCatalogButton } from "./SyncCatalogButton";
 
 const useCategoryChoices = () => {
   const { dealCategories } = useConfigurationContext();
   return dealCategories.map((c) => ({ id: c.value, name: c.label }));
 };
 
-const ProductListActions = () => (
-  <TopToolbar>
-    <QuickFilter label="Packages" value={{ kind: "package" }} />
-    <QuickFilter label="Parts and products" value={{ kind: "product" }} />
-    <QuickFilter label="Low stock" value={{ "inventory@lte": LOW_STOCK }} />
-  </TopToolbar>
-);
+type View = "cards" | "table";
+
+const ProductListActions = () => {
+  const [view, setView] = useStore<View>("packages.view", "cards");
+  return (
+    <TopToolbar>
+      <ToggleGroup
+        type="single"
+        variant="outline"
+        size="sm"
+        value={view}
+        onValueChange={(v) => v && setView(v as View)}
+        aria-label="Show products as"
+      >
+        <ToggleGroupItem value="cards" className="px-3" aria-label="Cards">
+          <LayoutGrid className="size-4" />
+          Cards
+        </ToggleGroupItem>
+        <ToggleGroupItem value="table" className="px-3" aria-label="Table">
+          <Table2 className="size-4" />
+          Table
+        </ToggleGroupItem>
+      </ToggleGroup>
+      <SyncCatalogButton />
+      <QuickFilter label="Packages" value={{ kind: "package" }} />
+      <QuickFilter label="Parts and products" value={{ kind: "product" }} />
+      <QuickFilter label="Low stock" value={{ "inventory@lte": LOW_STOCK }} />
+    </TopToolbar>
+  );
+};
 
 /** The Shopify catalog: shop packages and Parts Store products. Read-only. */
 export const ProductList = () => {
+  const [view] = useStore<View>("packages.view", "cards");
   const categories = useCategoryChoices();
   const { dealCategories } = useConfigurationContext();
   const categoryLabel = (value: string | null) =>
@@ -112,77 +83,86 @@ export const ProductList = () => {
         />,
       ]}
       sort={{ field: "title", order: "ASC" }}
-      perPage={50}
+      perPage={view === "cards" ? 48 : 50}
     >
-      <DataTable<Package> bulkActionButtons={false} rowClick="show">
-        <DataTable.Col<Package>
-          source="title"
-          label="Name"
-          render={(p) => (
-            <div className="flex items-center gap-3">
-              <ProductThumb pkg={p} />
-              <div className="min-w-0">
-                <div className="font-medium truncate max-w-md">{p.title}</div>
-                <div className="text-xs text-muted-foreground truncate">
-                  {[p.vendor, p.product_type].filter(Boolean).join(" · ")}
+      {view === "cards" ? (
+        <ProductGrid />
+      ) : (
+        <DataTable<Package> bulkActionButtons={false} rowClick="show">
+          <DataTable.Col<Package>
+            source="title"
+            label="Name"
+            render={(p) => (
+              <div className="flex items-center gap-3">
+                <ProductThumb pkg={p} />
+                <div className="min-w-0">
+                  <div className="font-medium truncate max-w-md">{p.title}</div>
+                  <div className="text-xs text-muted-foreground truncate">
+                    {[p.vendor, p.product_type].filter(Boolean).join(" · ")}
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
-        />
-        <DataTable.Col<Package>
-          source="category"
-          label="Service"
-          render={(p) => (
-            <div className="flex flex-wrap gap-1">
-              <KindChip pkg={p} />
-              <span className="lab-chip lab-chip-muted">
-                {categoryLabel(p.category)}
-              </span>
-            </div>
-          )}
-        />
-        <DataTable.Col<Package>
-          source="price"
-          label="Price"
-          headerClassName="text-right"
-          cellClassName="text-right lab-num"
-          render={(p) => packagePriceLabel(p)}
-        />
-        <DataTable.Col<Package>
-          source="inventory"
-          label="Stock"
-          render={(p) => <StockChip inventory={p.inventory} />}
-        />
-        <DataTable.Col<Package>
-          source="status"
-          label="Shopify"
-          render={(p) =>
-            p.status === "active" ? null : (
-              <span className="lab-chip lab-chip-muted">{p.status}</span>
-            )
-          }
-        />
-      </DataTable>
+            )}
+          />
+          <DataTable.Col<Package>
+            source="category"
+            label="Service"
+            render={(p) => (
+              <div className="flex flex-wrap gap-1">
+                <KindChip pkg={p} />
+                <span className="lab-chip lab-chip-muted">
+                  {categoryLabel(p.category)}
+                </span>
+              </div>
+            )}
+          />
+          <DataTable.Col<Package>
+            source="price"
+            label="Price"
+            headerClassName="text-right"
+            cellClassName="text-right lab-num"
+            render={(p) => packagePriceLabel(p)}
+          />
+          <DataTable.Col<Package>
+            source="inventory"
+            label="Stock"
+            render={(p) => <StockChip inventory={p.inventory} />}
+          />
+          <DataTable.Col<Package>
+            source="status"
+            label="Shopify"
+            render={(p) =>
+              p.status === "active" ? null : (
+                <span className="lab-chip lab-chip-muted">{p.status}</span>
+              )
+            }
+          />
+        </DataTable>
+      )}
     </List>
   );
 };
 
-const ProductCard = ({ pkg }: { pkg: Package }) => (
+const MobileProductCard = ({ pkg }: { pkg: Package }) => (
   <Card className="p-0">
     <Link
       to={`/packages/${pkg.id}/show`}
       className="flex items-center gap-3 p-3"
     >
-      <ProductThumb pkg={pkg} size={48} />
+      <ProductThumb pkg={pkg} size={72} />
       <div className="flex-1 min-w-0">
-        <p className="font-medium line-clamp-2">{pkg.title}</p>
+        <p className="truncate text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          {pkg.vendor || "THE LAB"}
+        </p>
+        <p className="font-medium leading-snug line-clamp-2">{pkg.title}</p>
         <div className="flex flex-wrap items-center gap-1 pt-1">
           <KindChip pkg={pkg} />
           <StockChip inventory={pkg.inventory} />
         </div>
+        <p className="lab-num pt-1 text-sm font-semibold">
+          {packagePriceLabel(pkg)}
+        </p>
       </div>
-      <span className="lab-num text-sm shrink-0">{packagePriceLabel(pkg)}</span>
     </Link>
   </Card>
 );
@@ -207,6 +187,6 @@ export const MobileProductList = () => (
         </div>
       </div>
     }
-    renderItem={(pkg) => <ProductCard pkg={pkg} />}
+    renderItem={(pkg) => <MobileProductCard pkg={pkg} />}
   />
 );

@@ -29,6 +29,10 @@ import {
   QuoteCheckoutError,
   type QuoteCheckoutResult,
 } from "../commons/quoteCheckout";
+import {
+  CatalogSyncError,
+  type CatalogSyncResult,
+} from "../commons/catalogSync";
 import type { CrmDataProvider } from "../types";
 import {
   authProvider as defaultAuthProvider,
@@ -198,6 +202,38 @@ export const createDataProvider = ({
         const start = (page - 1) * perPage;
         return { data: all.slice(start, start + perPage), total: all.length };
       }
+      if (resource === "order_lines") {
+        // The database view that lists one row per order line
+        const { filter = {}, pagination } = params;
+        const wanted = String(filter["name@ilike"] ?? "")
+          .replace(/\*/g, "")
+          .toLowerCase();
+        const orders = db.orders ?? [];
+        const all = orders
+          .flatMap((order) =>
+            order.line_items.map((line, i) => ({
+              id: `${order.id}-${i + 1}`,
+              order_id: order.id,
+              order_number: order.order_number,
+              contact_id: order.contact_id,
+              ordered_at: order.ordered_at,
+              cancelled_at: order.cancelled_at,
+              name: line.name,
+              quantity: line.quantity,
+              price: line.price,
+            })),
+          )
+          .filter(
+            (line) =>
+              !line.cancelled_at && line.name.toLowerCase().includes(wanted),
+          )
+          .sort((a, b) => b.ordered_at.localeCompare(a.ordered_at));
+        const start = (pagination.page - 1) * pagination.perPage;
+        return {
+          data: all.slice(start, start + pagination.perPage),
+          total: all.length,
+        };
+      }
       return baseDataProvider.getList(resource, params);
     },
     unarchiveDeal: async (deal: Deal) => {
@@ -282,6 +318,12 @@ export const createDataProvider = ({
     createQuoteCheckout: async (): Promise<QuoteCheckoutResult> => {
       throw new QuoteCheckoutError(
         "Checkout links are not connected to Shopify yet.",
+        "not_connected",
+      );
+    },
+    syncCatalog: async (): Promise<CatalogSyncResult> => {
+      throw new CatalogSyncError(
+        "The demo is not connected to a Shopify store.",
         "not_connected",
       );
     },

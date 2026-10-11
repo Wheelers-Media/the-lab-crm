@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 
 import type { Package } from "../types";
 import { packagePriceLabel } from "./packageModel";
-import { ProductThumb, StockChip } from "./ProductList";
+import { ProductThumb, StockChip } from "./ProductParts";
 import {
   fitsTruck,
   groupByType,

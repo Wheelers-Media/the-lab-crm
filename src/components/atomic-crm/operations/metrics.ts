@@ -1,6 +1,7 @@
 // Numbers for the home dashboard, computed from plain records so they can be
 // tested without a database.
 import type { Appointment, Deal, Order, ShopifyCheckout, Task } from "../types";
+import { PARTS_NUDGE_DAYS, PICKUP_NUDGE_DAYS } from "../shopfloor/workStatus";
 import { type DateRange, inRange, shopDayKey } from "./shopTime";
 
 export const OPEN_STAGES = ["intake", "qualified", "quoted", "booked"];
@@ -88,6 +89,8 @@ export type AttentionKind =
   | "quotes-waiting"
   | "new-requests"
   | "no-deposit"
+  | "pickups-waiting"
+  | "parts-waiting"
   | "overdue-tasks";
 
 export interface AttentionItem {
@@ -148,6 +151,31 @@ export const needsAttention = ({
       count: unpaid.length,
       oldest: next.start_at,
       detail: next.title,
+    });
+  }
+
+  const waitingFor = (status: "ready" | "waiting_parts", days: number) =>
+    deals.filter(
+      (d) =>
+        d.work_status === status &&
+        !d.archived_at &&
+        d.work_status_changed_at &&
+        t - new Date(d.work_status_changed_at).getTime() >= days * DAY_MS,
+    );
+  const pickups = waitingFor("ready", PICKUP_NUDGE_DAYS);
+  if (pickups.length) {
+    items.push({
+      kind: "pickups-waiting",
+      count: pickups.length,
+      oldest: pickups.map((d) => d.work_status_changed_at!).sort()[0],
+    });
+  }
+  const parts = waitingFor("waiting_parts", PARTS_NUDGE_DAYS);
+  if (parts.length) {
+    items.push({
+      kind: "parts-waiting",
+      count: parts.length,
+      oldest: parts.map((d) => d.work_status_changed_at!).sort()[0],
     });
   }
 
@@ -262,7 +290,7 @@ export interface ProductSales {
 }
 
 // Fees and adjustments that are not products
-const NOT_A_PRODUCT =
+export const NOT_A_PRODUCT =
   /^(shop supplies.*|mechanical shop supplies|shipping.*|duty fees.*|tip|custom sale|test amount)$/i;
 
 export const cleanProductName = (name: string): string =>

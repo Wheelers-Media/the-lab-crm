@@ -17,108 +17,19 @@ import {
   draftOrderPlan,
   type PayMode,
 } from "../_shared/lab/quoteCheckout.ts";
+import {
+  adminAccessToken,
+  ShopifyFailure as CheckoutFailure,
+  shopDomain,
+  shopifyGraphql,
+} from "../_shared/lab/shopifyAdmin.ts";
 import { supabaseAdmin } from "../_shared/supabaseAdmin.ts";
 import { createErrorResponse } from "../_shared/utils.ts";
-
-const API_VERSION = "2025-10";
 
 const json = (body: unknown) =>
   new Response(JSON.stringify(body), {
     headers: { "Content-Type": "application/json", ...corsHeaders },
   });
-
-const shopify = async (
-  shop: string,
-  token: string,
-  query: string,
-  variables: Record<string, unknown>,
-) => {
-  const res = await fetch(
-    `https://${shop}/admin/api/${API_VERSION}/graphql.json`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Shopify-Access-Token": token,
-      },
-      body: JSON.stringify({ query, variables }),
-    },
-  );
-  const body = await res.json().catch(() => ({}));
-  if (!res.ok || body.errors) {
-    const detail = Array.isArray(body.errors)
-      ? body.errors.map((e: { message?: string }) => e.message).join("; ")
-      : typeof body.errors === "string"
-        ? body.errors
-        : JSON.stringify(body.errors ?? body).slice(0, 200);
-    throw new CheckoutFailure(
-      res.status === 401 ||
-        res.status === 403 ||
-        /access denied|scope/i.test(detail)
-        ? `Shopify refused the request (${detail}). The app needs the write_draft_orders and write_customers scopes, released and approved on the store.`
-        : `Shopify error ${res.status}: ${detail}`,
-    );
-  }
-  return body.data;
-};
-
-/** A failure whose message is safe and useful to show the CRM user. */
-class CheckoutFailure extends Error {}
-
-/** "https://xr6pmx-y0.myshopify.com/" or "xr6pmx-y0" -> "xr6pmx-y0.myshopify.com" */
-const shopDomain = (raw: string) => {
-  const host = raw
-    .trim()
-    .replace(/^https?:\/\//, "")
-    .replace(/\/.*$/, "");
-  return host.includes(".") ? host : `${host}.myshopify.com`;
-};
-
-// Client credentials tokens last 24 hours; reuse one until shortly before it ends
-let cachedToken: { value: string; expiresAt: number } | null = null;
-
-const accessToken = async (shop: string): Promise<string | null> => {
-  const fixed = Deno.env.get("SHOPIFY_ADMIN_TOKEN");
-  if (fixed) return fixed;
-  // The permanent token saved by "Connect Shopify" (shopify_connect)
-  const { data: connection } = await supabaseAdmin
-    .from("shop_connections")
-    .select("access_token")
-    .eq("shop", shop)
-    .maybeSingle();
-  if (connection?.access_token) return connection.access_token;
-  const clientId = Deno.env.get("SHOPIFY_CLIENT_ID");
-  const clientSecret = Deno.env.get("SHOPIFY_CLIENT_SECRET");
-  if (!clientId || !clientSecret) return null;
-  if (cachedToken && cachedToken.expiresAt > Date.now())
-    return cachedToken.value;
-  const res = await fetch(`https://${shop}/admin/oauth/access_token`, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      grant_type: "client_credentials",
-      client_id: clientId,
-      client_secret: clientSecret,
-    }),
-  });
-  const body = await res.json().catch(() => ({}));
-  if (!res.ok || !body.access_token) {
-    const said =
-      body.error_description ??
-      body.error ??
-      body.errors ??
-      (Object.keys(body).length ? JSON.stringify(body) : "no reason given");
-    throw new CheckoutFailure(
-      `Shopify would not sign the CRM in (${res.status}: ${typeof said === "string" ? said : JSON.stringify(said)}). Connect the store once by opening ${Deno.env.get("SUPABASE_URL")}/functions/v1/shopify_connect while signed in to Shopify.`,
-    );
-  }
-  const lifetime = (Number(body.expires_in) || 86399) * 1000;
-  cachedToken = {
-    value: body.access_token,
-    expiresAt: Date.now() + lifetime - 10 * 60 * 1000,
-  };
-  return cachedToken.value;
-};
 
 const CREATE = `mutation($input: DraftOrderInput!) {
   draftOrderCreate(input: $input) {
@@ -145,7 +56,7 @@ type Contact = {
 const handle = async (req: Request) => {
   const rawShop = Deno.env.get("SHOPIFY_SHOP");
   const shop = rawShop ? shopDomain(rawShop) : null;
-  const token = shop ? await accessToken(shop) : null;
+  const token = shop ? await adminAccessToken(shop) : null;
   if (!shop || !token) {
     return createErrorResponse(
       503,
@@ -187,7 +98,7 @@ const handle = async (req: Request) => {
     );
   }
 
-  const created = await shopify(shop, token, CREATE, {
+  const created = await shopifyGraphql(shop, token, CREATE, {
     input: {
       email,
       phone: contact?.phone_jsonb?.[0]?.number || undefined,
@@ -210,7 +121,7 @@ const handle = async (req: Request) => {
 
   let emailed = false;
   if (body.email && email) {
-    const sent = await shopify(shop, token, SEND, {
+    const sent = await shopifyGraphql(shop, token, SEND, {
       id: draft.id,
       email: {
         to: email,

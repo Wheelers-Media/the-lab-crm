@@ -70,6 +70,8 @@ export type WebsiteQuote = {
   summary: string;
   source: "quote" | "walkthrough" | "form";
   page: string;
+  /** The customer agreed to the off-road / sanctioned racing use disclaimer. */
+  offroad?: true;
 };
 
 export type WebsiteLead = {
@@ -85,6 +87,7 @@ export type WebsiteLead = {
   estimateText: string;
   details: string;
   smsConsent: boolean;
+  offroadAgreed: boolean;
   page: string;
   quote: WebsiteQuote;
 };
@@ -203,6 +206,7 @@ export const parseWebsiteLead = (body: unknown): ParseResult<WebsiteLead> => {
       estimateText,
       details,
       smsConsent: b.sms_consent === true,
+      offroadAgreed: b.offroad_ack === true,
       page: clip(b.page, MAX.short),
       quote: {
         total: estimateText,
@@ -211,6 +215,7 @@ export const parseWebsiteLead = (body: unknown): ParseResult<WebsiteLead> => {
         summary: clip(b.summary, MAX.text),
         source,
         page: clip(b.page, MAX.short),
+        ...(b.offroad_ack === true ? { offroad: true as const } : {}),
       },
     },
   };

@@ -156,6 +156,8 @@ Deno.serve(async (req: Request) => {
       lead.details,
       lead.page && `Sent from: ${lead.page}`,
       `SMS consent: ${lead.smsConsent ? "yes" : "no"}`,
+      lead.offroadAgreed &&
+        "Off-road disclaimer: agreed (off-road and sanctioned racing use only)",
     ].filter(Boolean);
     await addDealNote(dealId, lines.join("\n\n"));
 

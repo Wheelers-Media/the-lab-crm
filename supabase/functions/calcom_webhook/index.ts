@@ -1,7 +1,9 @@
 // Receives Cal.com booking webhooks and keeps the CRM calendar and pipeline in
 // step: a booking saves an appointment, moves the customer's deal to Booked
 // and adds a drop-off task; reschedules move both; cancellations free the slot
-// and ask Eric to follow up.
+// and ask Eric to follow up. The $50 deposit is paid in the Shopify store: the
+// shopify_webhook marks a booking paid when the order arrives, and a booking
+// made after the deposit claims it here.
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { supabaseAdmin } from "../_shared/supabaseAdmin.ts";
 import { createErrorResponse } from "../_shared/utils.ts";
@@ -11,6 +13,7 @@ import {
   type CalBooking,
 } from "../_shared/lab/parse.ts";
 import { verifyCalSignature } from "../_shared/lab/signatures.ts";
+import { pickByCustomer } from "../_shared/lab/depositMatch.ts";
 import {
   addDealNote,
   createDeal,
@@ -20,8 +23,10 @@ import {
   finishEvent,
   findOpenDeal,
   findOrCreateContact,
+  findUnclaimedDeposits,
   moveDeal,
   recordEvent,
+  shopTimeText,
 } from "../_shared/lab/crm.ts";
 
 const SOURCE = "calcom";
@@ -30,16 +35,6 @@ const ok = (body: Record<string, unknown> = { ok: true }) =>
   new Response(JSON.stringify(body), {
     status: 200,
     headers: { "Content-Type": "application/json" },
-  });
-
-const whenText = (iso: string) =>
-  new Date(iso).toLocaleString("en-CA", {
-    timeZone: "America/Dawson_Creek",
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
   });
 
 const taskTextFor = (b: CalBooking) =>
@@ -51,10 +46,45 @@ const findAppointment = async (uid: string) => {
   if (!uid) return null;
   const { data } = await supabaseAdmin
     .from("appointments")
-    .select("id, task_id, deal_id, contact_id, vehicle_id, vehicle")
+    .select(
+      "id, task_id, deal_id, contact_id, vehicle_id, vehicle, deposit_paid",
+    )
     .eq("external_id", uid)
     .limit(1);
   return data?.[0] ?? null;
+};
+
+// Ties an earlier deposit to this booking: the order points at the booking,
+// the job is Converted (unless the deposit already did that when it was paid)
+// and the "check which booking it belongs to" task is closed.
+const claimDeposit = async (
+  deposit: {
+    id: number;
+    orderNumber: string;
+    contactId: number | null;
+    dealId: number | null;
+  },
+  appointmentId: number,
+  dealId: number,
+) => {
+  const { error } = await supabaseAdmin
+    .from("orders")
+    .update({ appointment_id: appointmentId, deal_id: dealId })
+    .eq("id", deposit.id);
+  if (error) throw new Error(`link deposit to booking: ${error.message}`);
+  if (deposit.dealId !== dealId) await moveDeal(dealId, "won");
+  await addDealNote(
+    dealId,
+    `$50 booking deposit was already paid (Shopify order ${deposit.orderNumber}).`,
+  );
+  if (deposit.contactId) {
+    await supabaseAdmin
+      .from("tasks")
+      .update({ done_date: new Date().toISOString() })
+      .eq("contact_id", deposit.contactId)
+      .is("done_date", null)
+      .like("text", `Deposit paid (order ${deposit.orderNumber})%`);
+  }
 };
 
 const handleCreated = async (b: CalBooking) => {
@@ -62,19 +92,29 @@ const handleCreated = async (b: CalBooking) => {
   const contact = await findOrCreateContact(b.contact, ["Booked online"]);
   if (!contact) throw new Error("Booking has no email or phone");
 
-  let deal = await findOpenDeal(contact.id);
-  const dealId = deal
-    ? deal.id
-    : await createDeal({
-        name: b.title,
-        contactId: contact.id,
-        stage: "booked",
-        category: b.category,
-        amount: 0,
-        leadSource: "cal.com",
-      });
-  if (deal && deal.stage !== "booked") await moveDeal(deal.id, "booked");
-  deal = null;
+  // A deposit paid before the booking was made: by this customer, else by name
+  const deposit = pickByCustomer(await findUnclaimedDeposits(), {
+    contactId: contact.id,
+    name: [b.contact.firstName, b.contact.lastName].filter(Boolean).join(" "),
+  });
+  const paid = deposit.kind === "match" ? deposit.item : null;
+
+  const deal = await findOpenDeal(contact.id);
+  // The job the deposit was paid against has already moved to Converted, so it
+  // is no longer "open": it still gets the booking
+  const dealId =
+    paid?.dealId ??
+    deal?.id ??
+    (await createDeal({
+      name: b.title,
+      contactId: contact.id,
+      stage: "booked",
+      category: b.category,
+      amount: 0,
+      leadSource: "cal.com",
+    }));
+  if (deal && deal.id === dealId && deal.stage !== "booked")
+    await moveDeal(deal.id, "booked");
 
   const taskId = await createTask(
     contact.id,
@@ -83,26 +123,32 @@ const handleCreated = async (b: CalBooking) => {
     b.startAt,
   );
   const vehicle = await defaultVehicleFor(contact.id);
-  const { error } = await supabaseAdmin.from("appointments").insert({
-    external_id: b.uid,
-    source: SOURCE,
-    contact_id: contact.id,
-    deal_id: dealId,
-    task_id: taskId,
-    title: b.title,
-    resource: b.resource,
-    start_at: b.startAt,
-    end_at: b.endAt,
-    status: "booked",
-    notes: b.notes || null,
-    vehicle_id: vehicle?.id ?? null,
-    vehicle: vehicle?.label || null,
-    sales_id: await defaultSalesId(),
-  });
+  const { data: created, error } = await supabaseAdmin
+    .from("appointments")
+    .insert({
+      external_id: b.uid,
+      source: SOURCE,
+      contact_id: contact.id,
+      deal_id: dealId,
+      task_id: taskId,
+      title: b.title,
+      resource: b.resource,
+      start_at: b.startAt,
+      end_at: b.endAt,
+      status: "booked",
+      deposit_paid: paid != null,
+      notes: b.notes || null,
+      vehicle_id: vehicle?.id ?? null,
+      vehicle: vehicle?.label || null,
+      sales_id: await defaultSalesId(),
+    })
+    .select("id")
+    .single();
   if (error) throw new Error(`save appointment: ${error.message}`);
+  if (paid) await claimDeposit(paid, created.id, dealId);
   await addDealNote(
     dealId,
-    `Booked on Cal.com: ${b.title}, ${whenText(b.startAt)}.${b.notes ? `\n\n${b.notes}` : ""}`,
+    `Booked on Cal.com: ${b.title}, ${shopTimeText(b.startAt)}.${b.notes ? `\n\n${b.notes}` : ""}`,
   );
 };
 
@@ -124,6 +170,8 @@ const handleRescheduled = async (b: CalBooking) => {
     task_id: previous.task_id,
     vehicle_id: previous.vehicle_id,
     vehicle: previous.vehicle,
+    // A deposit paid for the old time still covers the new one
+    deposit_paid: previous.deposit_paid ?? false,
     title: b.title,
     resource: b.resource,
     start_at: b.startAt,
@@ -142,7 +190,7 @@ const handleRescheduled = async (b: CalBooking) => {
   if (previous.deal_id)
     await addDealNote(
       previous.deal_id,
-      `Rescheduled on Cal.com to ${whenText(b.startAt)}.`,
+      `Rescheduled on Cal.com to ${shopTimeText(b.startAt)}.`,
     );
 };
 
@@ -159,13 +207,13 @@ const handleCancelled = async (b: CalBooking) => {
     await createTask(
       appointment.contact_id,
       "call",
-      `Booking cancelled (${b.title}, ${whenText(b.startAt)}). Follow up to rebook.`,
+      `Booking cancelled (${b.title}, ${shopTimeText(b.startAt)}). Follow up to rebook.`,
     );
   }
   if (appointment.deal_id)
     await addDealNote(
       appointment.deal_id,
-      `Cancelled on Cal.com: ${whenText(b.startAt)}.`,
+      `Cancelled on Cal.com: ${shopTimeText(b.startAt)}.`,
     );
 };
 

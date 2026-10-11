@@ -3,7 +3,7 @@
 What this turns on:
 
 - **Orders**: every paid order lands on the customer's contact (purchases and lifetime spend in the sidebar) and in the Orders tab.
-- **$50 deposit**: a paid deposit moves the customer's open deal to Converted and marks their booked appointment as paid.
+- **$50 deposit**: a paid deposit is matched to the booking it pays for: the customer's own booking first, then a booking under the same name, so a deposit paid with a different email or phone still finds it (and is added to that customer instead of creating a second one). That booking shows as paid and its job moves to Converted. If nobody booked under the name, or two customers share it, a task asks you to check which booking it belongs to. A booking made after the deposit was paid picks the deposit up automatically.
 - **Abandoned carts**: carts are stored in the Abandoned carts tab. Any cart of $2,000 or more left unpaid for an hour gets a "Call" task for Eric.
 
 Do the steps in order. Steps 1 to 3 take about ten minutes.
@@ -73,3 +73,17 @@ The CSV holds customer names, emails and phone numbers. Delete it when you're do
 ## Matching customers
 
 A Shopify customer is matched to an existing contact by email, then phone. If neither matches, a new contact is created and tagged "Shopify customer" plus what they bought ("Tint", "Detailing", "Diesel parts"...). Existing contacts only gain details; nothing already on them is overwritten.
+
+## Product details and cost
+
+The Packages screen shows each product as a card, and the product page shows its pictures, description, tags, SKUs, sale price, weight and how well it sells. New and changed products arrive on their own through the product webhooks. Products copied before those details were kept get them with **Packages -> Sync from Shopify**, which copies the whole catalog in one go (a few seconds for a few hundred products). It needs the CRM connected to Shopify (the "Connect Shopify" step) and the `read_products` scope.
+
+**Cost and margin.** Shopify keeps what you pay for each item (Settings -> Products -> Cost per item, or on the variant). The CRM can show cost and margin per item, and a margin on the cards, once the app is allowed to read it:
+
+1. Dev Dashboard -> the CRM app -> a new version -> add the `read_inventory` scope next to the ones already there -> release it.
+2. Open the `shopify_connect` link once more, signed in to Shopify, and approve the new permission.
+3. Press **Sync from Shopify**. The message says how many products have a cost.
+
+Only products with a cost filled in on Shopify show one (today, Speed Demon and Diamond LED do; Polar Diesel and Fish Tuning do not). Fill in the rest in Shopify and sync again.
+
+Without `read_inventory` everything else still syncs; the message just says cost is not available. Weights also come from this permission; products updated through the webhook get their weight regardless.

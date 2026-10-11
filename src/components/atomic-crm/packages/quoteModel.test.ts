@@ -10,6 +10,7 @@ import {
   quoteContext,
   quoteTotals,
   suggestProducts,
+  needsOffroadAck,
 } from "./quoteModel";
 
 let nextId = 1;
@@ -403,5 +404,32 @@ describe("quoteTotals", () => {
 
     // Assert
     expect(totals).toEqual({ parts: 0, labour: 900, total: 900 });
+  });
+});
+
+describe("needsOffroadAck", () => {
+  const delete_pipes = [{ title: "Cummins 6.7L Delete Pipes" }];
+
+  it("warns when emissions parts are quoted and nothing shows the customer agreed", () => {
+    expect(needsOffroadAck(delete_pipes, null)).toBe(true);
+    expect(
+      needsOffroadAck([{ title: "DPF delete kit" }], { offroad: false }),
+    ).toBe(true);
+  });
+
+  it("stays quiet once the website recorded it, or a note says they agreed in person", () => {
+    expect(needsOffroadAck(delete_pipes, { offroad: true })).toBe(false);
+    expect(
+      needsOffroadAck(delete_pipes, null, [
+        "Off-road disclaimer acknowledged by the customer.",
+      ]),
+    ).toBe(false);
+  });
+
+  it("stays quiet for quotes with nothing emissions-related", () => {
+    expect(
+      needsOffroadAck([{ title: "Ceramic tint" }, { title: "Labour" }], null),
+    ).toBe(false);
+    expect(needsOffroadAck([], null)).toBe(false);
   });
 });

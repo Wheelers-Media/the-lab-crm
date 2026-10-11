@@ -94,7 +94,12 @@ create table public.deals (
     quote jsonb,
     -- The latest Shopify checkout link sent for the job's quote (quote_checkout)
     checkout jsonb,
-    constraint deals_packages_is_array check (jsonb_typeof(packages) = 'array')
+    -- Where the vehicle is in the shop once it has arrived: in_shop,
+    -- waiting_parts, ready (for pickup) or picked_up. Empty until then.
+    work_status text,
+    work_status_changed_at timestamp with time zone,
+    constraint deals_packages_is_array check (jsonb_typeof(packages) = 'array'),
+    constraint deals_work_status_check check (work_status is null or work_status in ('in_shop', 'waiting_parts', 'ready', 'picked_up'))
 );
 
 create table public.deal_notes (

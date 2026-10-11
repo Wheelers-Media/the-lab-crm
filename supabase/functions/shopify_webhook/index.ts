@@ -1,7 +1,10 @@
 // Receives Shopify webhooks (Order payment, Checkout creation/update,
 // Product creation/update/deletion).
-// Paid orders are saved to the orders table and the customer's history; a
-// $50 booking deposit moves the customer's open deal to Converted.
+// Paid orders are saved to the orders table and the customer's history. A
+// $50 booking deposit is matched to the booking it pays for (the customer's
+// own booking first, then a booking under the same name, so a deposit paid
+// with another email or phone still finds it); the booking is marked paid and
+// its deal moves to Converted.
 // Checkouts are stored so the follow-up rules can flag big abandoned carts.
 // Products keep the CRM's catalog (packages and parts) in step with Shopify.
 // "history/order" is our own topic, sent by scripts/shopify-backfill.ts: past
@@ -16,6 +19,7 @@ import {
   type ShopifyOrder,
 } from "../_shared/lab/parse.ts";
 import { verifyShopifySignature } from "../_shared/lab/signatures.ts";
+import { type Match, pickByCustomer } from "../_shared/lab/depositMatch.ts";
 import { packageFromProduct } from "../_shared/lab/packages.ts";
 import {
   addContactNote,
@@ -26,8 +30,11 @@ import {
   findContact,
   findOpenDeal,
   findOrCreateContact,
+  findUnpaidBookings,
   moveDeal,
   recordEvent,
+  shopTimeText,
+  type UnpaidBooking,
 } from "../_shared/lab/crm.ts";
 
 const SOURCE = "shopify";
@@ -45,6 +52,9 @@ const ok = (body: Record<string, unknown> = { ok: true }) =>
     headers: { "Content-Type": "application/json" },
   });
 
+const payerName = (order: ShopifyOrder) =>
+  [order.contact.firstName, order.contact.lastName].filter(Boolean).join(" ");
+
 const handleOrder = async (
   order: ShopifyOrder,
   { history = false }: { history?: boolean } = {},
@@ -55,34 +65,72 @@ const handleOrder = async (
     .eq("shopify_order_id", order.shopifyOrderId)
     .limit(1);
   const isNew = !existing?.[0];
+  // A past deposit belongs to a job that is long done: never move today's deals
+  const isLiveDeposit = order.isDeposit && isNew && !history;
+
+  // Find the booking this deposit pays for before a contact is made for the
+  // payer: their own customer record first, then the name on the booking
+  let match: Match<UnpaidBooking> = { kind: "none" };
+  if (isLiveDeposit) {
+    const known = await findContact(order.contact);
+    match = pickByCustomer(await findUnpaidBookings(), {
+      contactId: known?.id ?? null,
+      name: payerName(order),
+    });
+  }
+  const booking = match.kind === "match" ? match.item : null;
 
   const contact = await findOrCreateContact(
     order.contact,
     ["Shopify customer", ...order.categories],
     history ? order.orderedAt : undefined,
+    booking?.contactId ?? undefined,
   );
   let dealId: number | null = null;
+  let appointmentId: number | null = booking?.id ?? null;
 
-  // A past deposit belongs to a job that is long done: never move today's deals
-  if (order.isDeposit && contact && isNew && !history) {
-    const deal = await findOpenDeal(contact.id);
-    if (deal) {
-      dealId = deal.id;
-      await moveDeal(deal.id, "won");
+  if (isLiveDeposit && contact) {
+    const dealToMove =
+      booking?.dealId ?? (await findOpenDeal(contact.id))?.id ?? null;
+    if (dealToMove) {
+      dealId = dealToMove;
+      await moveDeal(dealToMove, "won");
       await addDealNote(
-        deal.id,
-        `$50 booking deposit paid (Shopify order ${order.orderNumber}).`,
+        dealToMove,
+        `$50 booking deposit paid (Shopify order ${order.orderNumber}).` +
+          (booking && match.kind === "match" && match.by === "name"
+            ? ` Matched to the booking on ${shopTimeText(booking.when)} by the customer's name: it was paid with a different email or phone.`
+            : ""),
       );
-      await supabaseAdmin
-        .from("appointments")
-        .update({ deposit_paid: true })
-        .eq("deal_id", deal.id)
-        .eq("status", "booked");
-    } else {
+    }
+    // The matched booking, else the booked appointment on the job that moved
+    const paid = booking
+      ? supabaseAdmin
+          .from("appointments")
+          .update({ deposit_paid: true })
+          .eq("id", booking.id)
+      : dealToMove
+        ? supabaseAdmin
+            .from("appointments")
+            .update({ deposit_paid: true })
+            .eq("deal_id", dealToMove)
+            .eq("status", "booked")
+        : null;
+    if (paid) {
+      const { data: marked, error } = await paid.select("id");
+      if (error) throw new Error(`mark deposit paid: ${error.message}`);
+      appointmentId ??= marked?.[0]?.id ?? null;
+    }
+    if (!booking && !dealToMove) {
+      // The order number leads the text so a later booking can close this task
       await createTask(
         contact.id,
         "deposit",
-        `Deposit paid (order ${order.orderNumber}) but no open deal matched. Check which booking it belongs to.`,
+        `Deposit paid (order ${order.orderNumber}) by ${payerName(order) || "an unknown payer"}, ${
+          match.kind === "ambiguous"
+            ? "but several bookings share that name"
+            : "but no booking matched"
+        }. Check which booking it belongs to.`,
       );
     }
   }
@@ -105,6 +153,7 @@ const handleOrder = async (
     cancelled_at: order.cancelledAt,
     sales_id: await defaultSalesId(),
     ...(dealId ? { deal_id: dealId } : {}),
+    ...(appointmentId ? { appointment_id: appointmentId } : {}),
   };
   const { error } = await supabaseAdmin
     .from("orders")

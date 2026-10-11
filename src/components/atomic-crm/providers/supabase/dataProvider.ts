@@ -11,6 +11,10 @@ import {
   type QuoteCheckoutMode,
   type QuoteCheckoutResult,
 } from "../commons/quoteCheckout";
+import {
+  CatalogSyncError,
+  type CatalogSyncResult,
+} from "../commons/catalogSync";
 import type {
   ContactNote,
   Deal,
@@ -306,6 +310,23 @@ const getDataProviderWithCustomMethods = () => {
         );
       }
       return data as QuoteCheckoutResult;
+    },
+    // Copies the whole Shopify catalog (descriptions, pictures, tags, cost)
+    async syncCatalog(): Promise<CatalogSyncResult> {
+      const { data, error } = await getSupabaseClient().functions.invoke(
+        "catalog_sync",
+        { method: "POST", body: {} },
+      );
+      if (error) {
+        const body = await (error as { context?: Response }).context
+          ?.json()
+          .catch(() => null);
+        throw new CatalogSyncError(
+          body?.message ?? "Could not sync the catalog.",
+          body?.code,
+        );
+      }
+      return data as CatalogSyncResult;
     },
     async mergeContacts(sourceId: Identifier, targetId: Identifier) {
       const { data, error } = await getSupabaseClient().functions.invoke(

@@ -49,6 +49,26 @@ describe("parseWebsiteLead", () => {
     sms_consent: true,
   };
 
+  it("records that the customer agreed to the off-road disclaimer, only when they did", () => {
+    const agreed = parseWebsiteLead({
+      ...base,
+      form: "build",
+      offroad_ack: true,
+    });
+    const notAgreed = parseWebsiteLead({ ...base, form: "build" });
+    const wrongType = parseWebsiteLead({
+      ...base,
+      form: "build",
+      offroad_ack: "yes",
+    });
+
+    expect(agreed.ok && agreed.value.offroadAgreed).toBe(true);
+    expect(agreed.ok && agreed.value.quote.offroad).toBe(true);
+    expect(notAgreed.ok && notAgreed.value.offroadAgreed).toBe(false);
+    expect(notAgreed.ok && "offroad" in notAgreed.value.quote).toBe(false);
+    expect(wrongType.ok && wrongType.value.offroadAgreed).toBe(false);
+  });
+
   it("keeps the vehicle's year, make and model apart for the customer's profile", () => {
     const result = parseWebsiteLead({
       ...base,

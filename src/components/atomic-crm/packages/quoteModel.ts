@@ -374,3 +374,26 @@ export const searchCatalog = (
     .sort((a, b) => rank(a) - rank(b) || a.title.localeCompare(b.title))
     .slice(0, limit);
 };
+
+// Equipment the website's off-road disclaimer is about: emissions parts and
+// the exhaust and crankcase work that goes with them
+const EMISSIONS_PART = /\b(dpf|def|egr|scr|ccv)\b|delete|downpipe|emissions/i;
+
+/** Whether the quote includes emissions-related parts. */
+export const hasEmissionsParts = (
+  lines: Array<Pick<DealPackageLine, "title">> | null | undefined,
+): boolean => (lines ?? []).some((l) => EMISSIONS_PART.test(l.title));
+
+/**
+ * Whether to warn: the quote has emissions-related parts and nothing on the
+ * job shows the customer agreed they are for off-road and sanctioned racing
+ * use only (the website form records it; a note records it in person).
+ */
+export const needsOffroadAck = (
+  lines: Array<Pick<DealPackageLine, "title">> | null | undefined,
+  quote: Pick<WebsiteQuote, "offroad"> | null | undefined,
+  noteTexts: string[] = [],
+): boolean =>
+  hasEmissionsParts(lines) &&
+  !quote?.offroad &&
+  !noteTexts.some((t) => /off-?road (disclaimer|acknowledg)/i.test(t));

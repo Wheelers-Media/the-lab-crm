@@ -2,7 +2,7 @@ import { generateCompanies } from "./companies";
 import { generateContactNotes } from "./contactNotes";
 import { generateContacts } from "./contacts";
 import { generateDealNotes } from "./dealNotes";
-import { generateDeals } from "./deals";
+import { generateDeals, generateStageHistory } from "./deals";
 import { finalize } from "./finalize";
 import { generateSales } from "./sales";
 import {
@@ -39,6 +39,7 @@ export default (): Db => {
     );
     deal.vehicle_id = vehicle?.id ?? null;
   });
+  db.deal_stage_history = generateStageHistory(db.deals);
   db.deal_notes = generateDealNotes(db);
   db.tasks = generateTasks(db);
   db.orders = generateOrders(db);

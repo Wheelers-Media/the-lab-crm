@@ -5,7 +5,9 @@ import {
   ClipboardList,
   FileClock,
   Inbox,
+  PackageCheck,
   ShoppingCart,
+  Wrench,
 } from "lucide-react";
 import type { ComponentType } from "react";
 import { Link } from "react-router";
@@ -176,6 +178,26 @@ const ATTENTION: Record<
     to: "/calendar",
     title: (i) =>
       i.count === 1 ? "Booked, no deposit" : `${i.count} bookings, no deposit`,
+  },
+  "pickups-waiting": {
+    icon: PackageCheck,
+    chip: "lab-chip-warn",
+    action: "Text",
+    to: "/shop-floor",
+    title: (i) =>
+      i.count === 1
+        ? "1 vehicle ready 2+ days"
+        : `${i.count} vehicles ready 2+ days`,
+  },
+  "parts-waiting": {
+    icon: Wrench,
+    chip: "lab-chip-muted",
+    action: "Chase",
+    to: "/shop-floor",
+    title: (i) =>
+      i.count === 1
+        ? "1 vehicle waiting on parts 5+ days"
+        : `${i.count} vehicles waiting on parts 5+ days`,
   },
   "new-requests": {
     icon: Inbox,

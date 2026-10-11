@@ -188,7 +188,13 @@ export type Deal = {
   packages?: DealPackageLine[];
   quote?: WebsiteQuote | null;
   checkout?: DealCheckout | null;
+  /** Where the vehicle is once it has arrived; empty before that. */
+  work_status?: WorkStatus | null;
+  work_status_changed_at?: string | null;
 } & Pick<RaRecord, "id">;
+
+/** Where a vehicle is in the shop (see shopfloor/workStatus.ts). */
+export type WorkStatus = "in_shop" | "waiting_parts" | "ready" | "picked_up";
 
 /** The latest Shopify checkout link made for the job's quote. */
 export type DealCheckout = {
@@ -221,6 +227,8 @@ export type WebsiteQuote = {
   summary: string;
   source: "quote" | "walkthrough" | "form";
   page: string;
+  /** The customer agreed to the off-road / sanctioned racing use disclaimer. */
+  offroad?: boolean;
 };
 
 /** The Shopify catalog in the CRM (shopify_webhook keeps it in sync). */
@@ -239,6 +247,11 @@ export type Package = {
     price: number;
     sku?: string;
     inventory?: number | null;
+    /** The crossed-out price, when Shopify shows a sale. */
+    compare_at?: number;
+    weight_kg?: number;
+    /** What the shop pays for it, when Shopify shares it with the CRM. */
+    cost?: number;
   }>;
   status: "active" | "unlisted" | "draft" | "archived" | "deleted";
   shopify_updated_at: string | null;
@@ -250,6 +263,10 @@ export type Package = {
   image_url: string | null;
   /** Units in stock; null when Shopify does not track stock */
   inventory: number | null;
+  /** The description as plain text, bullets kept. */
+  description?: string;
+  images?: Array<{ url: string; alt?: string }>;
+  tags?: string[];
 } & Pick<RaRecord, "id">;
 
 export type DealNote = {

@@ -62,6 +62,34 @@ const EXTRA: Array<{
   },
 ];
 
+// A tinted square with the product's initials, as an inline picture
+const BACKDROPS = ["#16324f", "#3b2a1a", "#1f3b2d", "#3b1f33", "#2a2a40"];
+const demoImage = (title: string, index: number) => {
+  const initials = title
+    .split(/\s+/)
+    .filter((w) => /^[A-Za-z]/.test(w))
+    .slice(0, 2)
+    .map((w) => w[0].toUpperCase())
+    .join("");
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><rect width="400" height="400" fill="${BACKDROPS[index % BACKDROPS.length]}"/><text x="200" y="235" font-family="sans-serif" font-size="140" font-weight="700" fill="#ffffff" fill-opacity="0.85" text-anchor="middle">${initials}</text></svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+};
+
+const DESCRIPTION: Record<string, string> = {
+  "diesel-parts":
+    "Built for hard-working diesel trucks.\n\nTechnical Specifications:\n\n• T409 stainless steel\n• Direct bolt-on fit\n• Hardware included\n\nWARNING: Designed and intended strictly for Off-Road and Sanctioned Racing Use Only.",
+  tuning:
+    "Tune and monitor your truck from your phone.\n\nFeatures:\n\n• Custom tune files\n• Live gauges\n• Data logging",
+  lighting:
+    "Bright, durable lighting.\n\nTechnical Specifications:\n\n• 5,000 lumens\n• Weatherproof\n• Plug and play",
+};
+
+const TAGS: Record<string, string[]> = {
+  "diesel-parts": ["duramax", "exhaust", "Shipping: Exhaust"],
+  tuning: ["tuning", "Shipping: Standard"],
+  lighting: ["lighting", "Shipping: Standard"],
+};
+
 export const generatePackages = (): Package[] => {
   const now = new Date().toISOString();
   const fromOrders = CATALOGUE.map((item) => {
@@ -106,6 +134,17 @@ export const generatePackages = (): Package[] => {
         title: "Default Title",
         price: p.price,
         inventory: p.inventory,
+        ...(p.kind === "product"
+          ? {
+              sku: `LAB-${1000 + id}`,
+              // Some products have a known cost, some do not (like the real store)
+              ...(id % 2 === 0 ? { cost: Math.round(p.price * 0.62) } : {}),
+              weight_kg: 1 + (id % 5) * 4,
+              ...(id % 3 === 0
+                ? { compare_at: Math.round(p.price * 1.15) }
+                : {}),
+            }
+          : {}),
       },
     ],
     status: "active",
@@ -114,7 +153,13 @@ export const generatePackages = (): Package[] => {
     kind: p.kind,
     product_type: null,
     handle: null,
-    image_url: null,
+    image_url: p.kind === "product" ? demoImage(p.title, id) : null,
     inventory: p.inventory,
+    description: DESCRIPTION[p.category] ?? "",
+    images:
+      p.kind === "product"
+        ? [{ url: demoImage(p.title, id) }, { url: demoImage(p.title, id + 1) }]
+        : [],
+    tags: TAGS[p.category] ?? [],
   }));
 };

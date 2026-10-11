@@ -32,6 +32,7 @@ import { DealPackagesShow } from "../packages/DealPackagesShow";
 import { ContactList } from "./ContactList";
 import { DealStageSelect } from "./DealStageSelect";
 import { findDealLabel, formatISODateString } from "./dealUtils";
+import { WorkStatusPanel } from "../shopfloor/WorkStatusPanel";
 
 export const DealShow = ({ open, id }: { open: boolean; id?: string }) => {
   const redirect = useRedirect();
@@ -158,6 +159,8 @@ const DealShowContent = () => {
               )}
             </div>
           </div>
+
+          {record.archived_at ? null : <WorkStatusPanel deal={record} />}
 
           {!!record.contact_ids?.length && (
             <div className="my-4 sm:m-4">

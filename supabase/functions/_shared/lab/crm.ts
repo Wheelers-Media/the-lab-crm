@@ -1,6 +1,7 @@
 // Database operations shared by THE LAB connectors. Runs with the service role.
 import { supabaseAdmin } from "../supabaseAdmin.ts";
 import type { ContactInput } from "./parse.ts";
+import type { Candidate } from "./depositMatch.ts";
 
 const TAG_COLORS = [
   "#bcd4e6",
@@ -13,6 +14,17 @@ const TAG_COLORS = [
 
 // Deal stages that are still in progress (won = Converted, lost = Not now)
 export const OPEN_STAGES = ["intake", "qualified", "quoted", "booked"];
+
+/** "Mon, Oct 13, 2:00 p.m." in the shop's time zone. */
+export const shopTimeText = (iso: string): string =>
+  new Date(iso).toLocaleString("en-CA", {
+    timeZone: "America/Dawson_Creek",
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 
 const fail = (context: string, error: { message: string } | null): never => {
   throw new Error(`${context}: ${error?.message ?? "unknown error"}`);
@@ -163,6 +175,16 @@ export const findContact = async (
   return null;
 };
 
+const findContactById = async (id: number): Promise<ContactRow | null> => {
+  const { data, error } = await supabaseAdmin
+    .from("contacts")
+    .select(CONTACT_FIELDS)
+    .eq("id", id)
+    .limit(1);
+  if (error) fail("find contact by id", error);
+  return (data?.[0] as ContactRow) ?? null;
+};
+
 /**
  * Finds the contact by email, then phone. Creates one when there is no match.
  * Existing contacts only gain information (a missing name, email, phone or tag);
@@ -173,11 +195,17 @@ export const findOrCreateContact = async (
   tagNames: string[] = [],
   // When the customer was seen; history imports pass the order date
   seenAt: string = new Date().toISOString(),
+  // A customer already identified another way (a deposit matched to a booking
+  // by name): the email and phone used to pay are added to their record
+  // instead of creating a second customer
+  contactId?: number,
 ): Promise<{ id: number; created: boolean } | null> => {
   if (!input.email && !input.phone && !input.firstName && !input.lastName)
     return null;
   const tagIds = tagNames.length ? await ensureTagIds(tagNames) : [];
-  const existing = await findContact(input);
+  const existing = contactId
+    ? ((await findContactById(contactId)) ?? (await findContact(input)))
+    : await findContact(input);
 
   if (existing) {
     const emails = existing.email_jsonb ?? [];
@@ -472,4 +500,87 @@ export const noteContactProfile = async (
       .eq("id", contactId);
     if (error) fail("update contact profile", error);
   }
+};
+
+/** How the contact embedded in a row reads: PostgREST returns an object or a list. */
+type EmbeddedContact =
+  | { first_name: string | null; last_name: string | null }
+  | Array<{ first_name: string | null; last_name: string | null }>
+  | null;
+
+const embeddedName = (contact: EmbeddedContact): string => {
+  const c = Array.isArray(contact) ? contact[0] : contact;
+  return [c?.first_name, c?.last_name].filter(Boolean).join(" ");
+};
+
+export type UnpaidBooking = Candidate & { dealId: number | null };
+
+/** Bookings that are still to come (or only just started) and have no deposit yet. */
+export const findUnpaidBookings = async (): Promise<UnpaidBooking[]> => {
+  const since = new Date(Date.now() - 24 * 3_600_000).toISOString();
+  const { data, error } = await supabaseAdmin
+    .from("appointments")
+    .select(
+      "id, deal_id, contact_id, start_at, contacts(first_name, last_name)",
+    )
+    .eq("status", "booked")
+    .eq("deposit_paid", false)
+    .gte("start_at", since)
+    .order("start_at")
+    .limit(500);
+  if (error) fail("find unpaid bookings", error);
+  return (
+    (data ?? []) as unknown as Array<{
+      id: number;
+      deal_id: number | null;
+      contact_id: number | null;
+      start_at: string;
+      contacts: EmbeddedContact;
+    }>
+  ).map((row) => ({
+    id: row.id,
+    contactId: row.contact_id,
+    dealId: row.deal_id,
+    name: embeddedName(row.contacts),
+    when: row.start_at,
+  }));
+};
+
+export type UnclaimedDeposit = Candidate & {
+  dealId: number | null;
+  orderNumber: string;
+};
+
+/** Deposits paid in the last two weeks that no booking has claimed yet. */
+export const findUnclaimedDeposits = async (): Promise<UnclaimedDeposit[]> => {
+  const since = new Date(Date.now() - 14 * 24 * 3_600_000).toISOString();
+  const { data, error } = await supabaseAdmin
+    .from("orders")
+    .select(
+      "id, order_number, deal_id, contact_id, ordered_at, contacts(first_name, last_name)",
+    )
+    .eq("is_deposit", true)
+    .is("appointment_id", null)
+    .is("cancelled_at", null)
+    .gte("ordered_at", since)
+    .order("ordered_at")
+    .limit(500);
+  if (error) fail("find unclaimed deposits", error);
+  return (
+    (data ?? []) as unknown as Array<{
+      id: number;
+      order_number: string;
+      deal_id: number | null;
+      contact_id: number | null;
+      ordered_at: string;
+      contacts: EmbeddedContact;
+    }>
+  ).map((row) => ({
+    id: row.id,
+    contactId: row.contact_id,
+    dealId: row.deal_id,
+    orderNumber: row.order_number,
+    name: embeddedName(row.contacts),
+    when: row.ordered_at,
+  }));
 };
