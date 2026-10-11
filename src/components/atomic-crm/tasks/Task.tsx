@@ -63,14 +63,31 @@ export const Task = ({
     setOpenEdit(true);
   };
 
-  const handleCheck = () => () => {
-    update("tasks", {
-      id: task.id,
-      data: {
-        done_date: task.done_date ? null : new Date().toISOString(),
+  // Show the tick the moment it is tapped and save straight away; the old
+  // "undoable" save waited ~5 seconds, so a ticked task looked unticked
+  const [isDone, setIsDone] = useState(Boolean(task.done_date));
+  useEffect(() => setIsDone(Boolean(task.done_date)), [task.done_date]);
+  const toggleDone = () => {
+    const next = !isDone;
+    setIsDone(next);
+    if (next) navigator.vibrate?.(10);
+    update(
+      "tasks",
+      {
+        id: task.id,
+        data: { done_date: next ? new Date().toISOString() : null },
+        previousData: task,
       },
-      previousData: task,
-    });
+      {
+        mutationMode: "pessimistic",
+        onError: () => {
+          setIsDone(!next);
+          notify("Could not update the task. Check your connection.", {
+            type: "error",
+          });
+        },
+      },
+    );
   };
 
   useEffect(() => {
@@ -91,18 +108,19 @@ export const Task = ({
   return (
     <>
       <div className="flex items-start justify-between">
-        <div
-          className="flex items-start gap-2 flex-1"
-          onClick={isMobile ? handleCheck() : undefined}
-        >
+        <div className="flex items-start gap-3 flex-1">
           <Checkbox
             id={labelId}
-            checked={!!task.done_date}
-            onCheckedChange={handleCheck()}
-            disabled={isUpdatePending}
-            className="mt-1"
+            checked={isDone}
+            onCheckedChange={toggleDone}
+            aria-label={isDone ? "Mark not done" : "Mark done"}
+            className="mt-0.5 size-6 md:size-4 rounded-full md:rounded-sm transition-colors"
           />
-          <div className={`flex-grow ${task.done_date ? "line-through" : ""}`}>
+          {/* The whole text is part of the tap target on a phone: one tap, one toggle */}
+          <label
+            htmlFor={isMobile ? labelId : undefined}
+            className={`flex-grow transition-opacity ${isDone ? "line-through opacity-60" : ""}`}
+          >
             <div className="text-sm">
               {task.type && task.type !== "none" && (
                 <>
@@ -146,7 +164,7 @@ export const Task = ({
                 />
               )}
             </div>
-          </div>
+          </label>
         </div>
 
         <DropdownMenu>
