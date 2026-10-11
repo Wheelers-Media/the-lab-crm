@@ -14,6 +14,7 @@ import {
   ShoppingCart,
   StickyNote,
   Users,
+  Wrench,
 } from "lucide-react";
 import {
   Sheet,
@@ -205,6 +206,12 @@ const MORE_LINKS = [
     label: "Calendar",
     hint: "Drop-offs and Eric's bookings",
     Icon: CalendarDays,
+  },
+  {
+    href: "/shop-floor",
+    label: "Shop floor",
+    hint: "Who is here, waiting on parts, ready for pickup",
+    Icon: Wrench,
   },
   {
     href: "/packages",

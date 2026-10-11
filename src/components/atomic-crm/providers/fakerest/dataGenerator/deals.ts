@@ -43,7 +43,7 @@ const sampleJobs = [
 ];
 
 export const generateDeals = (db: Db): Deal[] => {
-  const deals = Array.from(Array(50).keys()).map((id) => {
+  const deals: Deal[] = Array.from(Array(50).keys()).map((id) => {
     const company = random.arrayElement(db.companies);
     company.nb_deals = (company.nb_deals ?? 0) + 1;
     const contacts = random.arrayElements(
@@ -84,12 +84,32 @@ export const generateDeals = (db: Db): Deal[] => {
       stage_changed_at: randomDate(new Date(created_at)).toISOString(),
     };
   });
+  // Demo shop floor: a few booked and converted jobs are in the shop
+  const floor = [
+    ["in_shop", 0.4],
+    ["in_shop", 1.2],
+    ["waiting_parts", 6],
+    ["waiting_parts", 2],
+    ["ready", 3],
+    ["ready", 0.3],
+    ["in_shop", 2.5],
+  ] as const;
+  deals
+    .filter((deal) => deal.stage === "booked" || deal.stage === "won")
+    .slice(0, floor.length)
+    .forEach((deal, i) => {
+      const [status, daysAgo] = floor[i];
+      deal.work_status = status;
+      deal.work_status_changed_at = new Date(
+        Date.now() - daysAgo * 86_400_000,
+      ).toISOString();
+    });
   // compute index based on stage
   defaultDealStages.forEach((stage) => {
     deals
       .filter((deal) => deal.stage === stage.value)
       .forEach((deal, index) => {
-        deals[deal.id].index = index;
+        deals[Number(deal.id)].index = index;
       });
   });
   return deals;

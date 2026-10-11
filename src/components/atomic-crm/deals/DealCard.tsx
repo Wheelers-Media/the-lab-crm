@@ -15,6 +15,7 @@ import { useConfigurationContext } from "../root/ConfigurationContext";
 import type { Contact, Deal } from "../types";
 import { VehicleLabelField } from "../vehicles/VehicleField";
 import { bayClassName } from "./dealBay";
+import { WORK_STATUS_LABEL } from "../shopfloor/workStatus";
 
 export const DealCard = ({ deal, index }: { deal: Deal; index: number }) => {
   if (!deal) return null;
@@ -110,6 +111,13 @@ export const DealCardContent = ({
                 optionValue="value"
               />
             </p>
+            {deal.work_status ? (
+              <p>
+                <span className="lab-chip lab-chip-bay">
+                  {WORK_STATUS_LABEL[deal.work_status]}
+                </span>
+              </p>
+            ) : null}
           </CardContent>
         </Card>
       </RecordContextProvider>

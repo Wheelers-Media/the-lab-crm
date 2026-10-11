@@ -29,6 +29,7 @@ import {
   shopDayKey,
 } from "./shopTime";
 import { listLink, money } from "./format";
+import { ShopFloorSummary } from "../shopfloor/ShopFloorSummary";
 import { PipelineSnapshot } from "./PipelineSnapshot";
 import { ShopifyMetrics } from "./ShopifyMetrics";
 import { useOperationsData, useRunAutomations } from "./useOperationsData";
@@ -240,6 +241,7 @@ export const CommandCenter = ({
     </>
   );
   const weekBlock = <WeekStrip loads={weekKeys} todayKey={todayKey} />;
+  const floorCard = <ShopFloorSummary deals={data.deals} now={now} />;
   const shopifyBlock = (
     <ShopifyMetrics
       orders={data.orders}
@@ -258,6 +260,7 @@ export const CommandCenter = ({
         {headerBlock}
         {attentionCard}
         {todayCard}
+        {floorCard}
         <PipelineSnapshot deals={data.deals} />
         {kpiBlock}
         {shopifyBlock}
@@ -275,6 +278,7 @@ export const CommandCenter = ({
         {todayCard}
         {attentionCard}
       </div>
+      {floorCard}
       {weekBlock}
     </div>
   );

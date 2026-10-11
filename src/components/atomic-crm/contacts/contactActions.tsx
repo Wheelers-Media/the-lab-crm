@@ -4,9 +4,8 @@ import { useNavigate } from "react-router";
 import type { SheetAction } from "../misc/ActionSheet";
 import { useStartQuote } from "../packages/useStartQuote";
 import type { Contact } from "../types";
+import { firstPhone } from "./firstPhone";
 
-const firstPhone = (c: Contact) =>
-  c.phone_jsonb?.find((p) => p.number?.trim())?.number?.trim() ?? null;
 const firstEmail = (c: Contact) =>
   c.email_jsonb?.find((e) => e.email?.trim())?.email?.trim() ?? null;
 const dial = (n: string) => n.replace(/[^\d+]/g, "");

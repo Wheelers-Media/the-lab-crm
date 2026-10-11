@@ -62,6 +62,32 @@ create trigger deals_track_stage before insert or update of stage on public.deal
 create trigger deals_log_stage after insert or update of stage on public.deals
     for each row execute function public.log_deal_stage();
 
+-- When the vehicle's work status last changed (the shop floor shows how long
+-- it has been there, and the follow-up rules count days from it)
+create or replace function public.track_work_status()
+ returns trigger
+ language plpgsql
+ security definer
+ set search_path to ''
+as $function$
+begin
+  if tg_op = 'INSERT' then
+    if new.work_status is not null then
+      new.work_status_changed_at := coalesce(new.work_status_changed_at, now());
+    end if;
+    return new;
+  end if;
+  if new.work_status is distinct from old.work_status then
+    new.work_status_changed_at := case when new.work_status is null then null else now() end;
+  end if;
+  return new;
+end;
+$function$;
+
+create trigger deals_track_work_status before insert or update of work_status on public.deals
+    for each row execute function public.track_work_status();
+create index deals_work_status_idx on public.deals (work_status) where work_status is not null;
+
 --
 -- Shopify orders
 --
@@ -378,6 +404,46 @@ begin
       update public.shopify_checkouts set task_id =
         (select a.task_id from public.automation_log a where a.rule = 'abandoned-cart' and a.subject_id = r.id)
       where id = r.id;
+      v_count := v_count + 1;
+    end if;
+  end loop;
+
+  -- 7. Ready for pickup for 2+ days: the customer has not come yet
+  for r in
+    select d.id, d.name, d.contact_ids[1] as contact_id, d.sales_id
+    from public.deals d
+    where d.work_status = 'ready' and d.archived_at is null
+      and d.work_status_changed_at < now() - interval '2 days'
+  loop
+    if public.lab_add_task('pickup-reminder', r.id, r.contact_id, 'pickup',
+        'Ready for pickup for 2 days. Check when they are coming: ' || r.name, r.sales_id) is not null then
+      v_count := v_count + 1;
+    end if;
+  end loop;
+
+  -- 8. Waiting on parts for 5+ days: check the ETA and tell the customer
+  for r in
+    select d.id, d.name, d.contact_ids[1] as contact_id, d.sales_id
+    from public.deals d
+    where d.work_status = 'waiting_parts' and d.archived_at is null
+      and d.work_status_changed_at < now() - interval '5 days'
+  loop
+    if public.lab_add_task('parts-delay', r.id, r.contact_id, 'follow-up',
+        'Waiting on parts for 5 days. Check the ETA and update the customer: ' || r.name, r.sales_id) is not null then
+      v_count := v_count + 1;
+    end if;
+  end loop;
+
+  -- 9. Picked up a day ago (within the last month): ask for a Google review
+  for r in
+    select d.id, d.name, d.contact_ids[1] as contact_id, d.sales_id
+    from public.deals d
+    where d.work_status = 'picked_up' and d.archived_at is null
+      and d.work_status_changed_at < now() - interval '1 day'
+      and d.work_status_changed_at > now() - interval '30 days'
+  loop
+    if public.lab_add_task('review-request', r.id, r.contact_id, 'text',
+        'Ask for a Google review: ' || r.name, r.sales_id) is not null then
       v_count := v_count + 1;
     end if;
   end loop;

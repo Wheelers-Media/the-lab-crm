@@ -195,6 +195,48 @@ describe("needs attention", () => {
     expect(items[1].detail).toBe("Highlander");
   });
 
+  it("flags vehicles ready for pickup 2+ days and waiting on parts 5+ days, newest not yet", () => {
+    const items = needsAttention({
+      now: NOW,
+      checkouts: [],
+      appointments: [],
+      tasks: [],
+      deals: [
+        deal({
+          stage: "won",
+          work_status: "ready",
+          work_status_changed_at: "2026-10-06T16:00:00Z", // 3 days
+        }),
+        deal({
+          stage: "won",
+          work_status: "ready",
+          work_status_changed_at: "2026-10-08T16:00:00Z", // 1 day
+        }),
+        deal({
+          stage: "won",
+          work_status: "waiting_parts",
+          work_status_changed_at: "2026-10-03T16:00:00Z", // 6 days
+        }),
+        deal({
+          stage: "won",
+          work_status: "waiting_parts",
+          work_status_changed_at: "2026-10-06T16:00:00Z", // 3 days
+        }),
+        deal({
+          stage: "won",
+          work_status: "ready",
+          work_status_changed_at: "2026-10-01T16:00:00Z",
+          archived_at: "2026-10-08T16:00:00Z",
+        }),
+      ],
+    });
+
+    expect(items.map((i) => [i.kind, i.count])).toEqual([
+      ["pickups-waiting", 1],
+      ["parts-waiting", 1],
+    ]);
+  });
+
   it("returns nothing when everything is handled", () => {
     expect(
       needsAttention({
