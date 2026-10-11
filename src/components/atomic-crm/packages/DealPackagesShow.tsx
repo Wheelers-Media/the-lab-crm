@@ -20,7 +20,7 @@ export const DealPackagesShow = ({ deal }: { deal: Deal }) => {
   const quote = deal.quote;
   if (!lines.length && !quote) return null;
   return (
-    <div className="m-4 flex flex-col gap-4">
+    <div className="my-4 sm:m-4 flex flex-col gap-4">
       {lines.length ? (
         <div>
           <span className="text-xs text-muted-foreground tracking-wide">

@@ -36,6 +36,7 @@ import { ContactOrders } from "../shop/ContactOrders";
 import { ContactVehicles } from "../vehicles/ContactVehicles";
 import { CustomerPackages } from "../packages/CustomerPackages";
 import { ContactQuotes } from "../packages/ContactQuotes";
+import { ContactQuickActions } from "./contactActions";
 
 export const ContactShow = (props: ShowBaseProps = {}) => {
   const isMobile = useIsMobile();
@@ -60,7 +61,7 @@ export const ContactShow = (props: ShowBaseProps = {}) => {
 
 const ContactShowContentMobile = () => {
   const translate = useTranslate();
-  const { defaultTitle, record, isPending } = useShowContext<Contact>();
+  const { record, isPending } = useShowContext<Contact>();
   const [noteCreateOpen, setNoteCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   if (isPending || !record) return null;
@@ -84,8 +85,12 @@ const ContactShowContentMobile = () => {
       <MobileHeader>
         <MobileBackButton />
         <div className="flex flex-1 min-w-0">
-          <Link to="/contacts" className="flex-1 min-w-0">
-            <h1 className="truncate text-xl font-semibold">{defaultTitle}</h1>
+          {/* The big name is right below; the bar just says where Back goes */}
+          <Link
+            to="/contacts"
+            className="flex-1 min-w-0 truncate text-base text-muted-foreground"
+          >
+            Customers
           </Link>
         </div>
         <Button
@@ -133,6 +138,10 @@ const ContactShowContentMobile = () => {
               </ReferenceField>
             </div>
           </div>
+        </div>
+
+        <div className="mb-6">
+          <ContactQuickActions contact={record} />
         </div>
 
         <div className="mb-6">

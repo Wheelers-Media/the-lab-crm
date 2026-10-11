@@ -1,5 +1,14 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { MoreVertical } from "lucide-react";
+import {
+  CalendarClock,
+  CalendarDays,
+  Check,
+  MoreHorizontal,
+  MoreVertical,
+  Pencil,
+  Trash2,
+  Undo2,
+} from "lucide-react";
 import {
   useDeleteWithUndoController,
   useGetRecordRepresentation,
@@ -9,7 +18,6 @@ import {
 } from "ra-core";
 import { useEffect, useState } from "react";
 import { ReferenceField } from "@/components/admin/reference-field";
-import { DateField } from "@/components/admin/date-field";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -24,6 +32,9 @@ import type { Contact, Task as TData } from "../types";
 import { TaskEdit } from "./TaskEdit";
 import { TaskEditSheet } from "./TaskEditSheet";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useLongPress } from "@/hooks/use-long-press";
+import { ActionSheet } from "../misc/ActionSheet";
+import { formatDue } from "./taskDue";
 
 export const Task = ({
   task,
@@ -104,10 +115,26 @@ export const Task = ({
   }, [queryClient, isUpdatePending, isSuccess, variables]);
 
   const labelId = `checkbox-list-label-${task.id}`;
+  const due = formatDue(task.due_date);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const longPress = useLongPress(() => setSheetOpen(true));
+  const postpone = (days: number) =>
+    update("tasks", {
+      id: task.id,
+      data: {
+        due_date: new Date(Date.now() + days * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .slice(0, 10),
+      },
+      previousData: task,
+    });
 
   return (
     <>
-      <div className="flex items-start justify-between">
+      <div
+        className="flex items-start justify-between"
+        {...(isMobile ? { ...longPress, "data-long-press": "" } : {})}
+      >
         <div className="flex items-start gap-3 flex-1">
           <Checkbox
             id={labelId}
@@ -140,9 +167,13 @@ export const Task = ({
               {task.text}
             </div>
             <div className="text-sm text-muted-foreground">
-              {translate("resources.tasks.fields.due_short")}
-              &nbsp;
-              <DateField source="due_date" record={task} showDate showTime />
+              <span
+                className={
+                  due.isOverdue && !isDone ? "text-destructive" : undefined
+                }
+              >
+                {due.label}
+              </span>
               {showContact && (
                 <ReferenceField<TData, Contact>
                   source="contact_id"
@@ -167,65 +198,114 @@ export const Task = ({
           </label>
         </div>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-5 pr-0! size-8 cursor-pointer"
-              aria-label={translate("resources.tasks.actions.title")}
-            >
-              <MoreVertical className="size-5 md:size-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              className="cursor-pointer h-12 md:h-8 px-4 md:px-2 text-base md:text-sm"
-              onClick={() => {
-                update("tasks", {
-                  id: task.id,
-                  data: {
-                    due_date: new Date(Date.now() + 24 * 60 * 60 * 1000)
-                      .toISOString()
-                      .slice(0, 10),
-                  },
-                  previousData: task,
-                });
-              }}
-            >
-              {translate("resources.tasks.actions.postpone_tomorrow")}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="cursor-pointer h-12 md:h-8 px-4 md:px-2 text-base md:text-sm"
-              onClick={() => {
-                update("tasks", {
-                  id: task.id,
-                  data: {
-                    due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-                      .toISOString()
-                      .slice(0, 10),
-                  },
-                  previousData: task,
-                });
-              }}
-            >
-              {translate("resources.tasks.actions.postpone_next_week")}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="cursor-pointer h-12 md:h-8 px-4 md:px-2 text-base md:text-sm"
-              onClick={handleEdit}
-            >
-              {translate("ra.action.edit")}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="cursor-pointer h-12 md:h-8 px-4 md:px-2 text-base md:text-sm"
-              onClick={handleDelete}
-            >
-              {translate("ra.action.delete")}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {isMobile ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-10 -mr-2 -mt-1.5 text-muted-foreground"
+            aria-label={translate("resources.tasks.actions.title")}
+            onClick={() => setSheetOpen(true)}
+          >
+            <MoreHorizontal className="size-5" />
+          </Button>
+        ) : (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-5 pr-0! size-8 cursor-pointer"
+                aria-label={translate("resources.tasks.actions.title")}
+              >
+                <MoreVertical className="size-5 md:size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                className="cursor-pointer h-12 md:h-8 px-4 md:px-2 text-base md:text-sm"
+                onClick={() => {
+                  update("tasks", {
+                    id: task.id,
+                    data: {
+                      due_date: new Date(Date.now() + 24 * 60 * 60 * 1000)
+                        .toISOString()
+                        .slice(0, 10),
+                    },
+                    previousData: task,
+                  });
+                }}
+              >
+                {translate("resources.tasks.actions.postpone_tomorrow")}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="cursor-pointer h-12 md:h-8 px-4 md:px-2 text-base md:text-sm"
+                onClick={() => {
+                  update("tasks", {
+                    id: task.id,
+                    data: {
+                      due_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+                        .toISOString()
+                        .slice(0, 10),
+                    },
+                    previousData: task,
+                  });
+                }}
+              >
+                {translate("resources.tasks.actions.postpone_next_week")}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="cursor-pointer h-12 md:h-8 px-4 md:px-2 text-base md:text-sm"
+                onClick={handleEdit}
+              >
+                {translate("ra.action.edit")}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="cursor-pointer h-12 md:h-8 px-4 md:px-2 text-base md:text-sm"
+                onClick={handleDelete}
+              >
+                {translate("ra.action.delete")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
+
+      {isMobile ? (
+        <ActionSheet
+          open={sheetOpen}
+          onOpenChange={setSheetOpen}
+          title={task.text}
+          subtitle={due.label}
+          actions={[
+            {
+              label: isDone ? "Mark not done" : "Mark done",
+              icon: isDone ? Undo2 : Check,
+              onSelect: toggleDone,
+            },
+            {
+              label: translate("resources.tasks.actions.postpone_tomorrow"),
+              icon: CalendarClock,
+              onSelect: () => postpone(1),
+            },
+            {
+              label: translate("resources.tasks.actions.postpone_next_week"),
+              icon: CalendarDays,
+              onSelect: () => postpone(7),
+            },
+            {
+              label: translate("ra.action.edit"),
+              icon: Pencil,
+              onSelect: handleEdit,
+            },
+            {
+              label: translate("ra.action.delete"),
+              icon: Trash2,
+              destructive: true,
+              onSelect: (event) => handleDelete(event),
+            },
+          ]}
+        />
+      ) : null}
 
       {isMobile ? (
         <TaskEditSheet

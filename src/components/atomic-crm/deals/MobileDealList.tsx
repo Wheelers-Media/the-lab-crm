@@ -1,11 +1,19 @@
-import { Plus, Search } from "lucide-react";
-import { ListBase, useListContext, useStore } from "ra-core";
+import { ArrowRight, CircleSlash, FileText, Plus, Search } from "lucide-react";
+import {
+  ListBase,
+  useListContext,
+  useNotify,
+  useStore,
+  useUpdate,
+} from "ra-core";
 import { useMemo, useState } from "react";
-import { Link, matchPath, useLocation } from "react-router";
+import { Link, matchPath, useLocation, useNavigate } from "react-router";
+import { useLongPress } from "@/hooks/use-long-press";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import MobileHeader from "../layout/MobileHeader";
+import { ActionSheet, type SheetAction } from "../misc/ActionSheet";
 import { MobileContent } from "../layout/MobileContent";
 import { useConfigurationContext } from "../root/ConfigurationContext";
 import type { Deal } from "../types";
@@ -26,6 +34,72 @@ const money = (amount: number) =>
 
 const matchesSearch = (deal: Deal, q: string) =>
   !q || deal.name.toLowerCase().includes(q.toLowerCase());
+
+/** A job card; tap opens it, tap and hold offers the quote and stage moves. */
+const MobileDealCard = ({ deal }: { deal: Deal }) => {
+  const { dealStages } = useConfigurationContext();
+  const navigate = useNavigate();
+  const notify = useNotify();
+  const [update] = useUpdate<Deal>();
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const longPress = useLongPress(() => setSheetOpen(true));
+  const at = dealStages.findIndex((s) => s.value === deal.stage);
+  const next = dealStages[at + 1];
+  const move = (stage: string, label: string) =>
+    update(
+      "deals",
+      {
+        id: deal.id,
+        data: { stage, stage_changed_at: new Date().toISOString() },
+        previousData: deal,
+      },
+      {
+        mutationMode: "pessimistic",
+        onSuccess: () => notify(`Moved to ${label}`, { type: "success" }),
+      },
+    );
+  const actions: SheetAction[] = [
+    {
+      label: deal.packages?.length ? "Open quote" : "Build quote",
+      icon: FileText,
+      onSelect: () => navigate(`/quotes/${deal.id}`),
+    },
+    ...(next
+      ? [
+          {
+            label: `Move to ${next.label}`,
+            icon: ArrowRight,
+            onSelect: () => move(next.value, next.label),
+          },
+        ]
+      : []),
+    ...(deal.stage !== "lost"
+      ? [
+          {
+            label: "Not now",
+            icon: CircleSlash,
+            destructive: true,
+            onSelect: () => move("lost", "Not now"),
+          },
+        ]
+      : []),
+  ];
+  return (
+    <>
+      <div {...longPress} data-long-press="">
+        <DealCardContent deal={deal} />
+      </div>
+      {/* Outside the card so taps in the sheet never reach the card's hold */}
+      <ActionSheet
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        title={deal.name}
+        subtitle={dealStages[at]?.label}
+        actions={actions}
+      />
+    </>
+  );
+};
 
 /** Jobs on the phone: one stage at a time, picked from a row of tabs. */
 const MobileDealBoard = () => {
@@ -103,7 +177,7 @@ const MobileDealBoard = () => {
       {isPending ? null : view.visible.length ? (
         <div className="flex flex-col gap-2">
           {view.visible.map((deal) => (
-            <DealCardContent key={deal.id} deal={deal} />
+            <MobileDealCard key={deal.id} deal={deal} />
           ))}
         </div>
       ) : (

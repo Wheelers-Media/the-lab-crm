@@ -65,7 +65,7 @@ const DealShowContent = () => {
         {record.archived_at ? <ArchivedTitle /> : null}
         <div className="flex-1">
           <div className="flex flex-wrap justify-between items-start gap-3 mb-6">
-            <div className="flex items-center gap-4 min-w-0">
+            <div className="flex items-center gap-4 min-w-0 max-sm:w-full max-sm:pr-12">
               <ReferenceField
                 source="company_id"
                 reference="companies"
@@ -73,11 +73,13 @@ const DealShowContent = () => {
               >
                 <CompanyAvatar />
               </ReferenceField>
-              <h2 className="text-2xl font-semibold break-words">
+              <h2 className="text-2xl font-semibold break-words min-w-0">
                 {record.name}
               </h2>
             </div>
-            <div className={`flex gap-2 ${record.archived_at ? "" : "pr-12"}`}>
+            <div
+              className={`flex flex-wrap gap-2 ${record.archived_at ? "" : "sm:pr-12"}`}
+            >
               {record.archived_at ? (
                 <>
                   <UnarchiveButton record={record} />
@@ -98,7 +100,7 @@ const DealShowContent = () => {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-x-8 gap-y-4 m-4">
+          <div className="flex flex-wrap gap-x-8 gap-y-4 my-4 sm:m-4">
             <div className="flex flex-col">
               <span className="text-xs text-muted-foreground tracking-wide">
                 {translate("resources.deals.fields.expected_closing_date")}
@@ -158,7 +160,7 @@ const DealShowContent = () => {
           </div>
 
           {!!record.contact_ids?.length && (
-            <div className="m-4">
+            <div className="my-4 sm:m-4">
               <div className="flex flex-col min-h-12">
                 <span className="text-xs text-muted-foreground tracking-wide">
                   {translate("resources.deals.fields.contact_ids")}
@@ -176,7 +178,7 @@ const DealShowContent = () => {
           <DealPackagesShow deal={record} />
 
           {record.vehicle_id ? (
-            <div className="m-4">
+            <div className="my-4 sm:m-4">
               <span className="text-xs text-muted-foreground tracking-wide">
                 Vehicle
               </span>
@@ -185,7 +187,7 @@ const DealShowContent = () => {
           ) : null}
 
           {record.description && (
-            <div className="m-4 whitespace-pre-line">
+            <div className="my-4 sm:m-4 whitespace-pre-line">
               <span className="text-xs text-muted-foreground tracking-wide">
                 {translate("resources.deals.fields.description")}
               </span>
@@ -193,7 +195,7 @@ const DealShowContent = () => {
             </div>
           )}
 
-          <div className="m-4">
+          <div className="my-4 sm:m-4">
             <Separator className="mb-4" />
             <InfiniteListBase
               resource="deal_notes"

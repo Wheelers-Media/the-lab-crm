@@ -66,6 +66,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/tasks/taskDue.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/tasks/TasksListFilter.tsx",
           "type": "registry:component"
         },
@@ -430,6 +434,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/packages/useStartQuote.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/packages/quoteModel.ts",
           "type": "registry:component"
         },
@@ -659,6 +667,10 @@
         },
         {
           "path": "src/components/atomic-crm/misc/ActiveFilterButton.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/misc/ActionSheet.tsx",
           "type": "registry:component"
         },
         {
@@ -926,6 +938,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/contacts/contactActions.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/contacts/TagsListEdit.tsx",
           "type": "registry:component"
         },
@@ -1139,6 +1155,10 @@
         },
         {
           "path": "src/hooks/useBulkExport.tsx",
+          "type": "registry:hook"
+        },
+        {
+          "path": "src/hooks/use-long-press.ts",
           "type": "registry:hook"
         },
         {

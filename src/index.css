@@ -346,3 +346,68 @@ h2 {
 .lab-num {
   font-variant-numeric: tabular-nums;
 }
+
+/* App feel on phones: no grey tap flash, instant taps, and a gentle press
+   on anything tappable, like a native app. */
+@media (pointer: coarse) {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  a,
+  button,
+  label,
+  [role="button"],
+  [role="radio"],
+  [role="tab"],
+  [role="checkbox"] {
+    touch-action: manipulation;
+  }
+  :where(button, a[href], [role="button"], [role="radio"], [role="tab"]):not(
+    :disabled
+  ) {
+    transition:
+      transform 140ms cubic-bezier(0.16, 1, 0.3, 1),
+      opacity 140ms;
+  }
+  :where(button, a[href], [role="button"], [role="radio"], [role="tab"]):not(
+      :disabled
+    ):active {
+    transform: scale(0.97);
+    opacity: 0.85;
+  }
+  /* Rows that open an action sheet on hold: no text selection or iOS callout */
+  [data-long-press] {
+    -webkit-touch-callout: none;
+    user-select: none;
+  }
+}
+
+/* Each phone page settles in instead of popping */
+@keyframes lab-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.lab-page-in {
+  animation: lab-page-in 260ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lab-page-in {
+    animation: none;
+  }
+  :where(
+    button,
+    a[href],
+    [role="button"],
+    [role="radio"],
+    [role="tab"]
+  ):active {
+    transform: none !important;
+  }
+}

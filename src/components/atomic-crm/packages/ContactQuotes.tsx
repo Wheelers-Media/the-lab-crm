@@ -1,12 +1,13 @@
 import { ChevronRight, FileText, Plus } from "lucide-react";
-import { useCreate, useGetIdentity, useGetList, useNotify } from "ra-core";
-import { Link, useNavigate } from "react-router";
+import { useGetList } from "ra-core";
+import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 
 import { isClosedStage } from "../deals/pipelineView";
 import { useConfigurationContext } from "../root/ConfigurationContext";
-import type { Contact, Deal, Vehicle } from "../types";
+import type { Contact, Deal } from "../types";
 import { quoteTotals } from "./quoteModel";
+import { useStartQuote } from "./useStartQuote";
 
 const money = (n: number) =>
   n.toLocaleString("en-CA", {
@@ -14,9 +15,6 @@ const money = (n: number) =>
     currency: "CAD",
     maximumFractionDigits: 0,
   });
-
-const IN_TWO_WEEKS = () =>
-  new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
 /** What a job's quote stands at, in a few words. */
 const quoteStatus = (deal: Deal) => {
@@ -36,49 +34,13 @@ const quoteStatus = (deal: Deal) => {
  */
 export const ContactQuotes = ({ contact }: { contact: Contact }) => {
   const { dealStages } = useConfigurationContext();
-  const { identity } = useGetIdentity();
-  const navigate = useNavigate();
-  const notify = useNotify();
-  const [create, { isPending: isCreating }] = useCreate<Deal>();
+  const { startQuote, isStarting } = useStartQuote();
   const { data: deals = [], isPending } = useGetList<Deal>("deals", {
     filter: { "contact_ids@cs": `{${contact.id}}`, "archived_at@is": null },
     sort: { field: "updated_at", order: "DESC" },
     pagination: { page: 1, perPage: 20 },
   });
-  const { data: vehicles = [] } = useGetList<Vehicle>("vehicles", {
-    filter: { contact_id: contact.id },
-    sort: { field: "is_primary", order: "DESC" },
-    pagination: { page: 1, perPage: 1 },
-  });
   const open = deals.filter((d) => !isClosedStage(d.stage));
-
-  const startQuote = () => {
-    const name = [contact.first_name, contact.last_name]
-      .filter(Boolean)
-      .join(" ");
-    create(
-      "deals",
-      {
-        data: {
-          name: `Quote - ${name || "customer"}`,
-          contact_ids: [contact.id],
-          company_id: contact.company_id ?? undefined,
-          stage: "qualified",
-          amount: 0,
-          index: 0,
-          sales_id: identity?.id,
-          expected_closing_date: IN_TWO_WEEKS(),
-          vehicle_id: vehicles[0]?.id ?? null,
-          packages: [],
-        },
-      },
-      {
-        onSuccess: (deal) => navigate(`/quotes/${deal.id}`),
-        onError: () =>
-          notify("Could not start the quote. Try again.", { type: "error" }),
-      },
-    );
-  };
 
   if (isPending) return null;
   return (
@@ -91,8 +53,8 @@ export const ContactQuotes = ({ contact }: { contact: Contact }) => {
           type="button"
           variant="ghost"
           size="sm"
-          onClick={startQuote}
-          disabled={isCreating}
+          onClick={() => startQuote(contact)}
+          disabled={isStarting}
         >
           <Plus className="size-4" />
           New quote

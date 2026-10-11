@@ -66,6 +66,8 @@ export const FormToolbar = ({
     {...rest}
     className={cn(
       "sticky pt-4 pb-4 md:block md:pt-2 md:pb-0 bottom-0 bg-linear-to-b from-transparent to-background to-10%",
+      // Phones: a solid full-width bar pinned to the bottom with big buttons
+      "max-md:z-10 max-md:flex max-md:gap-2 max-md:-mx-4 max-md:border-t max-md:border-border max-md:bg-background/95 max-md:bg-none max-md:px-4 max-md:pt-3 max-md:pb-[calc(env(safe-area-inset-bottom,0px)+0.75rem)] max-md:backdrop-blur max-md:[&_[data-slot=button]]:h-12 max-md:[&_[data-slot=button]]:flex-1",
       className,
     )}
     role="toolbar"

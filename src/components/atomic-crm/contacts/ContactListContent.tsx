@@ -1,3 +1,7 @@
+import { useState } from "react";
+import { useLongPress } from "@/hooks/use-long-press";
+import { ActionSheet } from "../misc/ActionSheet";
+import { useContactActions } from "./contactActions";
 import { difference, union } from "lodash";
 import {
   type Identifier,
@@ -249,47 +253,63 @@ export const ContactListContentMobile = () => {
 
 const ContactItemContentMobile = ({ contact }: { contact: Contact }) => {
   const translate = useTranslate();
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const longPress = useLongPress(() => setSheetOpen(true));
+  const { sheet } = useContactActions(contact);
   return (
-    <Link
-      to={`/contacts/${contact.id}/show`}
-      className="flex flex-row gap-4 items-center py-2 hover:bg-muted transition-colors"
-    >
-      <Avatar />
-      <div className="flex flex-col grow justify-between">
-        <div className="flex-1 min-w-0">
-          <div className="flex justify-between">
-            <div className="font-medium">
-              <RecordRepresentation />
+    <>
+      <ActionSheet
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        title={[contact.first_name, contact.last_name]
+          .filter(Boolean)
+          .join(" ")}
+        subtitle={contact.vehicle_label ?? undefined}
+        actions={sheet}
+      />
+      <Link
+        to={`/contacts/${contact.id}/show`}
+        {...longPress}
+        data-long-press=""
+        className="flex flex-row gap-4 items-center py-2.5 rounded-lg active:bg-muted transition-colors"
+      >
+        <Avatar />
+        <div className="flex flex-col grow justify-between">
+          <div className="flex-1 min-w-0">
+            <div className="flex justify-between">
+              <div className="font-medium">
+                <RecordRepresentation />
+              </div>
+              <Status status={contact.status} />
             </div>
-            <Status status={contact.status} />
-          </div>
-          <div className="text-sm text-muted-foreground">
-            <div className="flex flex-col gap-1">
-              <span>
-                {contact.vehicle_label
-                  ? `${contact.vehicle_label}${contact.company_id != null ? " · " : ""}`
-                  : null}
-                {contact.company_id != null && (
-                  <ReferenceField
-                    source="company_id"
-                    reference="companies"
-                    link={false}
-                  >
-                    <TextField source="name" />
-                  </ReferenceField>
-                )}
-              </span>
-              {contact.nb_tasks ? (
+            <div className="text-sm text-muted-foreground">
+              <div className="flex flex-col gap-1">
                 <span>
-                  {translate("crm.common.task_count", {
-                    smart_count: contact.nb_tasks,
-                  })}
+                  {contact.vehicle_label
+                    ? `${contact.vehicle_label}${contact.company_id != null ? " · " : ""}`
+                    : null}
+                  {contact.company_id != null && (
+                    <ReferenceField
+                      source="company_id"
+                      reference="companies"
+                      link={false}
+                    >
+                      <TextField source="name" />
+                    </ReferenceField>
+                  )}
                 </span>
-              ) : null}
+                {contact.nb_tasks ? (
+                  <span>
+                    {translate("crm.common.task_count", {
+                      smart_count: contact.nb_tasks,
+                    })}
+                  </span>
+                ) : null}
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </Link>
+      </Link>
+    </>
   );
 };
