@@ -27,6 +27,7 @@ import { ConfirmationRequired } from "../login/ConfirmationRequired";
 import { ImportPage } from "../misc/ImportPage";
 import { CalendarPage } from "../calendar/CalendarPage";
 import { ShopFloorPage } from "../shopfloor/ShopFloorPage";
+import { NumbersPage } from "../numbers/NumbersPage";
 import { ChangelogPage } from "../misc/ChangelogPage";
 import {
   getAuthProvider as defaultAuthProviderBuilder,
@@ -272,6 +273,7 @@ const DesktopAdmin = (
         <Route path={ChangelogPage.path} element={<ChangelogPage />} />
         <Route path={CalendarPage.path} element={<CalendarPage />} />
         <Route path={ShopFloorPage.path} element={<ShopFloorPage />} />
+        <Route path={NumbersPage.path} element={<NumbersPage />} />
         <Route path={QuoteBuilderPage.path} element={<QuoteBuilderPage />} />
       </CustomRoutes>
       <Resource name="deals" {...deals} />
@@ -362,6 +364,14 @@ const MobileAdmin = (
             element={
               <main className="px-4 pt-4 pb-24 min-h-screen">
                 <ShopFloorPage />
+              </main>
+            }
+          />
+          <Route
+            path={NumbersPage.path}
+            element={
+              <main className="px-4 pt-4 pb-24 min-h-screen">
+                <NumbersPage />
               </main>
             }
           />

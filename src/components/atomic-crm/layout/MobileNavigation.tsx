@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import {
+  BarChart3,
   Building2,
   CalendarDays,
   ChevronRight,
@@ -206,6 +207,12 @@ const MORE_LINKS = [
     label: "Calendar",
     hint: "Drop-offs and Eric's bookings",
     Icon: CalendarDays,
+  },
+  {
+    href: "/numbers",
+    label: "Numbers",
+    hint: "Sales, products, customers, leads and stock",
+    Icon: BarChart3,
   },
   {
     href: "/shop-floor",

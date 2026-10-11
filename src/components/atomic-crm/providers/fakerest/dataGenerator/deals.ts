@@ -114,3 +114,44 @@ export const generateDeals = (db: Db): Deal[] => {
   });
   return deals;
 };
+
+const PATH = ["intake", "qualified", "quoted", "booked", "won"];
+
+/**
+ * Demo stage log: every job starts at Intake and steps along the path to where
+ * it is now (a job that is Not now stops after Quoted), with the hours between
+ * steps spread out to look like a real shop.
+ */
+export const generateStageHistory = (
+  deals: Deal[],
+): Db["deal_stage_history"] => {
+  const history: Db["deal_stage_history"] = [];
+  deals.forEach((deal) => {
+    const reached = deal.stage === "lost" ? 3 : PATH.indexOf(deal.stage);
+    const steps = PATH.slice(0, Math.max(reached, 0) + 1);
+    const start = new Date(deal.created_at).getTime();
+    const end = new Date(deal.stage_changed_at ?? deal.updated_at).getTime();
+    const span = Math.max(end - start, 3_600_000);
+    steps.forEach((to, i) => {
+      history.push({
+        id: history.length + 1,
+        deal_id: deal.id,
+        from_stage: i === 0 ? null : steps[i - 1],
+        to_stage: to,
+        changed_at: new Date(
+          start + (span * i) / Math.max(steps.length - 1, 1),
+        ).toISOString(),
+      });
+    });
+    if (deal.stage === "lost") {
+      history.push({
+        id: history.length + 1,
+        deal_id: deal.id,
+        from_stage: steps[steps.length - 1],
+        to_stage: "lost",
+        changed_at: new Date(end).toISOString(),
+      });
+    }
+  });
+  return history;
+};

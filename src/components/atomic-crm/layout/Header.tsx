@@ -30,6 +30,8 @@ const Header = () => {
     currentPath = "/calendar";
   } else if (matchPath("/shop-floor", location.pathname)) {
     currentPath = "/shop-floor";
+  } else if (matchPath("/numbers", location.pathname)) {
+    currentPath = "/numbers";
   } else if (matchPath("/packages/*", location.pathname)) {
     currentPath = "/packages";
   } else if (matchPath("/orders/*", location.pathname)) {
@@ -48,7 +50,7 @@ const Header = () => {
             <div className="flex justify-between items-center flex-1">
               <Link
                 to="/"
-                className="flex items-center gap-2 text-secondary-foreground no-underline"
+                className="flex items-center gap-2 shrink-0 text-secondary-foreground no-underline"
               >
                 <img
                   className="[.light_&]:hidden h-9"
@@ -64,12 +66,17 @@ const Header = () => {
                   CRM
                 </span>
               </Link>
-              <div>
-                <nav className="flex">
+              <div className="min-w-0 flex-1 overflow-x-auto">
+                <nav className="flex w-max mx-auto">
                   <NavigationTab
                     label={translate("ra.page.dashboard")}
                     to="/"
                     isActive={currentPath === "/"}
+                  />
+                  <NavigationTab
+                    label="Numbers"
+                    to="/numbers"
+                    isActive={currentPath === "/numbers"}
                   />
                   <NavigationTab
                     label="Calendar"
@@ -157,7 +164,7 @@ const NavigationTab = ({
 }) => (
   <Link
     to={to}
-    className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 ${
+    className={`px-3 xl:px-5 py-3 text-sm font-medium whitespace-nowrap shrink-0 transition-colors border-b-2 ${
       isActive
         ? "text-secondary-foreground border-secondary-foreground"
         : "text-secondary-foreground/70 border-transparent hover:text-secondary-foreground/80"

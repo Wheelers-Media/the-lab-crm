@@ -290,7 +290,7 @@ export interface ProductSales {
 }
 
 // Fees and adjustments that are not products
-const NOT_A_PRODUCT =
+export const NOT_A_PRODUCT =
   /^(shop supplies.*|mechanical shop supplies|shipping.*|duty fees.*|tip|custom sale|test amount)$/i;
 
 export const cleanProductName = (name: string): string =>

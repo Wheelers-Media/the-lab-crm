@@ -13,6 +13,7 @@ import type {
   Task,
   Vehicle,
 } from "../../../types";
+import type { StageChange } from "../../../numbers/funnelModel";
 import type { ConfigurationContextValue } from "../../../root/ConfigurationContext";
 
 export interface Db {
@@ -21,6 +22,7 @@ export interface Db {
   contact_notes: ContactNote[];
   deals: Deal[];
   deal_notes: DealNote[];
+  deal_stage_history: Array<StageChange & { id: number }>;
   sales: Sale[];
   tags: Tag[];
   tasks: Task[];
