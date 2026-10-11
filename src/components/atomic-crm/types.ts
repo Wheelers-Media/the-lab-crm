@@ -227,6 +227,8 @@ export type WebsiteQuote = {
   summary: string;
   source: "quote" | "walkthrough" | "form";
   page: string;
+  /** The customer agreed to the off-road / sanctioned racing use disclaimer. */
+  offroad?: boolean;
 };
 
 /** The Shopify catalog in the CRM (shopify_webhook keeps it in sync). */

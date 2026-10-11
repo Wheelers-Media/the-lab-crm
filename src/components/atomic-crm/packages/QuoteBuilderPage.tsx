@@ -13,6 +13,7 @@ import { useConfigurationContext } from "../root/ConfigurationContext";
 import type {
   Contact,
   Deal,
+  DealNote,
   DealPackageLine,
   Package,
   Vehicle,
@@ -23,6 +24,7 @@ import { QuoteParts } from "./QuoteParts";
 import {
   enginesFor,
   lineFromCatalog,
+  needsOffroadAck,
   quoteContext,
   quoteTotals,
   suggestProducts,
@@ -78,6 +80,16 @@ export const QuoteBuilderPage = () => {
   const [update, { isPending: isSaving }] = useUpdate();
   const [lines, setLines] = useState<DealPackageLine[]>([]);
   const [isDirty, setIsDirty] = useState(false);
+  // Notes on the job can record that the customer agreed in person
+  const { data: notes = [] } = useGetList<DealNote>(
+    "deal_notes",
+    {
+      filter: { deal_id: deal?.id },
+      pagination: { page: 1, perPage: 100 },
+      sort: { field: "date", order: "DESC" },
+    },
+    { enabled: deal != null },
+  );
 
   // Start from what is saved on the job, and follow it until edited here
   useEffect(() => {
@@ -237,6 +249,23 @@ export const QuoteBuilderPage = () => {
               {[customer, vehicleName(vehicle)].filter(Boolean).join(" · ")}
             </p>
           </header>
+
+          {needsOffroadAck(
+            lines,
+            deal.quote,
+            notes.map((n) => n.text),
+          ) ? (
+            <div
+              role="alert"
+              className="rounded-lg border border-amber-500/60 bg-amber-500/10 p-3 text-sm"
+            >
+              <strong>No off-road agreement on this job.</strong> These parts
+              are sold for off-road and sanctioned racing use only. The website
+              form records the customer's agreement. If they agreed in person or
+              by text, add a note on the job that says "Off-road disclaimer
+              acknowledged".
+            </div>
+          ) : null}
 
           {deal.quote?.choices?.length ? (
             <details

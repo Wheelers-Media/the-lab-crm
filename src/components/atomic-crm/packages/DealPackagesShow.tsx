@@ -56,6 +56,11 @@ export const DealPackagesShow = ({ deal }: { deal: Deal }) => {
             {quote.source
               ? `, from ${SOURCE[quote.source] ?? quote.source}`
               : ""}
+            {quote.offroad ? (
+              <span className="lab-chip lab-chip-muted ml-2">
+                Off-road disclaimer agreed
+              </span>
+            ) : null}
           </span>
           {quote.choices?.length ? (
             <dl className="mt-1 grid grid-cols-[minmax(0,10rem)_1fr] gap-x-3 gap-y-1 text-sm">
