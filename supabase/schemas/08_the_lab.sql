@@ -71,6 +71,8 @@ create table public.orders (
     order_number text not null,
     contact_id bigint references public.contacts(id) on delete set null,
     deal_id bigint references public.deals(id) on delete set null,
+    -- The booking a $50 deposit order paid for (see shopify_webhook and calcom_webhook)
+    appointment_id bigint,
     source text,
     financial_status text,
     fulfillment_status text,
@@ -138,6 +140,10 @@ create table public.appointments (
 );
 create index appointments_start_at_idx on public.appointments (start_at);
 create index appointments_contact_id_idx on public.appointments (contact_id);
+
+alter table public.orders
+    add constraint orders_appointment_id_fkey foreign key (appointment_id) references public.appointments(id) on delete set null;
+create index orders_appointment_id_idx on public.orders (appointment_id);
 
 --
 -- Integration event log (idempotency and troubleshooting; written by edge functions only)
@@ -327,12 +333,17 @@ begin
     end if;
   end loop;
 
-  -- 4. Booked 2+ days ago and the deposit is still unpaid
+  -- 4. Booked 2+ days ago and the deposit is still unpaid (an appointment the
+  -- Shopify deposit order was matched to is marked paid and skips it)
   for r in
     select d.id, d.name, d.contact_ids[1] as contact_id, d.sales_id
     from public.deals d
     where d.stage = 'booked' and d.archived_at is null
       and d.stage_changed_at < now() - interval '2 days'
+      and not exists (
+        select 1 from public.appointments a
+        where a.deal_id = d.id and a.deposit_paid and a.status in ('booked', 'completed')
+      )
   loop
     if public.lab_add_task('deposit-reminder', r.id, r.contact_id, 'deposit',
         'Deposit not paid yet: ' || r.name, r.sales_id) is not null then

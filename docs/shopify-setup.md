@@ -3,7 +3,7 @@
 What this turns on:
 
 - **Orders**: every paid order lands on the customer's contact (purchases and lifetime spend in the sidebar) and in the Orders tab.
-- **$50 deposit**: a paid deposit moves the customer's open deal to Converted and marks their booked appointment as paid.
+- **$50 deposit**: a paid deposit is matched to the booking it pays for: the customer's own booking first, then a booking under the same name, so a deposit paid with a different email or phone still finds it (and is added to that customer instead of creating a second one). That booking shows as paid and its job moves to Converted. If nobody booked under the name, or two customers share it, a task asks you to check which booking it belongs to. A booking made after the deposit was paid picks the deposit up automatically.
 - **Abandoned carts**: carts are stored in the Abandoned carts tab. Any cart of $2,000 or more left unpaid for an hour gets a "Call" task for Eric.
 
 Do the steps in order. Steps 1 to 3 take about ten minutes.
