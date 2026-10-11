@@ -1,4 +1,4 @@
-import { ArrowRight, CircleSlash, FileText, Plus, Search } from "lucide-react";
+import { ArrowRight, CircleSlash, FileText, Search } from "lucide-react";
 import {
   ListBase,
   useListContext,
@@ -7,7 +7,7 @@ import {
   useUpdate,
 } from "ra-core";
 import { useMemo, useState } from "react";
-import { Link, matchPath, useLocation, useNavigate } from "react-router";
+import { matchPath, useLocation, useNavigate } from "react-router";
 import { useLongPress } from "@/hooks/use-long-press";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -223,12 +223,6 @@ export const MobileDealList = () => (
   >
     <MobileHeader>
       <h1 className="text-xl">Jobs</h1>
-      <Button asChild size="sm" className="ml-auto mr-2">
-        <Link to="/deals/create">
-          <Plus className="size-4" />
-          New
-        </Link>
-      </Button>
     </MobileHeader>
     <MobileContent>
       <MobileDealBoard />

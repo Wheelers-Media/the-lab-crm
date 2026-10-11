@@ -82,7 +82,7 @@ export const ContactQuotes = ({ contact }: { contact: Contact }) => {
                     · {quoteStatus(deal)}
                   </span>
                 </span>
-                <span className="shrink-0 text-xs uppercase tracking-wider text-primary">
+                <span className="shrink-0 text-xs uppercase tracking-wider text-[var(--lab-blue-text)]">
                   {deal.packages?.length ? "Open quote" : "Build quote"}
                 </span>
                 <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />

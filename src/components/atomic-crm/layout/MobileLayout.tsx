@@ -9,6 +9,7 @@ import { useConfigurationLoader } from "../root/useConfigurationLoader";
 import { MobileNavigation } from "./MobileNavigation";
 import { PullToRefresh } from "./PullToRefresh";
 import { ScrollMemory } from "./ScrollMemory";
+import { SwipeBack } from "./SwipeBack";
 
 export const MobileLayout = ({ children }: { children: ReactNode }) => {
   useConfigurationLoader();
@@ -16,6 +17,7 @@ export const MobileLayout = ({ children }: { children: ReactNode }) => {
     <DataImportProvider>
       <PullToRefresh />
       <ScrollMemory />
+      <SwipeBack />
       <ErrorBoundary FallbackComponent={Error}>
         <Suspense fallback={<Skeleton className="h-12 w-12 rounded-full" />}>
           {children}

@@ -88,7 +88,7 @@ const ContactShowContentMobile = () => {
           {/* The big name is right below; the bar just says where Back goes */}
           <Link
             to="/contacts"
-            className="flex-1 min-w-0 truncate text-base text-muted-foreground"
+            className="flex h-11 flex-1 min-w-0 items-center truncate text-base text-muted-foreground"
           >
             Customers
           </Link>

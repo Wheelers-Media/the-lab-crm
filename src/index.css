@@ -202,6 +202,8 @@ body {
   --lab-rule: #26282c;
   --lab-text: #f2f4f7;
   --lab-blue: #0066ff;
+  /* Blue for text and selected icons on dark grounds (6.9:1 on the bars) */
+  --lab-blue-text: #5c9dff;
   --lab-ice: #cfe3ff;
   --lab-amber: #ff8a1f;
   --primary: var(--lab-blue);

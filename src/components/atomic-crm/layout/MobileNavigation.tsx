@@ -1,10 +1,3 @@
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import {
   Building2,
@@ -19,6 +12,7 @@ import {
   Receipt,
   Settings,
   ShoppingCart,
+  StickyNote,
   Users,
 } from "lucide-react";
 import {
@@ -40,6 +34,7 @@ import { ContactCreateSheet } from "../contacts/ContactCreateSheet";
 import { useState } from "react";
 import { NoteCreateSheet } from "../notes/NoteCreateSheet";
 import { TaskCreateSheet } from "../tasks/TaskCreateSheet";
+import { ActionSheet } from "../misc/ActionSheet";
 
 export const MobileNavigation = () => {
   const location = useLocation();
@@ -68,53 +63,50 @@ export const MobileNavigation = () => {
   return (
     <nav
       aria-label={translate("crm.navigation.label")}
-      className="fixed bottom-0 left-0 right-0 z-50 bg-secondary h-14"
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/60 bg-secondary/90 backdrop-blur-xl pb-[env(safe-area-inset-bottom,0px)]"
       style={{
         // iOS bug: even though viewport is set correctly, the bottom safe area inset is not accounted for
         // So we manually add some padding to avoid the navigation being too close to the home bar
         paddingBottom: isPwa && isWebiOS ? 15 : undefined,
-        // We use box-sizing: border-box, so the height contains the padding.
-        // To actually increase the padding, we need to increase the height as well
-        height:
-          "calc(var(--spacing)) * 6" + (isPwa && isWebiOS ? " + 15px" : ""),
       }}
     >
-      <div className="flex justify-center">
-        <>
-          <NavigationButton
-            href="/"
-            Icon={Home}
-            label={translate("ra.page.dashboard")}
-            isActive={currentPath === "/"}
-          />
-          <NavigationButton
-            href="/deals"
-            Icon={KanbanSquare}
-            label={translate("resources.deals.name", { smart_count: 2 })}
-            isActive={currentPath === "/deals"}
-          />
-          <CreateButton />
-          <NavigationButton
-            href="/contacts"
-            Icon={Users}
-            label={translate("resources.contacts.name", {
-              smart_count: 2,
-            })}
-            isActive={currentPath === "/contacts"}
-          />
-          <MoreButton
-            isActive={
-              currentPath === false ||
-              currentPath === "/companies" ||
-              currentPath === "/tasks"
-            }
-          />
-        </>
+      {/* Tabs navigate; creating lives in the top bar's + button */}
+      <div className="mx-auto flex max-w-lg">
+        <NavigationButton
+          href="/"
+          Icon={Home}
+          label="Home"
+          isActive={currentPath === "/"}
+        />
+        <NavigationButton
+          href="/deals"
+          Icon={KanbanSquare}
+          label={translate("resources.deals.name", { smart_count: 2 })}
+          isActive={currentPath === "/deals"}
+        />
+        <NavigationButton
+          href="/contacts"
+          Icon={Users}
+          label={translate("resources.contacts.name", {
+            smart_count: 2,
+          })}
+          isActive={currentPath === "/contacts"}
+        />
+        <NavigationButton
+          href="/tasks"
+          Icon={ListTodo}
+          label="Tasks"
+          isActive={currentPath === "/tasks"}
+        />
+        <MoreButton
+          isActive={currentPath === false || currentPath === "/companies"}
+        />
       </div>
     </nav>
   );
 };
 
+/** One tab: icon over an 11pt label, brand blue when selected. */
 const NavigationButton = ({
   href,
   Icon,
@@ -126,24 +118,27 @@ const NavigationButton = ({
   label: string;
   isActive: boolean;
 }) => (
-  <Button
-    asChild
-    variant="ghost"
+  <Link
+    to={href}
+    aria-current={isActive ? "page" : undefined}
     className={cn(
-      "flex-col gap-1 h-auto py-2 px-1 rounded-md w-16",
-      isActive ? null : "text-muted-foreground",
+      "flex min-h-[49px] flex-1 flex-col items-center justify-center gap-0.5 pt-1.5",
+      isActive ? "text-[var(--lab-blue-text)]" : "text-muted-foreground",
     )}
   >
-    <Link to={href}>
-      <Icon className="size-6" />
-      <span className="text-[0.6rem] font-medium">{label}</span>
-    </Link>
-  </Button>
+    <Icon className="size-6" strokeWidth={isActive ? 2.25 : 1.75} />
+    <span className="text-[11px] font-medium leading-tight">{label}</span>
+  </Link>
 );
 
-const CreateButton = () => {
+/**
+ * The top bar's + button: new customer, job, note or task. An action lives
+ * in the toolbar, not in the tab bar.
+ */
+export const CreateMenu = () => {
   const translate = useTranslate();
   const contact_id = useMatch("/contacts/:id/*")?.params.id;
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [contactCreateOpen, setContactCreateOpen] = useState(false);
   const [noteCreateOpen, setNoteCreateOpen] = useState(false);
   const [taskCreateOpen, setTaskCreateOpen] = useState(false);
@@ -165,50 +160,41 @@ const CreateButton = () => {
         onOpenChange={setTaskCreateOpen}
         contact_id={contact_id}
       />
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="default"
-            size="icon"
-            className="h-16 w-16 rounded-full -mt-3"
-            aria-label={translate("ra.action.create")}
-          >
-            <Plus className="size-10" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuItem
-            className="h-12 px-4 text-base"
-            onSelect={() => {
-              setContactCreateOpen(true);
-            }}
-          >
-            {translate("resources.contacts.forcedCaseName")}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            className="h-12 px-4 text-base"
-            onSelect={() => navigate("/deals/create")}
-          >
-            {translate("resources.deals.forcedCaseName", { _: "Job" })}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            className="h-12 px-4 text-base"
-            onSelect={() => {
-              setNoteCreateOpen(true);
-            }}
-          >
-            {translate("resources.notes.forcedCaseName")}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            className="h-12 px-4 text-base"
-            onSelect={() => {
-              setTaskCreateOpen(true);
-            }}
-          >
-            {translate("resources.tasks.forcedCaseName")}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <button
+        type="button"
+        onClick={() => setSheetOpen(true)}
+        aria-label={translate("ra.action.create")}
+        className="grid size-11 place-items-center rounded-full text-[var(--lab-blue-text)]"
+      >
+        <Plus className="size-7" strokeWidth={2.25} />
+      </button>
+      <ActionSheet
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        title="New"
+        actions={[
+          {
+            label: translate("resources.contacts.forcedCaseName"),
+            icon: Users,
+            onSelect: () => setContactCreateOpen(true),
+          },
+          {
+            label: translate("resources.deals.forcedCaseName", { _: "Job" }),
+            icon: KanbanSquare,
+            onSelect: () => navigate("/deals/create"),
+          },
+          {
+            label: translate("resources.tasks.forcedCaseName"),
+            icon: ListTodo,
+            onSelect: () => setTaskCreateOpen(true),
+          },
+          {
+            label: translate("resources.notes.forcedCaseName"),
+            icon: StickyNote,
+            onSelect: () => setNoteCreateOpen(true),
+          },
+        ]}
+      />
     </>
   );
 };
@@ -245,12 +231,6 @@ const MORE_LINKS = [
     Icon: Building2,
   },
   {
-    href: "/tasks",
-    label: "Tasks",
-    hint: "Calls and follow-ups",
-    Icon: ListTodo,
-  },
-  {
     href: "/settings",
     label: "Settings",
     hint: "Profile, team and app",
@@ -263,17 +243,17 @@ const MoreButton = ({ isActive }: { isActive: boolean }) => {
   const navigate = useNavigate();
   return (
     <>
-      <Button
-        variant="ghost"
+      <button
+        type="button"
         onClick={() => setOpen(true)}
         className={cn(
-          "flex-col gap-1 h-auto py-2 px-1 rounded-md w-16",
-          isActive ? null : "text-muted-foreground",
+          "flex min-h-[49px] flex-1 flex-col items-center justify-center gap-0.5 pt-1.5",
+          isActive ? "text-[var(--lab-blue-text)]" : "text-muted-foreground",
         )}
       >
-        <Menu className="size-6" />
-        <span className="text-[0.6rem] font-medium">More</span>
-      </Button>
+        <Menu className="size-6" strokeWidth={isActive ? 2.25 : 1.75} />
+        <span className="text-[11px] font-medium leading-tight">More</span>
+      </button>
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent side="bottom" className="pb-8 rounded-t-lg">
           <SheetHeader>

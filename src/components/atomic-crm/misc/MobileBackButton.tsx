@@ -20,13 +20,17 @@ export const MobileBackButton = (props: { resource?: string; to?: string }) => {
       type="button"
       variant="ghost"
       size="icon"
-      className="rounded-full size-5 pr-2"
+      className="-ml-3 size-11 rounded-full"
       onClick={(e) => {
         e.preventDefault();
-        navigate(finalTo);
+        // Go back like iOS does, so the list returns to where you were;
+        // opened from a link with no history, go to the list instead
+        const idx = (window.history.state as { idx?: number } | null)?.idx;
+        if (idx && idx > 0) navigate(-1);
+        else navigate(finalTo);
       }}
     >
-      <ChevronLeft className="size-6" />
+      <ChevronLeft className="size-7" />
       <span className="sr-only">Back{to ? "" : " to list"}</span>
     </Button>
   );

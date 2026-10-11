@@ -36,7 +36,12 @@ export const SectionTitle = ({
     <h2 className="text-lg font-semibold text-muted-foreground flex-1">
       {children}
     </h2>
-    {action}
+    {action ? (
+      // Links like "Calendar" get a full 44pt tap target
+      <span className="-my-2 inline-flex [&>a]:inline-flex [&>a]:min-h-11 [&>a]:items-center">
+        {action}
+      </span>
+    ) : null}
   </div>
 );
 
