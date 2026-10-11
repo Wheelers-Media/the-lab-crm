@@ -170,6 +170,34 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/shopfloor/workStatus.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/shopfloor/useSetWorkStatus.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/shopfloor/messageTemplates.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/shopfloor/WorkStatusPanel.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/shopfloor/TextCustomerMenu.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/shopfloor/ShopFloorSummary.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/shopfloor/ShopFloorPage.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/shop/shopFormat.ts",
           "type": "registry:component"
         },
@@ -422,6 +450,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/providers/commons/catalogSync.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/providers/commons/canAccess.ts",
           "type": "registry:component"
         },
@@ -442,7 +474,15 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/packages/productModel.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/packages/packageModel.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/packages/SyncCatalogButton.tsx",
           "type": "registry:component"
         },
         {
@@ -466,7 +506,23 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/packages/ProductSales.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/packages/ProductParts.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/packages/ProductList.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/packages/ProductGallery.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/packages/ProductCards.tsx",
           "type": "registry:component"
         },
         {
@@ -519,6 +575,78 @@
         },
         {
           "path": "src/components/atomic-crm/operations/CommandCenter.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/numbers/widgets.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/numbers/useNumbersData.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/numbers/useAllRecords.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/numbers/salesModel.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/numbers/periods.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/numbers/inventoryModel.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/numbers/funnelModel.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/numbers/customerModel.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/numbers/csv.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/numbers/catalogMatch.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/numbers/capacityModel.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/numbers/TrendChart.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/numbers/ShopSection.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/numbers/SalesSection.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/numbers/ProductsSection.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/numbers/PipelineSection.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/numbers/NumbersPage.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/numbers/CustomersSection.tsx",
           "type": "registry:component"
         },
         {
@@ -723,10 +851,6 @@
         },
         {
           "path": "src/components/atomic-crm/layout/PullToRefresh.tsx",
-          "type": "registry:component"
-        },
-        {
-          "path": "src/components/atomic-crm/layout/MobileRefreshButton.tsx",
           "type": "registry:component"
         },
         {
@@ -935,6 +1059,10 @@
         },
         {
           "path": "src/components/atomic-crm/contacts/index.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/contacts/firstPhone.ts",
           "type": "registry:component"
         },
         {
