@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import type { DealPackageLine, Package } from "../types";
-import { ProductThumb } from "./ProductList";
+import { ProductThumb } from "./ProductParts";
 import { LABOUR_RATE, labourLine, lineKind, type LineKind } from "./quoteModel";
 
 const KINDS: Array<[LineKind, string]> = [

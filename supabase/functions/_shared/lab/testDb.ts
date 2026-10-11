@@ -65,7 +65,7 @@ class Query implements PromiseLike<Result> {
     this.payload = patch;
     return this;
   }
-  upsert(row: Row, opts?: { onConflict?: string }) {
+  upsert(row: Row | Row[], opts?: { onConflict?: string }) {
     this.action = "upsert";
     this.payload = row;
     this.upsertKey = opts?.onConflict ?? "id";
@@ -166,14 +166,16 @@ class Query implements PromiseLike<Result> {
       const rows = Array.isArray(this.payload) ? this.payload : [this.payload];
       changed = rows.map((r) => this.db.add(this.table, r));
     } else if (this.action === "upsert") {
-      const row = this.payload as Row;
-      const existing = table.find(
-        (r) => r[this.upsertKey] === row[this.upsertKey],
-      );
-      if (existing) {
-        Object.assign(existing, row);
-        changed = [existing];
-      } else changed = [this.db.add(this.table, row)];
+      const incoming = Array.isArray(this.payload)
+        ? this.payload
+        : [this.payload];
+      changed = incoming.map((row) => {
+        const existing = table.find(
+          (r) => r[this.upsertKey] === row[this.upsertKey],
+        );
+        if (existing) return Object.assign(existing, row);
+        return this.db.add(this.table, row);
+      });
     } else if (this.action === "update") {
       changed = this.rows();
       changed.forEach((r) => Object.assign(r, this.payload));

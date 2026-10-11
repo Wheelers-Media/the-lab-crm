@@ -245,6 +245,11 @@ export type Package = {
     price: number;
     sku?: string;
     inventory?: number | null;
+    /** The crossed-out price, when Shopify shows a sale. */
+    compare_at?: number;
+    weight_kg?: number;
+    /** What the shop pays for it, when Shopify shares it with the CRM. */
+    cost?: number;
   }>;
   status: "active" | "unlisted" | "draft" | "archived" | "deleted";
   shopify_updated_at: string | null;
@@ -256,6 +261,10 @@ export type Package = {
   image_url: string | null;
   /** Units in stock; null when Shopify does not track stock */
   inventory: number | null;
+  /** The description as plain text, bullets kept. */
+  description?: string;
+  images?: Array<{ url: string; alt?: string }>;
+  tags?: string[];
 } & Pick<RaRecord, "id">;
 
 export type DealNote = {
