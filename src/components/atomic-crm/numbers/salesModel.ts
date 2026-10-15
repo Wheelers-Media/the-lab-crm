@@ -39,7 +39,13 @@ export const depositOrders = (orders: Order[], range: DateRange): Order[] =>
   );
 
 /** What the customer paid for the goods: the order subtotal, else its total. */
-const netOf = (o: Order): number => num(o.subtotal ?? o.total);
+export const netOf = (o: Order): number => num(o.subtotal ?? o.total);
+
+/** Units on an order: product lines only, fees and shop supplies left out. */
+export const unitsOf = (o: Order): number =>
+  (o.line_items ?? [])
+    .filter((l) => !NOT_A_PRODUCT.test(cleanProductName(l.name ?? "")))
+    .reduce((n, l) => n + num(l.quantity), 0);
 
 const lineValue = (line: OrderLineItem): number =>
   num(line.quantity) * num(line.price);
@@ -240,6 +246,10 @@ const CHANNEL_NAMES: Record<string, string> = {
   shopify_draft_order: "Draft orders and pay links",
 };
 
+/** Where an order was placed, in the words used on the Numbers screen. */
+export const channelName = (o: Order): string =>
+  CHANNEL_NAMES[o.source ?? ""] ?? (o.source ? o.source : "Other");
+
 /** Net sales by where the order was placed. */
 export const salesByChannel = (
   orders: Order[],
@@ -247,8 +257,7 @@ export const salesByChannel = (
 ): GroupRow[] => {
   const rows = new Map<string, GroupRow>();
   for (const o of salesOrders(orders, range)) {
-    const name =
-      CHANNEL_NAMES[o.source ?? ""] ?? (o.source ? o.source : "Other");
+    const name = channelName(o);
     const row = rows.get(name) ?? { name, netSales: 0, orders: 0, units: 0 };
     row.netSales += netOf(o);
     row.orders += 1;

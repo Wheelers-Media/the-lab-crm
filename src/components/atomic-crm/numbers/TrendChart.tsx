@@ -2,43 +2,83 @@ import { ResponsiveBar } from "@nivo/bar";
 import { useMemo } from "react";
 
 import { money } from "../operations/format";
-import type { TrendPoint } from "./salesModel";
+import type { MetricPoint } from "./insightsModel";
 
 const axisText = { ticks: { text: { fill: "var(--color-muted-foreground)" } } };
 
-/** Net sales per day, week or month, with the previous period beside each bar. */
-export const TrendChart = ({ points }: { points: TrendPoint[] }) => {
+/**
+ * The chosen metric per day, week or month, with the previous period beside
+ * each bar. Click a bar for the orders behind it; the picked bar stays lit.
+ */
+export const TrendChart = ({
+  points,
+  isMoney,
+  compare = true,
+  selectedKey,
+  onSelect,
+  label,
+}: {
+  points: MetricPoint[];
+  isMoney: boolean;
+  compare?: boolean;
+  selectedKey?: string | null;
+  onSelect?: (key: string) => void;
+  label: string;
+}) => {
+  const show = (v: number) =>
+    isMoney
+      ? money(v)
+      : v.toLocaleString("en-CA", { maximumFractionDigits: 1 });
   // Show about eight labels along the bottom, however many bars there are
   const step = Math.max(1, Math.ceil(points.length / 8));
   const tickValues = useMemo(
     () => points.filter((_, i) => i % step === 0).map((p) => p.label),
     [points, step],
   );
+  const data = useMemo(
+    () =>
+      points.map((p) => ({
+        key: p.key,
+        label: p.label,
+        value: p.value,
+        previous: p.previous,
+      })),
+    [points],
+  );
   if (!points.length) return null;
   return (
     <div
-      className="h-[280px]"
+      className={onSelect ? "h-[280px] [&_rect]:cursor-pointer" : "h-[280px]"}
       role="img"
-      aria-label="Net sales over time compared with the previous period"
+      aria-label={`${label} over time compared with the previous period`}
     >
       <ResponsiveBar
-        data={points as unknown as Array<Record<string, string | number>>}
+        data={data}
         indexBy="label"
-        keys={["previousNetSales", "netSales"]}
+        keys={compare ? ["previous", "value"] : ["value"]}
         groupMode="grouped"
-        colors={["#6b7686", "#0066FF"]}
+        colors={(bar) =>
+          bar.id === "previous"
+            ? "#6b7686"
+            : bar.data.key === selectedKey
+              ? "#5c9dff"
+              : "#0066FF"
+        }
         margin={{ top: 10, right: 10, bottom: 30, left: 48 }}
         padding={0.25}
         innerPadding={1}
         enableLabel={false}
         enableGridY
         enableGridX={false}
+        onClick={(bar) => onSelect?.(String(bar.data.key))}
         axisLeft={{
           tickSize: 0,
           tickPadding: 8,
           tickValues: 5,
           format: (v) =>
-            Number(v) >= 1000 ? `${Number(v) / 1000}k` : String(v),
+            isMoney && Number(v) >= 1000
+              ? `${Number(v) / 1000}k`
+              : String(Number(v)),
           style: axisText,
         }}
         axisBottom={{
@@ -55,9 +95,14 @@ export const TrendChart = ({ points }: { points: TrendPoint[] }) => {
             <strong>{indexValue}</strong>
             <span className="text-muted-foreground">
               {" "}
-              {id === "netSales" ? "this period" : "previous"}:{" "}
+              {id === "value" ? "this period" : "previous"}:{" "}
             </span>
-            {money(Number(value))}
+            {show(Number(value))}
+            {onSelect && id === "value" ? (
+              <span className="block text-xs text-muted-foreground">
+                Click to see the orders
+              </span>
+            ) : null}
           </div>
         )}
       />

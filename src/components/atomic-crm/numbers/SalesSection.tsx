@@ -1,15 +1,33 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 import { money } from "../operations/format";
 import { KpiTile } from "../operations/OperationsWidgets";
 import type { Order } from "../types";
+import {
+  metricTrend,
+  ordersInBucket,
+  sameSegment,
+  SALES_METRICS,
+  type SalesMetric,
+  type Segment,
+} from "./insightsModel";
+import type { Drill } from "./OrderDrillSheet";
 import type { NumbersRanges } from "./periods";
 import {
   percentChange,
   salesByCategory,
   salesByChannel,
   salesSummary,
-  salesTrend,
   withPrevious,
 } from "./salesModel";
 import { TrendChart } from "./TrendChart";
@@ -49,33 +67,71 @@ const groupColumns = (label: string, total: number): Array<Column<Row>> => [
   },
 ];
 
+const bucketTitle = (bucket: NumbersRanges["bucket"], label: string) =>
+  bucket === "day"
+    ? `Orders on ${label}`
+    : bucket === "week"
+      ? `Orders in the week of ${label}`
+      : `Orders in ${label}`;
+
 export const SalesSection = ({
   orders,
+  breakdownOrders,
   ranges,
   vs,
+  metric,
+  onMetric,
+  segment,
+  onSegment,
+  onDrill,
 }: {
+  /** The orders after the screen's segment filter: figures and chart. */
   orders: Order[];
+  /** Every order: the breakdown tables keep showing all rows to pick from. */
+  breakdownOrders: Order[];
   ranges: NumbersRanges;
   vs: string;
+  metric: SalesMetric;
+  onMetric: (metric: SalesMetric) => void;
+  segment: Segment | null;
+  onSegment: (segment: Segment) => void;
+  onDrill: (drill: Drill) => void;
 }) => {
-  const now = useMemo(() => {
-    const current = salesSummary(orders, ranges.current);
-    const previous = salesSummary(orders, ranges.previous);
-    return {
-      current,
-      previous,
-      trend: salesTrend(orders, ranges),
+  const [compare, setCompare] = useState(true);
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+
+  const now = useMemo(
+    () => ({
+      current: salesSummary(orders, ranges.current),
+      previous: salesSummary(orders, ranges.previous),
+      breakdownTotal: salesSummary(breakdownOrders, ranges.current).netSales,
       categories: withPrevious(
-        salesByCategory(orders, ranges.current),
-        salesByCategory(orders, ranges.previous),
+        salesByCategory(breakdownOrders, ranges.current),
+        salesByCategory(breakdownOrders, ranges.previous),
       ),
       channels: withPrevious(
-        salesByChannel(orders, ranges.current),
-        salesByChannel(orders, ranges.previous),
+        salesByChannel(breakdownOrders, ranges.current),
+        salesByChannel(breakdownOrders, ranges.previous),
       ),
-    };
-  }, [orders, ranges]);
+    }),
+    [orders, breakdownOrders, ranges],
+  );
   const { current: c, previous: p } = now;
+  const points = useMemo(
+    () => metricTrend(orders, ranges, metric),
+    [orders, ranges, metric],
+  );
+  const meta = SALES_METRICS.find((m) => m.value === metric)!;
+
+  const openBucket = (key: string) => {
+    const point = points.find((pt) => pt.key === key);
+    if (!point) return;
+    setSelectedKey(key);
+    onDrill({
+      title: bucketTitle(ranges.bucket, point.label),
+      orders: ordersInBucket(orders, ranges, key),
+    });
+  };
 
   return (
     <>
@@ -85,12 +141,16 @@ export const SalesSection = ({
           value={money(c.netSales)}
           trend={percentChange(c.netSales, p.netSales)}
           detail={`${money(c.collected)} collected`}
+          onSelect={() => onMetric("netSales")}
+          selected={metric === "netSales"}
         />
         <KpiTile
           label="Orders"
           value={String(c.orders)}
           trend={percentChange(c.orders, p.orders)}
           detail={vs}
+          onSelect={() => onMetric("orders")}
+          selected={metric === "orders"}
         />
         <KpiTile
           label="Average order"
@@ -101,6 +161,8 @@ export const SalesSection = ({
               : null
           }
           detail={`largest ${money(c.largestOrder)}`}
+          onSelect={() => onMetric("average")}
+          selected={metric === "average"}
         />
         <KpiTile
           label="Units sold"
@@ -111,6 +173,8 @@ export const SalesSection = ({
               ? ""
               : `${c.unitsPerOrder.toFixed(1)} per order`
           }
+          onSelect={() => onMetric("units")}
+          selected={metric === "units"}
         />
         <KpiTile
           label="Refunds"
@@ -129,33 +193,94 @@ export const SalesSection = ({
       </div>
 
       <SectionCard
-        title="Net sales over time"
-        hint="Blue is this period, grey is the same stretch before. Net sales are before tax and shipping, after discounts."
+        title={`${meta.label} over time`}
+        hint="Blue is this period, grey is the same stretch before. Net sales are before tax and shipping, after discounts. Tap a figure above to chart it; tap a bar for its orders."
+        actions={
+          <div className="flex items-center gap-2 shrink-0">
+            <Switch
+              id="numbers-compare"
+              checked={compare}
+              onCheckedChange={setCompare}
+            />
+            <Label htmlFor="numbers-compare">Compare</Label>
+          </div>
+        }
       >
-        <TrendChart points={now.trend} />
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <ToggleGroup
+            type="single"
+            variant="outline"
+            size="sm"
+            value={metric}
+            onValueChange={(v) => v && onMetric(v as SalesMetric)}
+            aria-label="Chart metric"
+            className="flex-wrap"
+          >
+            {SALES_METRICS.map((m) => (
+              <ToggleGroupItem
+                key={m.value}
+                value={m.value}
+                className="px-3 min-h-9"
+              >
+                {m.label}
+              </ToggleGroupItem>
+            ))}
+          </ToggleGroup>
+          <Select value="" onValueChange={openBucket}>
+            <SelectTrigger size="sm" className="w-auto min-w-40">
+              <SelectValue placeholder="See orders for…" />
+            </SelectTrigger>
+            <SelectContent>
+              {points
+                .filter((pt) => pt.orders > 0)
+                .map((pt) => (
+                  <SelectItem key={pt.key} value={pt.key}>
+                    {pt.label}, {pt.orders}{" "}
+                    {pt.orders === 1 ? "order" : "orders"}
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <TrendChart
+          points={points}
+          isMoney={meta.money}
+          compare={compare}
+          selectedKey={selectedKey}
+          onSelect={openBucket}
+          label={meta.label}
+        />
       </SectionCard>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <SectionCard
           title="By kind of work"
-          hint="Discounts are spread over each order's lines."
+          hint="Tap a row to filter the whole screen to it. Discounts are spread over each order's lines."
         >
           <StatTable
             rows={now.categories}
             rowKey={(r) => r.name}
-            columns={groupColumns("Category", c.netSales)}
+            columns={groupColumns("Category", now.breakdownTotal)}
             filename="net-sales-by-category.csv"
+            onRowClick={(r) => onSegment({ kind: "category", value: r.name })}
+            isSelected={(r) =>
+              sameSegment(segment, { kind: "category", value: r.name })
+            }
           />
         </SectionCard>
         <SectionCard
           title="By channel"
-          hint="Draft orders are the pay links made from quotes."
+          hint="Tap a row to filter. Draft orders are the pay links made from quotes."
         >
           <StatTable
             rows={now.channels}
             rowKey={(r) => r.name}
-            columns={groupColumns("Channel", c.netSales)}
+            columns={groupColumns("Channel", now.breakdownTotal)}
             filename="net-sales-by-channel.csv"
+            onRowClick={(r) => onSegment({ kind: "channel", value: r.name })}
+            isSelected={(r) =>
+              sameSegment(segment, { kind: "channel", value: r.name })
+            }
           />
         </SectionCard>
       </div>

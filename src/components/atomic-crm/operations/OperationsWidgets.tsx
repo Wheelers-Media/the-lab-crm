@@ -54,14 +54,26 @@ export interface KpiTileProps {
   trend?: number | null;
   /** Opens the list behind the number */
   to?: string;
+  /** Makes the tile a toggle (the Numbers screen picks its chart metric this way) */
+  onSelect?: () => void;
+  selected?: boolean;
 }
 
-export const KpiTile = ({ label, value, detail, trend, to }: KpiTileProps) => {
+export const KpiTile = ({
+  label,
+  value,
+  detail,
+  trend,
+  to,
+  onSelect,
+  selected,
+}: KpiTileProps) => {
   const tile = (
     <Card
       className={cn(
         "p-4 gap-1 h-full",
-        to && "transition-colors group-hover:bg-muted",
+        (to || onSelect) && "transition-colors group-hover:bg-muted",
+        selected && "border-primary ring-1 ring-primary",
       )}
     >
       <p className="text-sm text-muted-foreground">{label}</p>
@@ -82,8 +94,19 @@ export const KpiTile = ({ label, value, detail, trend, to }: KpiTileProps) => {
       </p>
     </Card>
   );
+  if (onSelect)
+    return (
+      <button
+        type="button"
+        onClick={onSelect}
+        aria-pressed={selected}
+        className="group block w-full rounded-lg text-left"
+      >
+        {tile}
+      </button>
+    );
   return to ? (
-    <Link to={to} className="group block rounded-xl">
+    <Link to={to} className="group block rounded-lg">
       {tile}
     </Link>
   ) : (

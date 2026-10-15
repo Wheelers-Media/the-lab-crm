@@ -45,12 +45,12 @@ const utcMidnight = (key: string): number => {
   return Date.UTC(y, m - 1, d);
 };
 
-const daysBetween = (fromKey: string, toKey: string): number =>
+export const daysBetween = (fromKey: string, toKey: string): number =>
   Math.round((utcMidnight(toKey) - utcMidnight(fromKey)) / 86_400_000);
 
-const firstOfMonth = (key: string): string => `${key.slice(0, 7)}-01`;
+export const firstOfMonth = (key: string): string => `${key.slice(0, 7)}-01`;
 
-const addMonths = (key: string, months: number): string => {
+export const addMonths = (key: string, months: number): string => {
   const [y, m] = key.split("-").map(Number);
   return new Date(Date.UTC(y, m - 1 + months, 1)).toISOString().slice(0, 10);
 };
