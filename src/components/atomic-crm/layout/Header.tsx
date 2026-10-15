@@ -44,8 +44,9 @@ const Header = () => {
 
   return (
     <>
-      <nav className="grow">
-        <header className="bg-secondary">
+      {/* Sticky like the website's header: the page scrolls under it */}
+      <nav className="sticky top-0 z-40 grow">
+        <header className="border-b border-border bg-background/95 backdrop-blur-xl">
           <div className="px-4">
             <div className="flex justify-between items-center flex-1">
               <Link
@@ -66,7 +67,7 @@ const Header = () => {
                   CRM
                 </span>
               </Link>
-              <div className="min-w-0 flex-1 overflow-x-auto">
+              <div className="min-w-0 flex-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 <nav className="flex w-max mx-auto">
                   <NavigationTab
                     label={translate("ra.page.dashboard")}
@@ -164,11 +165,8 @@ const NavigationTab = ({
 }) => (
   <Link
     to={to}
-    className={`px-3 xl:px-5 py-3 text-sm font-medium whitespace-nowrap shrink-0 transition-colors border-b-2 ${
-      isActive
-        ? "text-secondary-foreground border-secondary-foreground"
-        : "text-secondary-foreground/70 border-transparent hover:text-secondary-foreground/80"
-    }`}
+    className="lab-nav-link"
+    aria-current={isActive ? "page" : undefined}
   >
     {label}
   </Link>
