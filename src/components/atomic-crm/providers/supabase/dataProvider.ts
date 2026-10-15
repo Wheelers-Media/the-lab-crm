@@ -15,6 +15,10 @@ import {
   CatalogSyncError,
   type CatalogSyncResult,
 } from "../commons/catalogSync";
+import {
+  GoogleCalendarSyncError,
+  type GoogleCalendarSyncResult,
+} from "../commons/googleCalendarSync";
 import type {
   ContactNote,
   Deal,
@@ -327,6 +331,23 @@ const getDataProviderWithCustomMethods = () => {
         );
       }
       return data as CatalogSyncResult;
+    },
+    // Brings events typed into the shop's Google calendars into the CRM and
+    // sends CRM appointments to them (see google_calendar_sync)
+    async syncGoogleCalendar(): Promise<GoogleCalendarSyncResult> {
+      const { data, error } = await getSupabaseClient().functions.invoke(
+        "google_calendar_sync",
+        { method: "POST", body: {} },
+      );
+      if (error) {
+        const body = await (error as { context?: Response }).context
+          ?.json()
+          .catch(() => null);
+        throw new GoogleCalendarSyncError(
+          body?.message ?? "Could not sync Google Calendar.",
+        );
+      }
+      return data as GoogleCalendarSyncResult;
     },
     async mergeContacts(sourceId: Identifier, targetId: Identifier) {
       const { data, error } = await getSupabaseClient().functions.invoke(

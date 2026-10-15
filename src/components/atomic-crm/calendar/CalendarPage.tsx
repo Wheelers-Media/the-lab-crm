@@ -28,6 +28,7 @@ import {
 import { useAppointments } from "../operations/useOperationsData";
 import type { Appointment, Contact, Task } from "../types";
 import { AddAppointment } from "./AddAppointment";
+import { GoogleCalendarSync } from "./GoogleCalendarSync";
 
 type View = "week" | "day";
 
@@ -264,6 +265,7 @@ export const CalendarPage = () => {
           <AddAppointment defaultDay={date} />
         </div>
       </div>
+      <GoogleCalendarSync />
 
       {view === "day" ? (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
