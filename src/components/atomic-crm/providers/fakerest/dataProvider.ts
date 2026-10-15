@@ -33,6 +33,10 @@ import {
   CatalogSyncError,
   type CatalogSyncResult,
 } from "../commons/catalogSync";
+import {
+  TrafficSyncError,
+  type TrafficSyncResult,
+} from "../commons/trafficSync";
 import type { CrmDataProvider } from "../types";
 import {
   authProvider as defaultAuthProvider,
@@ -323,6 +327,12 @@ export const createDataProvider = ({
     },
     syncCatalog: async (): Promise<CatalogSyncResult> => {
       throw new CatalogSyncError(
+        "The demo is not connected to a Shopify store.",
+        "not_connected",
+      );
+    },
+    syncTraffic: async (): Promise<TrafficSyncResult> => {
+      throw new TrafficSyncError(
         "The demo is not connected to a Shopify store.",
         "not_connected",
       );

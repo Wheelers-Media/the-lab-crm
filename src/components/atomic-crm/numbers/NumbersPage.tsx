@@ -23,6 +23,8 @@ import { PipelineSection } from "./PipelineSection";
 import { ProductsSection } from "./ProductsSection";
 import { SalesSection } from "./SalesSection";
 import { ShopSection } from "./ShopSection";
+import { TrafficSection } from "./TrafficSection";
+import { isTrafficMetric, type TrafficMetric } from "./trafficModel";
 import { useNumbersData } from "./useNumbersData";
 
 const isPeriod = (value: string | null): value is NumbersPeriod =>
@@ -49,6 +51,16 @@ export const NumbersPage = () => {
     : "netSales";
   const segmentRaw = params.get("segment");
   const segment = useMemo(() => parseSegment(segmentRaw), [segmentRaw]);
+  const requestedTraffic = params.get("traffic");
+  const trafficMetric: TrafficMetric = isTrafficMetric(requestedTraffic)
+    ? requestedTraffic
+    : "sessions";
+  const sourceParam = params.get("source");
+  const deviceParam = params.get("device");
+  const trafficFilter = useMemo(
+    () => ({ source: sourceParam || null, device: deviceParam || null }),
+    [sourceParam, deviceParam],
+  );
 
   const data = useNumbersData(period);
   const label = NUMBERS_PERIODS.find((p) => p.value === period)!;
@@ -63,6 +75,9 @@ export const NumbersPage = () => {
   // Picking the segment that is already on clears it
   const pickSegment = (next: Segment) =>
     setParam("segment", sameSegment(segment, next) ? null : segmentParam(next));
+  // The traffic source and device work the same way
+  const pickTraffic = (name: string, current: string | null, next: string) =>
+    setParam(name, current === next ? null : next);
 
   const filtered = useMemo(
     () =>
@@ -78,8 +93,8 @@ export const NumbersPage = () => {
             Numbers
           </h1>
           <p className="text-sm text-muted-foreground">
-            {label.label}, {label.vs}. From Shopify orders and the CRM. Tap a
-            figure, bar or row to dig in.
+            {label.label}, {label.vs}. From Shopify orders, Shopify's traffic
+            reports and the CRM. Tap a figure, bar or row to dig in.
           </p>
         </div>
         <ToggleGroup
@@ -118,8 +133,8 @@ export const NumbersPage = () => {
             <X />
           </Button>
           <span className="text-xs text-muted-foreground">
-            Sales, patterns and products follow this filter. Customers, leads
-            and stock always show everything.
+            Sales, patterns and products follow this filter. Customers, leads,
+            stock and traffic always show everything.
           </span>
         </div>
       ) : null}
@@ -146,6 +161,17 @@ export const NumbersPage = () => {
             segment={segment}
             onSegment={pickSegment}
             onDrill={setDrill}
+          />
+          <Heading>Traffic</Heading>
+          <TrafficSection
+            traffic={data.traffic}
+            ranges={data.ranges}
+            vs={label.vs}
+            metric={trafficMetric}
+            onMetric={(m) => setParam("traffic", m === "sessions" ? null : m)}
+            filter={trafficFilter}
+            onSource={(key) => pickTraffic("source", trafficFilter.source, key)}
+            onDevice={(key) => pickTraffic("device", trafficFilter.device, key)}
           />
           <Heading>Patterns</Heading>
           <InsightsSection

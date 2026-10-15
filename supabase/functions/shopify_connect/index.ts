@@ -14,8 +14,10 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { supabaseAdmin } from "../_shared/supabaseAdmin.ts";
 
+// read_reports lets traffic_sync read the store's sessions (ShopifyQL). A store
+// connected before it was added must be approved again to get a token with it.
 const SCOPES =
-  "write_draft_orders,read_draft_orders,read_products,write_customers,read_customers";
+  "write_draft_orders,read_draft_orders,read_products,write_customers,read_customers,read_reports";
 // An approval link stays valid this long
 const STATE_TTL_MS = 15 * 60 * 1000;
 

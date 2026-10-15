@@ -14,6 +14,7 @@ import type {
   Vehicle,
 } from "../../../types";
 import type { StageChange } from "../../../numbers/funnelModel";
+import type { TrafficRow } from "../../../numbers/trafficModel";
 import type { ConfigurationContextValue } from "../../../root/ConfigurationContext";
 
 export interface Db {
@@ -28,6 +29,7 @@ export interface Db {
   tasks: Task[];
   orders: Order[];
   shopify_checkouts: ShopifyCheckout[];
+  shop_traffic_daily: TrafficRow[];
   appointments: Appointment[];
   vehicles: Vehicle[];
   packages: Package[];

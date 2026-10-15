@@ -15,6 +15,10 @@ import {
   CatalogSyncError,
   type CatalogSyncResult,
 } from "../commons/catalogSync";
+import {
+  TrafficSyncError,
+  type TrafficSyncResult,
+} from "../commons/trafficSync";
 import type {
   ContactNote,
   Deal,
@@ -327,6 +331,23 @@ const getDataProviderWithCustomMethods = () => {
         );
       }
       return data as CatalogSyncResult;
+    },
+    // Copies the store's online traffic from Shopify's reports (read_reports)
+    async syncTraffic(): Promise<TrafficSyncResult> {
+      const { data, error } = await getSupabaseClient().functions.invoke(
+        "traffic_sync",
+        { method: "POST", body: {} },
+      );
+      if (error) {
+        const body = await (error as { context?: Response }).context
+          ?.json()
+          .catch(() => null);
+        throw new TrafficSyncError(
+          body?.message ?? "Could not update traffic from Shopify.",
+          body?.code,
+        );
+      }
+      return data as TrafficSyncResult;
     },
     async mergeContacts(sourceId: Identifier, targetId: Identifier) {
       const { data, error } = await getSupabaseClient().functions.invoke(

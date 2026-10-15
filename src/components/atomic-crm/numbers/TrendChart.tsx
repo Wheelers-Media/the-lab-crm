@@ -13,22 +13,28 @@ const axisText = { ticks: { text: { fill: "var(--color-muted-foreground)" } } };
 export const TrendChart = ({
   points,
   isMoney,
+  percent = false,
   compare = true,
   selectedKey,
   onSelect,
+  clickHint = "Click to see the orders",
   label,
 }: {
-  points: MetricPoint[];
+  points: Array<Pick<MetricPoint, "key" | "label" | "value" | "previous">>;
   isMoney: boolean;
+  /** The values are percentages, such as a conversion rate. */
+  percent?: boolean;
   compare?: boolean;
   selectedKey?: string | null;
   onSelect?: (key: string) => void;
+  /** What the tooltip says a click does. */
+  clickHint?: string;
   label: string;
 }) => {
+  const number = (v: number) =>
+    v.toLocaleString("en-CA", { maximumFractionDigits: 1 });
   const show = (v: number) =>
-    isMoney
-      ? money(v)
-      : v.toLocaleString("en-CA", { maximumFractionDigits: 1 });
+    isMoney ? money(v) : percent ? `${number(v)}%` : number(v);
   // Show about eight labels along the bottom, however many bars there are
   const step = Math.max(1, Math.ceil(points.length / 8));
   const tickValues = useMemo(
@@ -78,7 +84,9 @@ export const TrendChart = ({
           format: (v) =>
             isMoney && Number(v) >= 1000
               ? `${Number(v) / 1000}k`
-              : String(Number(v)),
+              : percent
+                ? `${Number(v)}%`
+                : String(Number(v)),
           style: axisText,
         }}
         axisBottom={{
@@ -100,7 +108,7 @@ export const TrendChart = ({
             {show(Number(value))}
             {onSelect && id === "value" ? (
               <span className="block text-xs text-muted-foreground">
-                Click to see the orders
+                {clickHint}
               </span>
             ) : null}
           </div>
