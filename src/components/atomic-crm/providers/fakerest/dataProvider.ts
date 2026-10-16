@@ -37,6 +37,7 @@ import {
   TrafficSyncError,
   type TrafficSyncResult,
 } from "../commons/trafficSync";
+import type { GoogleCalendarSyncResult } from "../commons/googleCalendarSync";
 import type { CrmDataProvider } from "../types";
 import {
   authProvider as defaultAuthProvider,
@@ -337,6 +338,10 @@ export const createDataProvider = ({
         "not_connected",
       );
     },
+    syncGoogleCalendar: async (): Promise<GoogleCalendarSyncResult> => ({
+      configured: false,
+      message: "The demo is not connected to Google Calendar.",
+    }),
     isInitialized: async (): Promise<boolean> => {
       const sales = await dataProvider.getList<Sale>("sales", {
         filter: {},
