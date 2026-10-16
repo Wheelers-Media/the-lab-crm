@@ -182,3 +182,5 @@ verify_jwt = false
 verify_jwt = false
 [functions.shopify_connect]
 verify_jwt = false
+[functions.google_calendar_sync]
+verify_jwt = false
