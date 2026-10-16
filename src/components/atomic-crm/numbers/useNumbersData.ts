@@ -13,6 +13,7 @@ import { addDays, shopDayKey, startOfShopDay } from "../operations/shopTime";
 import { type LedgerOrder } from "./customerModel";
 import { type StageChange } from "./funnelModel";
 import { type NumbersPeriod, numbersRanges } from "./periods";
+import type { TrafficRow } from "./trafficModel";
 import { useAllRecords } from "./useAllRecords";
 
 const LEDGER_COLUMNS = [
@@ -62,6 +63,13 @@ export const useNumbersData = (period: NumbersPeriod) => {
     sort: { field: "checkout_updated_at", order: "ASC" },
   });
 
+  // Online store visits copied from Shopify's reports. Kept apart from the
+  // orders: the table may not exist yet, and that must not blank the screen
+  const traffic = useAllRecords<TrafficRow>("shop_traffic_daily", {
+    filter: { "day@gte": shopDayKey(ranges.previous.start) },
+    sort: { field: "day", order: "ASC" },
+  });
+
   return {
     now,
     ranges,
@@ -72,6 +80,12 @@ export const useNumbersData = (period: NumbersPeriod) => {
     changes: changes.data ?? [],
     appointments: appointments.data ?? [],
     checkouts: checkouts.data ?? [],
+    traffic: {
+      rows: traffic.data ?? [],
+      isPending: traffic.isPending,
+      error: traffic.error,
+      refetch: traffic.refetch,
+    },
     isPending: orders.isPending || ledgerOrders.isPending,
     error: orders.error ?? ledgerOrders.error,
   };

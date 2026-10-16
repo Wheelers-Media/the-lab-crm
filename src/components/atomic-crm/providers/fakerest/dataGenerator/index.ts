@@ -12,6 +12,7 @@ import {
 } from "./shop";
 import { generateTags } from "./tags";
 import { generateTasks } from "./tasks";
+import { generateTraffic } from "./traffic";
 import type { Db } from "./types";
 import { generateVehicles, vehiclesFts } from "./vehicles";
 import { generatePackages } from "./packages";
@@ -45,6 +46,7 @@ export default (): Db => {
   db.orders = generateOrders(db);
   db.packages = generatePackages();
   db.shopify_checkouts = generateCheckouts(db);
+  db.shop_traffic_daily = generateTraffic();
   db.appointments = generateAppointments(db);
   db.configuration = [
     {

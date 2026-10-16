@@ -170,9 +170,9 @@ class Query implements PromiseLike<Result> {
         ? this.payload
         : [this.payload];
       changed = incoming.map((row) => {
-        const existing = table.find(
-          (r) => r[this.upsertKey] === row[this.upsertKey],
-        );
+        // onConflict may name several columns, like the database does
+        const keys = this.upsertKey.split(",").map((k) => k.trim());
+        const existing = table.find((r) => keys.every((k) => r[k] === row[k]));
         if (existing) return Object.assign(existing, row);
         return this.db.add(this.table, row);
       });

@@ -16,6 +16,10 @@ import {
   type CatalogSyncResult,
 } from "../commons/catalogSync";
 import {
+  TrafficSyncError,
+  type TrafficSyncResult,
+} from "../commons/trafficSync";
+import {
   GoogleCalendarSyncError,
   type GoogleCalendarSyncResult,
 } from "../commons/googleCalendarSync";
@@ -331,6 +335,23 @@ const getDataProviderWithCustomMethods = () => {
         );
       }
       return data as CatalogSyncResult;
+    },
+    // Copies the store's online traffic from Shopify's reports (read_reports)
+    async syncTraffic(): Promise<TrafficSyncResult> {
+      const { data, error } = await getSupabaseClient().functions.invoke(
+        "traffic_sync",
+        { method: "POST", body: {} },
+      );
+      if (error) {
+        const body = await (error as { context?: Response }).context
+          ?.json()
+          .catch(() => null);
+        throw new TrafficSyncError(
+          body?.message ?? "Could not update traffic from Shopify.",
+          body?.code,
+        );
+      }
+      return data as TrafficSyncResult;
     },
     // Brings events typed into the shop's Google calendars into the CRM and
     // sends CRM appointments to them (see google_calendar_sync)
