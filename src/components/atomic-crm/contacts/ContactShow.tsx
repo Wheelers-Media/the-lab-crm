@@ -32,7 +32,7 @@ import type { Contact } from "../types";
 import { Avatar } from "./Avatar";
 import { ContactAside } from "./ContactAside";
 import { MobileBackButton } from "../misc/MobileBackButton";
-import { ContactOrders } from "../shop/ContactOrders";
+import { ContactPurchases } from "../shop/ContactPurchases";
 import { ContactVehicles } from "../vehicles/ContactVehicles";
 import { CustomerPackages } from "../packages/CustomerPackages";
 import { ContactQuotes } from "../packages/ContactQuotes";
@@ -109,9 +109,9 @@ const ContactShowContentMobile = () => {
           <div className="flex items-center mb-4">
             <Avatar />
             <div className="mx-3 flex-1">
-              <h2 className="text-2xl font-bold">
+              <h1 className="text-2xl font-bold">
                 <RecordRepresentation />
-              </h2>
+              </h1>
               <div className="text-sm text-muted-foreground">
                 {record.vehicle_label
                   ? `${record.vehicle_label}${record.company_id != null ? " · " : ""}`
@@ -149,16 +149,19 @@ const ContactShowContentMobile = () => {
         </div>
 
         <Tabs defaultValue="notes" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 h-10">
-            <TabsTrigger value="notes">
+          <TabsList className="grid w-full grid-cols-4 h-11">
+            <TabsTrigger value="notes" className="px-1 text-[13px]">
               {translate("resources.notes.name", { smart_count: 2 })}
             </TabsTrigger>
-            <TabsTrigger value="tasks">
+            <TabsTrigger value="purchases" className="px-1 text-[13px]">
+              Purchases
+            </TabsTrigger>
+            <TabsTrigger value="tasks" className="px-1 text-[13px]">
               {translate("crm.common.task_count", {
                 smart_count: taskCount ?? 0,
               })}
             </TabsTrigger>
-            <TabsTrigger value="details">
+            <TabsTrigger value="details" className="px-1 text-[13px]">
               {translate("crm.common.details")}
             </TabsTrigger>
           </TabsList>
@@ -194,6 +197,10 @@ const ContactShowContentMobile = () => {
             >
               <NotesIteratorMobile contactId={record.id} showStatus />
             </InfiniteListBase>
+          </TabsContent>
+
+          <TabsContent value="purchases" className="mt-4">
+            <ContactPurchases contactId={record.id} />
           </TabsContent>
 
           <TabsContent value="tasks" className="mt-4">
@@ -254,15 +261,6 @@ const ContactShowContentMobile = () => {
               </div>
               <div>
                 <h3 className="text-lg font-semibold">
-                  {translate("resources.orders.purchases", { _: "Purchases" })}
-                </h3>
-                <Separator />
-                <div className="mt-3">
-                  <ContactOrders contactId={record.id} />
-                </div>
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold">
                   {translate("resources.tags.name", { smart_count: 2 })}
                 </h3>
                 <Separator />
@@ -279,6 +277,7 @@ const ContactShowContentMobile = () => {
 };
 
 const ContactShowContent = () => {
+  const translate = useTranslate();
   const { record, isPending } = useShowContext<Contact>();
   if (isPending || !record) return null;
 
@@ -290,9 +289,9 @@ const ContactShowContent = () => {
             <div className="flex">
               <Avatar />
               <div className="ml-2 flex-1">
-                <h5 className="text-xl font-semibold">
+                <h1 className="text-xl font-semibold leading-tight">
                   <RecordRepresentation />
-                </h5>
+                </h1>
                 <div className="inline-flex text-sm text-muted-foreground">
                   {record.vehicle_label
                     ? `${record.vehicle_label}${record.company_id != null ? " · " : ""}`
@@ -323,19 +322,36 @@ const ContactShowContent = () => {
             <div className="mt-6">
               <ContactQuotes contact={record} />
             </div>
-            <InfiniteListBase
-              resource="contact_notes"
-              filter={{ contact_id: record.id }}
-              sort={{ field: "date", order: "DESC" }}
-              perPage={25}
-              disableSyncWithLocation
-              storeKey={false}
-              empty={
-                <NoteCreate reference="contacts" showStatus className="mt-4" />
-              }
-            >
-              <NotesIterator reference="contacts" showStatus />
-            </InfiniteListBase>
+            <Tabs defaultValue="notes" className="w-full mt-6">
+              <TabsList className="grid w-full max-w-sm grid-cols-2 h-11">
+                <TabsTrigger value="notes">
+                  {translate("resources.notes.name", { smart_count: 2 })}
+                </TabsTrigger>
+                <TabsTrigger value="purchases">Purchases</TabsTrigger>
+              </TabsList>
+              <TabsContent value="notes" className="mt-4">
+                <InfiniteListBase
+                  resource="contact_notes"
+                  filter={{ contact_id: record.id }}
+                  sort={{ field: "date", order: "DESC" }}
+                  perPage={25}
+                  disableSyncWithLocation
+                  storeKey={false}
+                  empty={
+                    <NoteCreate
+                      reference="contacts"
+                      showStatus
+                      className="mt-4"
+                    />
+                  }
+                >
+                  <NotesIterator reference="contacts" showStatus />
+                </InfiniteListBase>
+              </TabsContent>
+              <TabsContent value="purchases" className="mt-4">
+                <ContactPurchases contactId={record.id} />
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
       </div>

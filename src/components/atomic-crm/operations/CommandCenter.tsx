@@ -12,7 +12,6 @@ import {
   needsAttention,
   openPipeline,
   orderRevenue,
-  percentChange,
 } from "./metrics";
 import {
   AppointmentRow,
@@ -31,6 +30,7 @@ import {
 import { listLink, money } from "./format";
 import { ShopFloorSummary } from "../shopfloor/ShopFloorSummary";
 import { PipelineSnapshot } from "./PipelineSnapshot";
+import { RevenueCard } from "./RevenueCard";
 import { ShopifyMetrics } from "./ShopifyMetrics";
 import { useOperationsData, useRunAutomations } from "./useOperationsData";
 
@@ -145,20 +145,19 @@ export const CommandCenter = ({
     [`${field}@gte`]: range.start.toISOString(),
     [`${field}@lt`]: range.end.toISOString(),
   });
+  const revenueCard = (
+    <RevenueCard
+      orders={data.orders}
+      todayKey={todayKey}
+      revenue={kpis.revenue}
+      previousRevenue={kpis.revenueBefore}
+      periodLabel={periodLabel.label}
+      vs={periodLabel.vs}
+    />
+  );
   const kpiBlock = (
     <>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <KpiTile
-          label="Revenue (Shopify)"
-          to={listLink("orders", inPeriod("ordered_at"))}
-          value={money(kpis.revenue)}
-          trend={percentChange(kpis.revenue, kpis.revenueBefore)}
-          detail={
-            percentChange(kpis.revenue, kpis.revenueBefore) != null
-              ? periodLabel.vs
-              : `${money(kpis.revenueBefore)} ${periodLabel.vs.replace("vs ", "")}`
-          }
-        />
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
         <KpiTile
           label="New leads"
           to={listLink("deals", inPeriod("created_at"))}
@@ -254,10 +253,11 @@ export const CommandCenter = ({
   );
 
   if (variant === "phone") {
-    // Eric's phone: what needs him first, then today, then the numbers
+    // Eric's phone: today's money, what needs him, then today's work
     return (
       <div className="flex flex-col gap-4 mt-1">
         {headerBlock}
+        {revenueCard}
         {attentionCard}
         {todayCard}
         {floorCard}
@@ -272,6 +272,7 @@ export const CommandCenter = ({
   return (
     <div className="flex flex-col gap-4 mt-1">
       {headerBlock}
+      {revenueCard}
       {kpiBlock}
       {shopifyBlock}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -279,7 +280,10 @@ export const CommandCenter = ({
         {attentionCard}
       </div>
       {floorCard}
-      {weekBlock}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {weekBlock}
+        <PipelineSnapshot deals={data.deals} />
+      </div>
     </div>
   );
 };

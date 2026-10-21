@@ -5,6 +5,7 @@ import { Error } from "@/components/admin/error";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { DataImportProvider } from "../dataImport/DataImportProvider";
+import { SkipLink } from "../misc/SkipLink";
 import { useConfigurationLoader } from "../root/useConfigurationLoader";
 import Header from "./Header";
 import { ScrollMemory } from "./ScrollMemory";
@@ -13,9 +14,14 @@ export const Layout = ({ children }: { children: ReactNode }) => {
   useConfigurationLoader();
   return (
     <DataImportProvider>
+      <SkipLink />
       <Header />
       <ScrollMemory />
-      <main className="max-w-screen-xl mx-auto p-4" id="main-content">
+      <main
+        className="max-w-screen-xl mx-auto p-4"
+        id="main-content"
+        tabIndex={-1}
+      >
         <ErrorBoundary FallbackComponent={Error}>
           <Suspense fallback={<Skeleton className="h-12 w-12 rounded-full" />}>
             {children}

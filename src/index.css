@@ -471,3 +471,67 @@ h2 {
     transform: none !important;
   }
 }
+
+/* ── iOS app rules ─────────────────────────────────────────────────────────
+   System-level behaviour the app relies on: pinch zoom stays available, the
+   notch and home bar are respected, segmented controls stay 44pt, and the
+   frosted bars turn solid when Reduce Transparency is on. */
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 5rem);
+}
+
+:root {
+  color-scheme: light;
+}
+.dark {
+  color-scheme: dark;
+}
+
+/* A frosted bar, like a native tab bar. The solid fallback keeps text legible
+   for anyone who has asked the system for less transparency. */
+.lab-glass {
+  background: color-mix(in oklab, var(--secondary) 88%, transparent);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+}
+@media (prefers-reduced-transparency: reduce) {
+  .lab-glass {
+    background: var(--secondary);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+/* iOS touch rule: anything that acts like a control is at least 44pt. */
+@media (pointer: coarse) {
+  [data-slot="tabs-list"] {
+    height: auto;
+    min-height: 2.75rem;
+  }
+  [data-slot="tabs-trigger"],
+  [data-slot="button"],
+  [data-slot="toggle-group-item"] {
+    min-height: 2.75rem;
+  }
+  [data-slot="button"][data-size="icon"] {
+    min-width: 2.75rem;
+  }
+}
+
+/* More contrast on request: body copy and rules get stronger, not just bigger. */
+@media (prefers-contrast: more) {
+  :root {
+    --muted-foreground: #3d4248;
+    --border: #767b83;
+  }
+  .dark {
+    --muted-foreground: #e8ebf0;
+    --border: #4b5058;
+  }
+  .lab-chip {
+    border: 1px solid currentColor;
+  }
+}

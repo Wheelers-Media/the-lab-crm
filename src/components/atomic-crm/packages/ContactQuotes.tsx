@@ -46,9 +46,12 @@ export const ContactQuotes = ({ contact }: { contact: Contact }) => {
   return (
     <section className="flex flex-col gap-2" aria-labelledby="contact-quotes">
       <div className="flex items-center justify-between gap-2">
-        <h3 id="contact-quotes" className="text-base font-semibold">
+        <h2
+          id="contact-quotes"
+          className="text-base font-semibold normal-case leading-snug"
+        >
           Quotes
-        </h3>
+        </h2>
         <Button
           type="button"
           variant="ghost"

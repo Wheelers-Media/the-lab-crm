@@ -6,6 +6,7 @@ import { ErrorBoundary } from "react-error-boundary";
 
 import { DataImportProvider } from "../dataImport/DataImportProvider";
 import { useConfigurationLoader } from "../root/useConfigurationLoader";
+import { SkipLink } from "../misc/SkipLink";
 import { MobileNavigation } from "./MobileNavigation";
 import { PullToRefresh } from "./PullToRefresh";
 import { ScrollMemory } from "./ScrollMemory";
@@ -15,6 +16,7 @@ export const MobileLayout = ({ children }: { children: ReactNode }) => {
   useConfigurationLoader();
   return (
     <DataImportProvider>
+      <SkipLink />
       <PullToRefresh />
       <ScrollMemory />
       <SwipeBack />

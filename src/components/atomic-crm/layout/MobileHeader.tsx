@@ -10,7 +10,7 @@ const MobileHeader = ({ children }: { children: React.ReactNode }) => {
   return (
     <header
       ref={ref}
-      className="lab-away fixed top-0 left-0 right-0 z-10 flex h-14 w-full items-center justify-between gap-1 border-b border-border/60 bg-secondary/90 px-2 pl-4 backdrop-blur-xl"
+      className="lab-away lab-glass fixed top-0 left-0 right-0 z-10 flex h-[calc(env(safe-area-inset-top,0px)+3.5rem)] w-full items-center justify-between gap-1 border-b border-border/60 px-2 pl-4 pt-[env(safe-area-inset-top,0px)]"
     >
       {children}
       <CreateMenu />

@@ -2,7 +2,13 @@
 // tested without a database.
 import type { Appointment, Deal, Order, ShopifyCheckout, Task } from "../types";
 import { PARTS_NUDGE_DAYS, PICKUP_NUDGE_DAYS } from "../shopfloor/workStatus";
-import { type DateRange, inRange, shopDayKey } from "./shopTime";
+import {
+  addDays,
+  type DateRange,
+  formatShopDay,
+  inRange,
+  shopDayKey,
+} from "./shopTime";
 
 export const OPEN_STAGES = ["intake", "qualified", "quoted", "booked"];
 export const BAY_SLOTS_PER_DAY = 2;
@@ -18,6 +24,40 @@ const netTotal = (o: Order): number =>
 
 export const orderRevenue = (orders: Order[], range: DateRange): number =>
   countedOrders(orders, range).reduce((sum, o) => sum + netTotal(o), 0);
+
+export interface RevenuePoint {
+  key: string;
+  /** Day of the month, for the axis under the bars. */
+  label: string;
+  value: number;
+}
+
+/**
+ * Net revenue for each of the last `days` shop days, ending with `endKey`.
+ * Days with no orders are kept as zeroes so the bars stay evenly spaced.
+ */
+export const dailyRevenue = (
+  orders: Order[],
+  endKey: string,
+  days = 14,
+): RevenuePoint[] => {
+  const keys = Array.from({ length: days }, (_, i) =>
+    addDays(endKey, i - days + 1),
+  );
+  const wanted = new Set(keys);
+  const totals = new Map<string, number>();
+  for (const o of orders) {
+    if (o.cancelled_at) continue;
+    const key = shopDayKey(o.ordered_at);
+    if (!wanted.has(key)) continue;
+    totals.set(key, (totals.get(key) ?? 0) + netTotal(o));
+  }
+  return keys.map((key) => ({
+    key,
+    label: formatShopDay(key, { day: "numeric" }),
+    value: totals.get(key) ?? 0,
+  }));
+};
 
 /** Change between two values as a whole percentage, or null when there is no base. */
 export const percentChange = (

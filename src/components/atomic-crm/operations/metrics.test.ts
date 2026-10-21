@@ -4,6 +4,7 @@ import type { Appointment, Deal, Order, ShopifyCheckout, Task } from "../types";
 import {
   cartStats,
   cleanProductName,
+  dailyRevenue,
   dayLoads,
   leadStats,
   needsAttention,
@@ -84,6 +85,35 @@ describe("dashboard numbers", () => {
       { total: 999, refunded_amount: 0, ordered_at: "2026-09-30T18:00:00Z" },
     ] as Order[];
     expect(orderRevenue(orders, periodRange("month", NOW))).toBe(450);
+  });
+
+  it("adds up each of the last days, leaving empty days at zero", () => {
+    const orders = [
+      { total: 500, refunded_amount: 50, ordered_at: "2026-10-09T18:00:00Z" },
+      { total: 200, refunded_amount: 0, ordered_at: "2026-10-07T18:00:00Z" },
+      { total: 50, refunded_amount: 0, ordered_at: "2026-10-07T20:00:00Z" },
+      {
+        total: 900,
+        refunded_amount: 0,
+        ordered_at: "2026-10-08T18:00:00Z",
+        cancelled_at: "2026-10-08T19:00:00Z",
+      },
+      { total: 999, refunded_amount: 0, ordered_at: "2026-09-01T18:00:00Z" },
+    ] as Order[];
+
+    const points = dailyRevenue(orders, "2026-10-09", 7);
+
+    expect(points.map((p) => p.key)).toEqual([
+      "2026-10-03",
+      "2026-10-04",
+      "2026-10-05",
+      "2026-10-06",
+      "2026-10-07",
+      "2026-10-08",
+      "2026-10-09",
+    ]);
+    expect(points.map((p) => p.value)).toEqual([0, 0, 0, 0, 250, 0, 450]);
+    expect(points[6].label).toBe("9");
   });
 
   it("reports a percent change only when there is something to compare with", () => {

@@ -13,9 +13,15 @@ export function AsideSection({ title, children, noGap }: AsideSectionProps) {
   const isMobile = useIsMobile();
   return (
     <div className="mb-6 text-sm">
-      <h3 className={isMobile ? "text-lg font-semibold" : "font-medium pb-1"}>
+      <h2
+        className={
+          isMobile
+            ? "text-lg font-semibold normal-case leading-snug"
+            : "font-medium pb-1 normal-case leading-snug"
+        }
+      >
         {title}
-      </h3>
+      </h2>
       <Separator />
       <div className={cn("pt-2 flex flex-col", { "gap-1": !noGap })}>
         {children}

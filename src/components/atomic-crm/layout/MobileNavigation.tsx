@@ -65,7 +65,7 @@ export const MobileNavigation = () => {
   return (
     <nav
       aria-label={translate("crm.navigation.label")}
-      className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/60 bg-secondary/90 backdrop-blur-xl pb-[env(safe-area-inset-bottom,0px)]"
+      className="lab-glass fixed bottom-0 left-0 right-0 z-50 border-t border-border/60 pb-[env(safe-area-inset-bottom,0px)]"
       style={{
         // iOS bug: even though viewport is set correctly, the bottom safe area inset is not accounted for
         // So we manually add some padding to avoid the navigation being too close to the home bar

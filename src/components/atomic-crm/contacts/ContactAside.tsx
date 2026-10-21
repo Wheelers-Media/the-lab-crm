@@ -14,7 +14,6 @@ import { AsideSection } from "../misc/AsideSection";
 import type { Contact } from "../types";
 import { ContactMergeButton } from "./ContactMergeButton";
 import { ExportVCardButton } from "./ExportVCardButton";
-import { ContactOrders } from "../shop/ContactOrders";
 import { ContactVehicles } from "../vehicles/ContactVehicles";
 import { CustomerPackages } from "../packages/CustomerPackages";
 
@@ -61,12 +60,6 @@ export const ContactAside = ({ link = "edit" }: { link?: "edit" | "show" }) => {
 
       <AsideSection title="Packages">
         <CustomerPackages contact={record} />
-      </AsideSection>
-
-      <AsideSection
-        title={translate("resources.orders.purchases", { _: "Purchases" })}
-      >
-        <ContactOrders contactId={record.id} />
       </AsideSection>
 
       <AsideSection
