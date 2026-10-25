@@ -68,3 +68,4 @@ orders_export*.csv
 # Local preview and browser-probe scratch (screenshots, logs, throwaway scripts)
 /artifacts/
 /preview.log
+/freebuff-sites-build/
