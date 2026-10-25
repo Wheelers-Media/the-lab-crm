@@ -1,20 +1,14 @@
-import {
-  CalendarDays,
-  Check,
-  ChevronLeft,
-  ChevronRight,
-  UserX,
-} from "lucide-react";
-import { useGetList, useNotify, useUpdate } from "ra-core";
-import { useMemo } from "react";
-import { Link, useSearchParams } from "react-router";
+import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+import { useGetList } from "ra-core";
+import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
-import { BAY_SLOTS_PER_DAY } from "../operations/metrics";
+import { bayLoad } from "../operations/metrics";
 import { contactName } from "../operations/format";
 import { DepositChip, ResourceChip } from "../operations/OperationsWidgets";
 import {
@@ -28,6 +22,7 @@ import {
 import { useAppointments } from "../operations/useOperationsData";
 import type { Appointment, Contact, Task } from "../types";
 import { AddAppointment } from "./AddAppointment";
+import { AppointmentDetail } from "./AppointmentDetail";
 import { GoogleCalendarSync } from "./GoogleCalendarSync";
 
 type View = "week" | "day";
@@ -51,40 +46,10 @@ const useCalendarParams = () => {
   return { date, view, go };
 };
 
-const StatusActions = ({ appointment }: { appointment: Appointment }) => {
-  const [update, { isPending }] = useUpdate<Appointment>();
-  const notify = useNotify();
-  if (appointment.status !== "booked") return null;
-  const set = (status: Appointment["status"], message: string) =>
-    update(
-      "appointments",
-      { id: appointment.id, data: { status }, previousData: appointment },
-      { onSuccess: () => notify(message) },
-    );
-  return (
-    <div className="flex gap-2 mt-2">
-      <Button
-        size="sm"
-        variant="outline"
-        disabled={isPending}
-        onClick={() => set("completed", "Marked done")}
-      >
-        <Check className="w-4 h-4" />
-        Done
-      </Button>
-      <Button
-        size="sm"
-        variant="ghost"
-        disabled={isPending}
-        onClick={() => set("no_show", "Marked as no-show")}
-      >
-        <UserX className="w-4 h-4" />
-        No-show
-      </Button>
-    </div>
-  );
-};
-
+/**
+ * One booking. The whole card opens the appointment: the customer to call, the
+ * notes, and the Google event behind it.
+ */
 const AppointmentCard = ({
   appointment,
   contact,
@@ -93,55 +58,86 @@ const AppointmentCard = ({
   appointment: Appointment;
   contact?: Contact;
   detailed?: boolean;
-}) => (
-  <Card
-    className={cn("p-3 gap-1", appointment.status !== "booked" && "opacity-70")}
-  >
-    <div className="flex items-center justify-between gap-2">
-      <span className="text-sm font-semibold lab-num">
-        {formatShopTime(appointment.start_at)}
-        {detailed ? ` to ${formatShopTime(appointment.end_at)}` : ""}
-      </span>
-      <ResourceChip resource={appointment.resource} />
-    </div>
-    <p className="text-sm font-medium leading-snug">{appointment.title}</p>
-    {contact ? (
-      <Link
-        to={`/contacts/${contact.id}/show`}
-        className="text-xs text-muted-foreground hover:text-foreground hover:underline"
+}) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Card
+        role="button"
+        tabIndex={0}
+        aria-label={`${appointment.title}, ${formatShopTime(appointment.start_at)}`}
+        onClick={() => setOpen(true)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            setOpen(true);
+          }
+        }}
+        className={cn(
+          "p-3 gap-1 cursor-pointer transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary outline-none",
+          appointment.status !== "booked" && "opacity-70",
+        )}
       >
-        {contactName(contact)}
-      </Link>
-    ) : null}
-    {appointment.vehicle ? (
-      <p className="text-xs text-muted-foreground">{appointment.vehicle}</p>
-    ) : null}
-    <div className="flex flex-wrap gap-1 mt-1">
-      {appointment.status === "completed" ? (
-        <span className="lab-chip lab-chip-muted">Done</span>
-      ) : appointment.status === "no_show" ? (
-        <span className="lab-chip lab-chip-danger">No-show</span>
-      ) : (
-        <DepositChip appointment={appointment} />
-      )}
-    </div>
-    {detailed && appointment.notes ? (
-      <p className="text-xs text-muted-foreground whitespace-pre-line mt-1">
-        {appointment.notes}
-      </p>
-    ) : null}
-    {detailed ? <StatusActions appointment={appointment} /> : null}
-  </Card>
-);
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-sm font-semibold lab-num">
+            {formatShopTime(appointment.start_at)}
+            {detailed ? ` to ${formatShopTime(appointment.end_at)}` : ""}
+          </span>
+          <ResourceChip resource={appointment.resource} />
+        </div>
+        <p className="text-sm font-medium leading-snug">{appointment.title}</p>
+        {contact ? (
+          <p className="text-xs text-muted-foreground">
+            {contactName(contact)}
+          </p>
+        ) : null}
+        {appointment.vehicle ? (
+          <p className="text-xs text-muted-foreground">{appointment.vehicle}</p>
+        ) : null}
+        <div className="flex flex-wrap gap-1 mt-1">
+          {appointment.status === "completed" ? (
+            <span className="lab-chip lab-chip-muted">Done</span>
+          ) : appointment.status === "no_show" ? (
+            <span className="lab-chip lab-chip-danger">No-show</span>
+          ) : (
+            <DepositChip appointment={appointment} />
+          )}
+        </div>
+        {detailed && appointment.notes ? (
+          <p className="text-xs text-muted-foreground whitespace-pre-line mt-1 line-clamp-3">
+            {appointment.notes}
+          </p>
+        ) : null}
+      </Card>
+      {open ? (
+        <AppointmentDetail
+          appointment={appointment}
+          contact={contact}
+          open={open}
+          onOpenChange={setOpen}
+        />
+      ) : null}
+    </>
+  );
+};
 
-const bayChip = (count: number) => (
-  <span
-    className={cn("lab-chip", count > 0 ? "lab-chip-bay" : "lab-chip-muted")}
-  >
-    Bay {count}/{BAY_SLOTS_PER_DAY}
-    {count >= BAY_SLOTS_PER_DAY ? " full" : ""}
-  </span>
-);
+const bayChip = (count: number) => {
+  const load = bayLoad(count);
+  return (
+    <span
+      className={cn(
+        "lab-chip",
+        load.over
+          ? "lab-chip-danger"
+          : count > 0
+            ? "lab-chip-bay"
+            : "lab-chip-muted",
+      )}
+    >
+      {load.label}
+    </span>
+  );
+};
 
 const DayTasks = ({ tasks }: { tasks: Task[] }) =>
   tasks.length ? (
@@ -209,6 +205,14 @@ export const CalendarPage = () => {
   const contactOf = (a: Appointment) =>
     a.contact_id != null ? contactsById.get(a.contact_id) : undefined;
 
+  // The day's load, so a full bay and a badly overbooked one don't look alike
+  const dayAppts = byDay.get(date)?.appts ?? [];
+  const kept = (list: Appointment[]) =>
+    list.filter((a) => a.status !== "no_show").length;
+  const dayBay = kept(dayAppts.filter((a) => a.resource === "detailing-bay"));
+  const dayEric = kept(dayAppts.filter((a) => a.resource === "eric"));
+  const dayOver = bayLoad(dayBay).over;
+
   const step = view === "day" ? 1 : 7;
   const rangeLabel =
     view === "day"
@@ -268,60 +272,76 @@ export const CalendarPage = () => {
       <GoogleCalendarSync />
 
       {view === "day" ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {(["detailing-bay", "eric"] as const).map((resource) => {
-            const appts = byDay
-              .get(date)!
-              .appts.filter((a) => a.resource === resource);
-            const booked = appts.filter((a) => a.status !== "no_show").length;
-            return (
-              <div key={resource} className="flex flex-col gap-2">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-semibold text-muted-foreground flex-1">
-                    {resource === "detailing-bay" ? "Detailing bay" : "Eric"}
-                  </h2>
-                  {resource === "detailing-bay" ? bayChip(booked) : null}
+        <div className="flex flex-col gap-3">
+          <p
+            className="text-sm text-muted-foreground lab-num"
+            aria-live="polite"
+          >
+            {dayAppts.length}{" "}
+            {dayAppts.length === 1 ? "appointment" : "appointments"} · {dayBay}{" "}
+            in the bay · {dayEric} with Eric
+            {dayOver ? (
+              <span className="text-destructive font-medium">
+                {" "}
+                — {dayOver} over the bay's 2 drop-offs
+              </span>
+            ) : null}
+          </p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {(["detailing-bay", "eric"] as const).map((resource) => {
+              const appts = byDay
+                .get(date)!
+                .appts.filter((a) => a.resource === resource);
+              const booked = appts.filter((a) => a.status !== "no_show").length;
+              return (
+                <div key={resource} className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-lg font-semibold text-muted-foreground flex-1">
+                      {resource === "detailing-bay" ? "Detailing bay" : "Eric"}
+                    </h2>
+                    {resource === "detailing-bay" ? bayChip(booked) : null}
+                  </div>
+                  {appts.map((a) => (
+                    <AppointmentCard
+                      key={a.id}
+                      appointment={a}
+                      contact={contactOf(a)}
+                      detailed
+                    />
+                  ))}
+                  {resource === "detailing-bay"
+                    ? Array.from({
+                        length: Math.max(0, bayLoad(booked).capacity - booked),
+                      }).map((_, i) => (
+                        <div
+                          key={i}
+                          className="rounded-xl border border-dashed p-3 text-sm text-muted-foreground"
+                        >
+                          Open drop-off slot (8 to 9 a.m.)
+                        </div>
+                      ))
+                    : null}
+                  {resource === "eric" && !appts.length ? (
+                    <p className="text-sm text-muted-foreground">
+                      Nothing booked with Eric.
+                    </p>
+                  ) : null}
                 </div>
-                {appts.map((a) => (
-                  <AppointmentCard
-                    key={a.id}
-                    appointment={a}
-                    contact={contactOf(a)}
-                    detailed
-                  />
-                ))}
-                {resource === "detailing-bay"
-                  ? Array.from({
-                      length: Math.max(0, BAY_SLOTS_PER_DAY - booked),
-                    }).map((_, i) => (
-                      <div
-                        key={i}
-                        className="rounded-xl border border-dashed p-3 text-sm text-muted-foreground"
-                      >
-                        Open drop-off slot (8 to 9 a.m.)
-                      </div>
-                    ))
-                  : null}
-                {resource === "eric" && !appts.length ? (
-                  <p className="text-sm text-muted-foreground">
-                    Nothing booked with Eric.
+              );
+            })}
+            {byDay.get(date)!.tasks.length ? (
+              <Card className="p-4 lg:col-span-2 gap-1">
+                <h2 className="text-sm font-semibold text-muted-foreground">
+                  Tasks due
+                </h2>
+                {byDay.get(date)!.tasks.map((t) => (
+                  <p key={t.id} className="text-sm">
+                    {t.text}
                   </p>
-                ) : null}
-              </div>
-            );
-          })}
-          {byDay.get(date)!.tasks.length ? (
-            <Card className="p-4 lg:col-span-2 gap-1">
-              <h2 className="text-sm font-semibold text-muted-foreground">
-                Tasks due
-              </h2>
-              {byDay.get(date)!.tasks.map((t) => (
-                <p key={t.id} className="text-sm">
-                  {t.text}
-                </p>
-              ))}
-            </Card>
-          ) : null}
+                ))}
+              </Card>
+            ) : null}
+          </div>
         </div>
       ) : (
         <div

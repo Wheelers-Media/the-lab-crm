@@ -144,6 +144,8 @@ export type GoogleEvent = {
   location?: string;
   updated?: string;
   iCalUID?: string;
+  /** Where the event opens in Google Calendar. */
+  htmlLink?: string;
   start?: { dateTime?: string; date?: string };
   end?: { dateTime?: string; date?: string };
   extendedProperties?: { private?: Record<string, string> };
@@ -211,6 +213,8 @@ export type PullRow = {
   vehicle: string | null;
   notes: string | null;
   phone: string | null;
+  /** The event in Google Calendar, kept so the CRM can link back to it. */
+  url: string | null;
 };
 
 export type SkipReason = "allDay" | "calcom" | "invalid";
@@ -237,6 +241,7 @@ export const rowFromEvent = (
       vehicle: vehicleFrom(notes),
       notes: notes ? notes.slice(0, 2000) : null,
       phone: phoneFrom(notes),
+      url: event.htmlLink?.trim() || null,
     },
   };
 };
@@ -245,6 +250,7 @@ export const rowFromEvent = (
 export type SyncAppointment = {
   id: number;
   external_id: string | null;
+  external_url?: string | null;
   source: string;
   resource: string;
   title: string;
@@ -290,11 +296,13 @@ export type SyncPlan = {
   updates: Array<{
     id: number;
     patch: { title: string; start_at: string; end_at: string };
+    /** The event's Google Calendar link, when Google gave one. */
+    url: string | null;
   }>;
   /** CRM appointments to mark cancelled: the event was cancelled or deleted. */
   cancels: number[];
   /** CRM appointments that already have a Google event but did not record its id. */
-  links: Array<{ id: number; externalId: string }>;
+  links: Array<{ id: number; externalId: string; url: string | null }>;
   /** CRM-made appointments with no event yet. */
   pushCreates: SyncAppointment[];
   /** CRM edits newer than the Google event. */
@@ -364,7 +372,12 @@ export const planSync = (
 
     // An event the CRM itself sent
     if (known && Number.isInteger(crmId) && crmId === known.id) {
-      if (!known.external_id) plan.links.push({ id: known.id, externalId });
+      if (!known.external_id)
+        plan.links.push({
+          id: known.id,
+          externalId,
+          url: event.htmlLink?.trim() || null,
+        });
       if (known.status === "cancelled") {
         plan.pushDeletes.push({
           appointment: known,
@@ -398,6 +411,7 @@ export const planSync = (
               start_at: start,
               end_at: end,
             },
+            url: event.htmlLink?.trim() || null,
           });
         }
       }
@@ -424,6 +438,7 @@ export const planSync = (
       plan.updates.push({
         id: known.id,
         patch: { title: row.title, start_at: row.startAt, end_at: row.endAt },
+        url: row.url,
       });
     }
   }

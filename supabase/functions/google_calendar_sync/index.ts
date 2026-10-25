@@ -236,6 +236,7 @@ const handle = async () => {
           status: "booked",
           vehicle: row.vehicle,
           notes: row.notes,
+          external_url: row.url,
           sales_id: salesId,
         });
         // 23505: another run saved it a moment ago
@@ -244,10 +245,10 @@ const handle = async () => {
         if (!error) result.pulled.created += 1;
       }
     }
-    for (const { id, patch } of plan.updates) {
+    for (const { id, patch, url } of plan.updates) {
       const { error } = await supabaseAdmin
         .from("appointments")
-        .update(patch)
+        .update(url ? { ...patch, external_url: url } : patch)
         .eq("id", id);
       if (error) throw new Error(`update appointment: ${error.message}`);
       result.pulled.updated += 1;
@@ -260,10 +261,14 @@ const handle = async () => {
       if (error) throw new Error(`cancel appointments: ${error.message}`);
       result.pulled.cancelled += plan.cancels.length;
     }
-    for (const { id, externalId } of plan.links) {
+    for (const { id, externalId, url } of plan.links) {
       await supabaseAdmin
         .from("appointments")
-        .update({ external_id: externalId })
+        .update(
+          url
+            ? { external_id: externalId, external_url: url }
+            : { external_id: externalId },
+        )
         .eq("id", id)
         .is("external_id", null);
     }
@@ -286,7 +291,10 @@ const handle = async () => {
       if (googleId) {
         await supabaseAdmin
           .from("appointments")
-          .update({ external_id: GOOGLE_PREFIX + googleId })
+          .update({
+            external_id: GOOGLE_PREFIX + googleId,
+            external_url: (created?.htmlLink as string | undefined) ?? null,
+          })
           .eq("id", a.id);
         result.pushed.created += 1;
       }

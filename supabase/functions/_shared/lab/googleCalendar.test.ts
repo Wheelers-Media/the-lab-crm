@@ -187,6 +187,31 @@ describe("rowFromEvent", () => {
     expect(rowFromEvent(bad.event, "eric")).toEqual({ skip: "invalid" });
     expect(isCalcomEvent({ id: "x", iCalUID: "abc123@Cal.com" })).toBe(true);
   });
+
+  it("keeps the Google link so the CRM can open the event there", () => {
+    const linked = event({
+      htmlLink: "https://www.google.com/calendar/event?eid=evt1",
+    });
+    const known = appointment({
+      id: 7,
+      external_id: `${GOOGLE_PREFIX}evt1`,
+      source: "google",
+    });
+
+    const result = rowFromEvent(linked.event, "eric");
+    expect("row" in result && result.row.url).toBe(
+      "https://www.google.com/calendar/event?eid=evt1",
+    );
+
+    const moved = event({
+      htmlLink: "https://www.google.com/calendar/event?eid=evt1",
+      start: { dateTime: "2026-10-17T08:00:00-07:00" },
+      end: { dateTime: "2026-10-17T09:00:00-07:00" },
+    });
+    expect(planSync([moved], [known], NOW).updates[0].url).toBe(
+      "https://www.google.com/calendar/event?eid=evt1",
+    );
+  });
 });
 
 describe("planSync", () => {
@@ -248,6 +273,7 @@ describe("planSync", () => {
           start_at: "2026-10-17T15:00:00.000Z",
           end_at: "2026-10-17T16:00:00.000Z",
         },
+        url: null,
       },
     ]);
     expect(planSync([gone], [known], NOW).cancels).toEqual([7]);
@@ -278,7 +304,7 @@ describe("planSync", () => {
 
     const plan = planSync([sent], [appointment({ id: 1 })], NOW);
 
-    expect(plan.links).toEqual([{ id: 1, externalId: "gcal:evt9" }]);
+    expect(plan.links).toEqual([{ id: 1, externalId: "gcal:evt9", url: null }]);
     expect(plan.pushCreates).toEqual([]);
     expect(plan.creates).toEqual([]);
   });

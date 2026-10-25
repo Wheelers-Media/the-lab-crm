@@ -426,6 +426,8 @@ export type AppointmentResource = "detailing-bay" | "eric";
 
 export type Appointment = {
   external_id: string | null;
+  /** The Google Calendar event, when there is one, to open it there. */
+  external_url?: string | null;
   source: string;
   contact_id: Identifier | null;
   deal_id: Identifier | null;

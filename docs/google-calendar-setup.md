@@ -33,6 +33,7 @@ The calendar ids are built in. If a calendar is ever replaced, set `GOOGLE_CALEN
 - It looks one week back and 120 days ahead.
 - **THE LAB | Detailing Bay** events become Detailing Bay appointments; **THE LAB | Vehicle Customization** events become Eric appointments.
 - An appointment that began in Google is owned by Google: edit it there. An appointment that began in the CRM can be edited in either place.
+- Click a booking on the Calendar to open it: the customer's phone, email and history, the notes typed in Google, and **Open in Google Calendar** to jump to the event itself.
 - Each run is logged in the `integration_events` table (source `google_calendar`), with the error if one failed.
 
 ## If something is wrong
