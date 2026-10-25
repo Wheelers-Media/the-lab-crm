@@ -124,7 +124,7 @@ const NavigationButton = ({
     to={href}
     aria-current={isActive ? "page" : undefined}
     className={cn(
-      "flex min-h-[49px] flex-1 flex-col items-center justify-center gap-0.5 pt-1.5",
+      "lab-tab flex min-h-[49px] flex-1 flex-col items-center justify-center gap-0.5 pt-1.5",
       isActive ? "text-[var(--lab-blue-text)]" : "text-muted-foreground",
     )}
   >

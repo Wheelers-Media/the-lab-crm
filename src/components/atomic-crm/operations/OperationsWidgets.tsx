@@ -19,7 +19,7 @@ import { contactName, money } from "./format";
 import {
   type AttentionItem,
   type AttentionKind,
-  BAY_SLOTS_PER_DAY,
+  bayLoad,
   type DayLoad,
 } from "./metrics";
 import { formatShopDay, formatShopTime, shopDayKey } from "./shopTime";
@@ -332,7 +332,7 @@ export const WeekStrip = ({
       }}
     >
       {loads.map((day) => {
-        const full = day.bay >= BAY_SLOTS_PER_DAY;
+        const bay = bayLoad(day.bay);
         return (
           <Link
             key={day.key}
@@ -355,11 +355,14 @@ export const WeekStrip = ({
             <span
               className={cn(
                 "lab-chip",
-                day.bay === 0 ? "lab-chip-muted" : "lab-chip-bay",
+                bay.over
+                  ? "lab-chip-danger"
+                  : day.bay === 0
+                    ? "lab-chip-muted"
+                    : "lab-chip-bay",
               )}
             >
-              Bay {day.bay}/{BAY_SLOTS_PER_DAY}
-              {full ? " full" : ""}
+              {bay.label}
             </span>
             <span
               className={cn(

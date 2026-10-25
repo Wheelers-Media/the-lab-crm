@@ -100,27 +100,41 @@ export const RevenueCard = ({
           </span>
         </p>
 
-        <div aria-hidden="true">
-          <div className="flex h-24 items-end gap-[3px] border-b border-border">
-            {points.map((point) => {
+        <div aria-hidden="true" className="relative">
+          {/* Faint gridlines give the bars a scale without an axis */}
+          <div className="pointer-events-none absolute inset-x-0 top-0 flex h-24 flex-col justify-between">
+            {[0, 1, 2].map((line) => (
+              <span key={line} className="h-px w-full bg-border/70" />
+            ))}
+          </div>
+          <div className="relative flex h-24 items-end gap-[3px]">
+            {points.map((point, i) => {
               const isToday = point.key === todayKey;
+              const isBest = point.key === best.key && best.value > 0;
               const height = Math.round((point.value / max) * 100);
               return (
                 <div
                   key={point.key}
+                  className="flex h-full flex-1 items-end"
                   title={`${formatShopDay(point.key)}: ${money(point.value)}`}
-                  className={cn(
-                    "flex-1 rounded-t-[3px]",
-                    point.value === 0
-                      ? "bg-border"
-                      : isToday
-                        ? "bg-primary"
-                        : "bg-[var(--lab-blue)]/40",
-                  )}
-                  style={{
-                    height: point.value === 0 ? 2 : `${Math.max(4, height)}%`,
-                  }}
-                />
+                >
+                  <span
+                    className={cn(
+                      "lab-bar-rise w-full rounded-t-[4px]",
+                      point.value === 0
+                        ? "bg-border"
+                        : isToday
+                          ? "bg-primary shadow-[0_0_18px_-4px_var(--lab-blue)]"
+                          : isBest
+                            ? "bg-gradient-to-t from-[var(--lab-blue)]/25 to-[var(--lab-blue)]/80"
+                            : "bg-gradient-to-t from-[var(--lab-blue)]/15 to-[var(--lab-blue)]/55",
+                    )}
+                    style={{
+                      height: point.value === 0 ? 2 : `${Math.max(6, height)}%`,
+                      animationDelay: `${i * 24}ms`,
+                    }}
+                  />
+                </div>
               );
             })}
           </div>
@@ -131,6 +145,15 @@ export const RevenueCard = ({
               </span>
             ))}
           </div>
+          <p className="mt-2 flex items-baseline justify-between text-[11px] text-muted-foreground tabular-nums">
+            <span>
+              Best day{" "}
+              {formatShopDay(best.key, { month: "short", day: "numeric" })}
+            </span>
+            <span className="font-medium text-foreground">
+              {money(best.value)}
+            </span>
+          </p>
         </div>
       </figure>
     </Card>

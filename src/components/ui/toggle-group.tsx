@@ -36,7 +36,8 @@ function ToggleGroup({
       data-spacing={spacing}
       style={{ "--gap": spacing } as React.CSSProperties}
       className={cn(
-        "group/toggle-group flex w-fit items-center gap-[--spacing(var(--gap))] rounded-md data-[spacing=default]:data-[variant=outline]:shadow-xs",
+        // A native segmented control: a track with a raised thumb inside it
+        "group/toggle-group flex w-fit items-center gap-[--spacing(var(--gap))] rounded-full bg-[var(--lab-segment-track)] p-0.5",
         className
       )}
       {...props}
@@ -69,8 +70,9 @@ function ToggleGroupItem({
           variant: context.variant || variant,
           size: context.size || size,
         }),
-        "w-auto min-w-0 shrink-0 px-3 focus:z-10 focus-visible:z-10",
-        "data-[spacing=0]:rounded-none data-[spacing=0]:shadow-none data-[spacing=0]:first:rounded-l-md data-[spacing=0]:last:rounded-r-md data-[spacing=0]:data-[variant=outline]:border-l-0 data-[spacing=0]:data-[variant=outline]:first:border-l",
+        "w-auto min-w-0 shrink-0 rounded-full border-0 px-3 focus:z-10 focus-visible:z-10",
+        "data-[state=on]:bg-[var(--lab-segment-thumb)] data-[state=on]:font-semibold data-[state=on]:text-foreground data-[state=on]:shadow-sm",
+        "transition-[background-color,box-shadow,color] duration-150",
         className
       )}
       {...props}

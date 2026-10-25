@@ -22,6 +22,7 @@ import { MobileDashboard } from "../dashboard/MobileDashboard";
 import deals from "../deals";
 import { Layout } from "../layout/Layout";
 import { MobileLayout } from "../layout/MobileLayout";
+import { MobilePage } from "../layout/MobilePage";
 import { SignupPage } from "../login/SignupPage";
 import { ConfirmationRequired } from "../login/ConfirmationRequired";
 import { ImportPage } from "../misc/ImportPage";
@@ -350,29 +351,36 @@ const MobileAdmin = (
             element={<SettingsPageMobile />}
           />
           <Route path={ChangelogPage.path} element={<ChangelogPage />} />
-          <Route path={QuoteBuilderPage.path} element={<QuoteBuilderPage />} />
+          <Route
+            path={QuoteBuilderPage.path}
+            element={
+              <MobilePage>
+                <QuoteBuilderPage />
+              </MobilePage>
+            }
+          />
           <Route
             path={CalendarPage.path}
             element={
-              <main className="px-4 pt-4 pb-24 min-h-screen">
+              <MobilePage>
                 <CalendarPage />
-              </main>
+              </MobilePage>
             }
           />
           <Route
             path={ShopFloorPage.path}
             element={
-              <main className="px-4 pt-4 pb-24 min-h-screen">
+              <MobilePage>
                 <ShopFloorPage />
-              </main>
+              </MobilePage>
             }
           />
           <Route
             path={NumbersPage.path}
             element={
-              <main className="px-4 pt-4 pb-24 min-h-screen">
+              <MobilePage>
                 <NumbersPage />
-              </main>
+              </MobilePage>
             }
           />
         </CustomRoutes>

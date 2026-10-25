@@ -14,6 +14,31 @@ export const OPEN_STAGES = ["intake", "qualified", "quoted", "booked"];
 export const BAY_SLOTS_PER_DAY = 2;
 export const BIG_CART_THRESHOLD = 2000;
 
+export interface BayLoad {
+  booked: number;
+  capacity: number;
+  /** Drop-offs beyond what the bay takes, 0 when the day still fits. */
+  over: number;
+  /** "Bay 1/2", "Bay 2/2 full", "Bay 3/2 over by 1". */
+  label: string;
+}
+
+/**
+ * The bay takes two drop-offs a day. Counting carries on past that so an
+ * overbooked day says so instead of looking merely full.
+ */
+export const bayLoad = (booked: number): BayLoad => {
+  const capacity = BAY_SLOTS_PER_DAY;
+  const over = Math.max(0, booked - capacity);
+  const suffix = over ? ` over by ${over}` : booked >= capacity ? " full" : "";
+  return {
+    booked,
+    capacity,
+    over,
+    label: `Bay ${booked}/${capacity}${suffix}`,
+  };
+};
+
 const DAY_MS = 86_400_000;
 
 const countedOrders = (orders: Order[], range: DateRange): Order[] =>

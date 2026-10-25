@@ -64,3 +64,7 @@ orders_export*.csv
 
 # vitest browser failure screenshots
 .vitest/
+
+# Local preview and browser-probe scratch (screenshots, logs, throwaway scripts)
+/artifacts/
+/preview.log

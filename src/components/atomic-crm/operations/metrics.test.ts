@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { Appointment, Deal, Order, ShopifyCheckout, Task } from "../types";
 import {
+  bayLoad,
   cartStats,
   cleanProductName,
   dailyRevenue,
@@ -394,5 +395,27 @@ describe("shopify metrics", () => {
       { category: "Detailing", orders: 2 },
       { category: "Lighting", orders: 1 },
     ]);
+  });
+});
+
+describe("bayLoad", () => {
+  it("counts up to the two drop-offs the bay takes", () => {
+    expect(bayLoad(0)).toEqual({
+      booked: 0,
+      capacity: 2,
+      over: 0,
+      label: "Bay 0/2",
+    });
+    expect(bayLoad(1).label).toBe("Bay 1/2");
+    expect(bayLoad(2)).toMatchObject({ over: 0, label: "Bay 2/2 full" });
+  });
+
+  it("says how far over an overbooked day is, instead of looking merely full", () => {
+    expect(bayLoad(4)).toEqual({
+      booked: 4,
+      capacity: 2,
+      over: 2,
+      label: "Bay 4/2 over by 2",
+    });
   });
 });

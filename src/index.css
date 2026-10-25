@@ -203,6 +203,8 @@ body {
   --lab-card: #141517;
   --lab-rule: #26282c;
   --lab-text: #f2f4f7;
+  --lab-segment-track: #111214;
+  --lab-segment-thumb: #2c2e33;
   --lab-blue: #0066ff;
   /* Blue for text and selected icons on dark grounds (6.9:1 on the bars) */
   --lab-blue-text: #5c9dff;
@@ -242,6 +244,12 @@ body {
   --sidebar-primary: var(--lab-blue);
   --sidebar-accent: #1b1c1f;
   --sidebar-border: var(--lab-rule);
+}
+
+/* Segmented controls read as a track with a raised thumb in either scheme. */
+:root:not(.dark) {
+  --lab-segment-track: #f1f1f3;
+  --lab-segment-thumb: #ffffff;
 }
 
 h1,
@@ -311,11 +319,19 @@ h2 {
   transform-origin: left;
   transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.lab-nav-link:hover,
+/* Touch devices fake :hover and leave it stuck after a tap, so the desktop
+   hover only applies where a real pointer can hover (mobile-native rule 1). */
+@media (hover: hover) and (pointer: fine) {
+  .lab-nav-link:hover {
+    color: var(--foreground);
+  }
+  .lab-nav-link:hover::after {
+    transform: scaleX(1);
+  }
+}
 .lab-nav-link[aria-current="page"] {
   color: var(--foreground);
 }
-.lab-nav-link:hover::after,
 .lab-nav-link[aria-current="page"]::after {
   transform: scaleX(1);
 }
@@ -442,6 +458,70 @@ h2 {
   }
 }
 
+/* Native apps never let a long press select a tab label or pop the callout
+   on a control; body copy stays selectable. */
+@media (pointer: coarse) {
+  nav a,
+  nav button,
+  .lab-chip,
+  .lab-nav-link,
+  [data-slot="button"],
+  [data-slot="tabs-trigger"],
+  [data-slot="toggle-group-item"] {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+}
+
+/* Pages scroll the document, not themselves: a page wrapper that was also a
+   scroll container swallowed every wheel and touch gesture. Only put
+   overscroll-behavior on a real nested scroller (a sheet, a table), never on
+   the page itself. */
+
+/* Charts: the bars grow in once, staggered, so a period change reads as a
+   change rather than a flash of new pixels. */
+@keyframes lab-bar-rise {
+  from {
+    transform: scaleY(0);
+    opacity: 0.35;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+.lab-bar-rise {
+  transform-origin: bottom;
+  animation: lab-bar-rise 560ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lab-bar-rise {
+    animation: none;
+  }
+}
+
+/* The tab you land on pops once, like a native bar item, and stays put. */
+@keyframes lab-tab-pop {
+  0% {
+    transform: scale(0.82);
+  }
+  60% {
+    transform: scale(1.06);
+  }
+  100% {
+    transform: none;
+  }
+}
+.lab-tab[aria-current="page"] svg {
+  animation: lab-tab-pop 340ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .lab-tab[aria-current="page"] svg {
+    animation: none;
+  }
+}
+
 /* Each phone page settles in instead of popping */
 @keyframes lab-page-in {
   from {
@@ -505,16 +585,32 @@ html {
   }
 }
 
-/* iOS touch rule: anything that acts like a control is at least 44pt. */
+/* iOS touch rule: anything that acts like a control is at least 44pt. This
+   covers plain <button>s and fields too, which the component-level rule
+   missed: a 32pt filter icon or a 34pt day header is a miss more often than
+   a hit with a thumb. */
 @media (pointer: coarse) {
   [data-slot="tabs-list"] {
     height: auto;
     min-height: 2.75rem;
   }
-  [data-slot="tabs-trigger"],
-  [data-slot="button"],
-  [data-slot="toggle-group-item"] {
+  :where(
+    button,
+    [role="button"],
+    [role="tab"],
+    [role="radio"],
+    [role="switch"],
+    [data-slot="button"],
+    [data-slot="tabs-trigger"],
+    [data-slot="toggle-group-item"],
+    input:not([type="checkbox"]):not([type="radio"]),
+    select,
+    textarea
+  ) {
     min-height: 2.75rem;
+  }
+  :where(button, [data-slot="button"]) {
+    min-width: 2.75rem;
   }
   [data-slot="button"][data-size="icon"] {
     min-width: 2.75rem;
