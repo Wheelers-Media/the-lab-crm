@@ -249,6 +249,8 @@ export const rowFromEvent = (
 /** The CRM appointment as the sync sees it. */
 export type SyncAppointment = {
   id: number;
+  /** The customer on the booking, when one has been linked. */
+  contact_id?: number | null;
   external_id: string | null;
   external_url?: string | null;
   source: string;

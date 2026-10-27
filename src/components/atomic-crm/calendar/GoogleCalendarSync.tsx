@@ -25,6 +25,7 @@ const summary = (r: GoogleCalendarSyncResult): string => {
   if (r.pulled?.created) parts.push(`${r.pulled.created} new from Google`);
   if (r.pulled?.updated) parts.push(`${r.pulled.updated} changed`);
   if (r.pulled?.cancelled) parts.push(`${r.pulled.cancelled} cancelled`);
+  if (r.linked) parts.push(`${r.linked} linked to a customer`);
   if (r.pushed?.created) parts.push(`${r.pushed.created} sent to Google`);
   if (r.pushed?.updated) parts.push(`${r.pushed.updated} moved in Google`);
   if (r.pushed?.deleted) parts.push(`${r.pushed.deleted} removed from Google`);
@@ -53,7 +54,8 @@ export const GoogleCalendarSync = () => {
       const changed =
         (r.pulled?.created ?? 0) +
         (r.pulled?.updated ?? 0) +
-        (r.pulled?.cancelled ?? 0);
+        (r.pulled?.cancelled ?? 0) +
+        (r.linked ?? 0);
       if (changed > 0) refresh();
     },
     onError: (error: Error) => notify(error.message, { type: "error" }),

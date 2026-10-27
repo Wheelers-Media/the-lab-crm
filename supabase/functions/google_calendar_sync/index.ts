@@ -2,7 +2,10 @@
 //
 //  - Events typed into "THE LAB | Detailing Bay" or "THE LAB | Vehicle
 //    Customization" become CRM appointments (title, time, the vehicle line and
-//    the notes; a phone number in the notes links the customer when it matches).
+//    the notes). The customer's name is usually the title, so the booking is
+//    linked to that customer, or to the phone number in the notes; bookings
+//    already on the calendar whose customer was added later are linked on the
+//    next sync.
 //  - A time moved or an event cancelled in Google follows into the CRM.
 //  - Appointments made in the CRM are added to the right calendar, and a time
 //    edit or cancellation there follows to Google (the later edit wins).
@@ -22,8 +25,9 @@ import {
   countRecentEvents,
   defaultSalesId,
   finishEvent,
-  findContact,
+  linkBooking,
   recordEvent,
+  resolveCustomerForBooking,
 } from "../_shared/lab/crm.ts";
 import {
   type CalendarEvent,
@@ -33,6 +37,7 @@ import {
   type GoogleEvent,
   LAB_CALENDARS,
   parseServiceAccount,
+  phoneFrom,
   planSync,
   type Resource,
   type ServiceAccount,
@@ -50,6 +55,8 @@ const PAST_DAYS = 7;
 const FUTURE_DAYS = 120;
 // Events sent to Google in one run; the rest go on the next one
 const MAX_PUSHES = 40;
+// Bookings looked up by customer name in one run, so a sync stays quick
+const MAX_LINKS = 40;
 
 const json = (body: unknown) =>
   new Response(JSON.stringify(body), {
@@ -195,7 +202,7 @@ const handle = async () => {
     const { data: rows, error: readError } = await supabaseAdmin
       .from("appointments")
       .select(
-        "id, external_id, source, resource, title, start_at, end_at, status, vehicle, notes, updated_at",
+        "id, contact_id, external_id, source, resource, title, start_at, end_at, status, vehicle, notes, updated_at",
       )
       .gte("start_at", timeMin)
       .lt("start_at", timeMax)
@@ -214,6 +221,7 @@ const handle = async () => {
       calendars: status,
       pulled: { created: 0, updated: 0, cancelled: 0 },
       pushed: { created: 0, updated: 0, deleted: 0 },
+      linked: 0,
       skipped: plan.skipped,
       syncedAt: now.toISOString(),
     };
@@ -222,9 +230,10 @@ const handle = async () => {
     if (plan.creates.length) {
       const salesId = await defaultSalesId();
       for (const row of plan.creates) {
-        const contact = row.phone
-          ? await findContact({ phone: row.phone })
-          : null;
+        const contact = await resolveCustomerForBooking({
+          title: row.title,
+          phone: row.phone,
+        });
         const { error } = await supabaseAdmin.from("appointments").insert({
           external_id: row.externalId,
           source: "google",
@@ -242,7 +251,10 @@ const handle = async () => {
         // 23505: another run saved it a moment ago
         if (error && error.code !== "23505")
           throw new Error(`save appointment: ${error.message}`);
-        if (!error) result.pulled.created += 1;
+        if (!error) {
+          result.pulled.created += 1;
+          if (contact) result.linked += 1;
+        }
       }
     }
     for (const { id, patch, url } of plan.updates) {
@@ -271,6 +283,29 @@ const handle = async () => {
         )
         .eq("id", id)
         .is("external_id", null);
+    }
+
+    // ── Bookings without a customer ───────────────────────────────────────
+    // The customer may have been added after the booking was typed in (or paid
+    // for it since), so every unlinked booking in the window is looked up by
+    // the name in its title, then by the phone in its notes.
+    const nowMs = now.getTime();
+    const unlinked = appointments
+      .filter((a) => a.contact_id == null && a.status !== "cancelled")
+      // Nearest today first: this week's bookings are the ones being looked at
+      .sort(
+        (a, b) =>
+          Math.abs(Date.parse(a.start_at) - nowMs) -
+          Math.abs(Date.parse(b.start_at) - nowMs),
+      )
+      .slice(0, MAX_LINKS);
+    for (const appointment of unlinked) {
+      const contact = await resolveCustomerForBooking({
+        title: appointment.title,
+        phone: phoneFrom(appointment.notes ?? ""),
+      });
+      if (!contact) continue;
+      if (await linkBooking(appointment.id, contact.id)) result.linked += 1;
     }
 
     // ── CRM -> Google ─────────────────────────────────────────────────────

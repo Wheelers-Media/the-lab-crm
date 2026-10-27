@@ -1,7 +1,12 @@
 // Database operations shared by THE LAB connectors. Runs with the service role.
 import { supabaseAdmin } from "../supabaseAdmin.ts";
+import type { NamedBooking } from "./bookingMatch.ts";
+import { nameTokens, titleNames } from "./bookingMatch.ts";
 import type { ContactInput } from "./parse.ts";
 import type { Candidate } from "./depositMatch.ts";
+
+/** The shop's clock; bookings and orders are grouped by its days. */
+export const SHOP_TIME_ZONE = "America/Dawson_Creek";
 
 const TAG_COLORS = [
   "#bcd4e6",
@@ -18,7 +23,7 @@ export const OPEN_STAGES = ["intake", "qualified", "quoted", "booked"];
 /** "Mon, Oct 13, 2:00 p.m." in the shop's time zone. */
 export const shopTimeText = (iso: string): string =>
   new Date(iso).toLocaleString("en-CA", {
-    timeZone: "America/Dawson_Creek",
+    timeZone: SHOP_TIME_ZONE,
     weekday: "short",
     month: "short",
     day: "numeric",
@@ -544,6 +549,108 @@ export const findUnpaidBookings = async (): Promise<UnpaidBooking[]> => {
     name: embeddedName(row.contacts),
     when: row.start_at,
   }));
+};
+
+/** The shop's calendar day for an instant: "2026-10-27". */
+const shopDayKey = (iso: string): string =>
+  new Intl.DateTimeFormat("en-CA", {
+    timeZone: SHOP_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(iso));
+
+/**
+ * Bookings that start on the shop day of `iso`, linked to a customer or not.
+ * The window is wide enough for any time zone; the day itself decides.
+ */
+export const findBookingsOnDay = async (
+  iso: string,
+): Promise<NamedBooking[]> => {
+  const at = new Date(iso).getTime();
+  const day = shopDayKey(iso);
+  const { data, error } = await supabaseAdmin
+    .from("appointments")
+    .select("id, contact_id, title, start_at")
+    .gte("start_at", new Date(at - 36 * 3_600_000).toISOString())
+    .lt("start_at", new Date(at + 36 * 3_600_000).toISOString())
+    .in("status", ["booked", "completed"])
+    .order("start_at")
+    .limit(200);
+  if (error) fail("find bookings on day", error);
+  return (
+    (data ?? []) as unknown as Array<{
+      id: number;
+      contact_id: number | null;
+      title: string;
+      start_at: string;
+    }>
+  )
+    .filter((row) => shopDayKey(row.start_at) === day)
+    .map((row) => ({
+      id: row.id,
+      contactId: row.contact_id,
+      title: row.title,
+      when: row.start_at,
+    }));
+};
+
+/** Puts the customer on the booking. A booking already linked is left alone. */
+export const linkBooking = async (
+  bookingId: number,
+  contactId: number,
+): Promise<boolean> => {
+  const { data, error } = await supabaseAdmin
+    .from("appointments")
+    .update({ contact_id: contactId })
+    .eq("id", bookingId)
+    .is("contact_id", null)
+    .select("id");
+  if (error) fail("link booking", error);
+  return (data ?? []).length > 0;
+};
+
+/** Customers whose name appears in a booking title; several may share it. */
+export const findContactsNamedIn = async (
+  title: string,
+): Promise<ContactRow[]> => {
+  // Look the title's words up as last names first: whoever the booking is for,
+  // one of those words is their last name.
+  const words = nameTokens(title).slice(0, 6);
+  if (!words.length) return [];
+  const { data, error } = await supabaseAdmin
+    .from("contacts")
+    .select(CONTACT_FIELDS)
+    .or(words.map((word) => `last_name.ilike.%${word}%`).join(","))
+    .limit(50);
+  if (error) fail("find customer by name", error);
+  return ((data ?? []) as ContactRow[]).filter((contact) =>
+    titleNames(
+      title,
+      [contact.first_name, contact.last_name].filter(Boolean).join(" "),
+    ),
+  );
+};
+
+/**
+ * The customer behind a booking typed into Google: the name in the title comes
+ * first, then the phone number in the notes. Two customers sharing a name are
+ * not guessed between unless the phone picks one.
+ */
+export const resolveCustomerForBooking = async ({
+  title,
+  phone,
+}: {
+  title: string;
+  phone: string | null;
+}): Promise<ContactRow | null> => {
+  const named = await findContactsNamedIn(title);
+  if (named.length === 1) return named[0];
+  if (phone) {
+    const byPhone = await findContact({ phone });
+    if (byPhone) return byPhone;
+  }
+  return null;
 };
 
 export type UnclaimedDeposit = Candidate & {

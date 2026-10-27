@@ -5,6 +5,9 @@
 // own booking first, then a booking under the same name, so a deposit paid
 // with another email or phone still finds it); the booking is marked paid and
 // its deal moves to Converted.
+// Any other order paid on the day of a booking typed into Google Calendar is
+// tied to that booking by the customer's name, and the booking's customer is
+// used instead of making a second record for the same person.
 // Checkouts are stored so the follow-up rules can flag big abandoned carts.
 // Products keep the CRM's catalog (packages and parts) in step with Shopify.
 // "history/order" is our own topic, sent by scripts/shopify-backfill.ts: past
@@ -20,6 +23,10 @@ import {
 } from "../_shared/lab/parse.ts";
 import { verifyShopifySignature } from "../_shared/lab/signatures.ts";
 import { type Match, pickByCustomer } from "../_shared/lab/depositMatch.ts";
+import {
+  type NamedBooking,
+  pickBookingForCustomer,
+} from "../_shared/lab/bookingMatch.ts";
 import { packageFromProduct } from "../_shared/lab/packages.ts";
 import {
   addContactNote,
@@ -27,10 +34,12 @@ import {
   createTask,
   defaultSalesId,
   finishEvent,
+  findBookingsOnDay,
   findContact,
   findOpenDeal,
   findOrCreateContact,
   findUnpaidBookings,
+  linkBooking,
   moveDeal,
   recordEvent,
   shopTimeText,
@@ -71,12 +80,25 @@ const handleOrder = async (
   // Find the booking this deposit pays for before a contact is made for the
   // payer: their own customer record first, then the name on the booking
   let match: Match<UnpaidBooking> = { kind: "none" };
-  if (isLiveDeposit) {
+  // A booking on the day of the order under the payer's name: the customer is
+  // at the shop, so the job in the calendar is theirs. Also used for a deposit
+  // whose own booking was not found, so the day still ties the two together.
+  let sameDayBooking: NamedBooking | null = null;
+  if (isNew && !history) {
     const known = await findContact(order.contact);
-    match = pickByCustomer(await findUnpaidBookings(), {
-      contactId: known?.id ?? null,
-      name: payerName(order),
-    });
+    if (isLiveDeposit) {
+      match = pickByCustomer(await findUnpaidBookings(), {
+        contactId: known?.id ?? null,
+        name: payerName(order),
+      });
+    }
+    if (match.kind !== "match") {
+      const pick = pickBookingForCustomer(
+        await findBookingsOnDay(order.orderedAt),
+        { name: payerName(order), contactId: known?.id ?? null },
+      );
+      if (pick.kind === "match") sameDayBooking = pick.booking;
+    }
   }
   const booking = match.kind === "match" ? match.item : null;
 
@@ -84,7 +106,9 @@ const handleOrder = async (
     order.contact,
     ["Shopify customer", ...order.categories],
     history ? order.orderedAt : undefined,
-    booking?.contactId ?? undefined,
+    // Paying on the day of a booking already on file: that customer is this
+    // payer, so the new email and phone join their record
+    sameDayBooking?.contactId ?? booking?.contactId ?? undefined,
   );
   let dealId: number | null = null;
   let appointmentId: number | null = booking?.id ?? null;
@@ -121,7 +145,7 @@ const handleOrder = async (
       if (error) throw new Error(`mark deposit paid: ${error.message}`);
       appointmentId ??= marked?.[0]?.id ?? null;
     }
-    if (!booking && !dealToMove) {
+    if (!booking && !dealToMove && !sameDayBooking) {
       // The order number leads the text so a later booking can close this task
       await createTask(
         contact.id,
@@ -132,6 +156,24 @@ const handleOrder = async (
             : "but no booking matched"
         }. Check which booking it belongs to.`,
       );
+    }
+  }
+
+  // A customer who pays on the day of their booking: the booking carries their
+  // name, so it becomes their job in the calendar, and the order knows which
+  // booking it belongs to.
+  if (sameDayBooking && contact) {
+    const linked =
+      sameDayBooking.contactId != null ||
+      (await linkBooking(sameDayBooking.id, contact.id));
+    if (linked) {
+      appointmentId ??= sameDayBooking.id;
+      // A deposit paid on the day still marks the booking it paid for
+      if (isLiveDeposit)
+        await supabaseAdmin
+          .from("appointments")
+          .update({ deposit_paid: true })
+          .eq("id", sameDayBooking.id);
     }
   }
 

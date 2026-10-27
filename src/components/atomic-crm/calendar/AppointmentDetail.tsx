@@ -57,8 +57,9 @@ const CustomerBlock = ({ contact }: { contact?: Contact }) => {
   if (!contact)
     return (
       <p className="text-sm text-muted-foreground">
-        No customer linked. A phone number in the event notes links the customer
-        on the next sync.
+        No customer linked yet. A booking named after the customer links itself
+        when they pay, or on the next calendar sync; a phone number in the notes
+        links them too.
       </p>
     );
   const phone = contact.phone_jsonb?.[0]?.number;

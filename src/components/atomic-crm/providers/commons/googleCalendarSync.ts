@@ -8,6 +8,8 @@ export type GoogleCalendarSyncResult = {
   calendars?: Array<{ name: string; ok: boolean; error?: string }>;
   pulled?: { created: number; updated: number; cancelled: number };
   pushed?: { created: number; updated: number; deleted: number };
+  /** Bookings tied to the customer whose name they carry. */
+  linked?: number;
   skipped?: { allDay: number; calcom: number; invalid: number };
   syncedAt?: string;
 };

@@ -1,14 +1,23 @@
 // A small in-memory stand-in for the Supabase client, for testing the webhook
 // handlers end to end without a database. It implements only the query shapes
-// the connectors use: eq / is / gte / like / in / contains / filter("cs"),
-// order, limit, single, insert, update, upsert, delete and the contacts(...)
-// embed. Test-only: no function imports it, so it is never deployed.
+// the connectors use: eq / is / gte / lt / like / ilike / or / in / contains /
+// filter("cs"), order, limit, single, insert, update, upsert, delete and the
+// contacts(...) embed. Test-only: no function imports it, so it is never deployed.
 
 type Row = Record<string, unknown>;
 type Result = {
   data: unknown;
   error: null | { message: string; code?: string };
   count?: number;
+};
+
+/** SQL like / ilike on one column, with % as the wildcard. */
+const matcher = (col: string, op: "like" | "ilike", pattern: string) => {
+  const re = new RegExp(
+    `^${pattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/%/g, ".*")}$`,
+    op === "ilike" ? "i" : "",
+  );
+  return (r: Row) => typeof r[col] === "string" && re.test(r[col] as string);
 };
 
 const matchesJson = (value: unknown, wanted: unknown): boolean => {
@@ -87,17 +96,34 @@ class Query implements PromiseLike<Result> {
     this.filters.push((r) => (r[col] as string | number) >= value);
     return this;
   }
+  lt(col: string, value: string | number) {
+    this.filters.push((r) => (r[col] as string | number) < value);
+    return this;
+  }
   in(col: string, values: unknown[]) {
     this.filters.push((r) => values.includes(r[col]));
     return this;
   }
   like(col: string, pattern: string) {
-    const re = new RegExp(
-      `^${pattern.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/%/g, ".*")}$`,
-    );
-    this.filters.push(
-      (r) => typeof r[col] === "string" && re.test(r[col] as string),
-    );
+    this.filters.push(matcher(col, "like", pattern));
+    return this;
+  }
+  ilike(col: string, pattern: string) {
+    this.filters.push(matcher(col, "ilike", pattern));
+    return this;
+  }
+  /** PostgREST's `or`, for the clause shapes the connectors use. */
+  or(filters: string) {
+    const clauses = filters.split(",").map((clause) => {
+      const [col, op, ...rest] = clause.split(".");
+      const value = rest.join(".");
+      if (op !== "like" && op !== "ilike" && op !== "eq")
+        throw new Error(`TestDb: or ${op} not supported`);
+      return op === "eq"
+        ? (r: Row) => r[col] === value
+        : matcher(col, op, value);
+    });
+    this.filters.push((r) => clauses.some((matches) => matches(r)));
     return this;
   }
   contains(col: string, wanted: unknown) {
