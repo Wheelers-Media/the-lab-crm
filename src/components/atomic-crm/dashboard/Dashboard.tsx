@@ -33,24 +33,21 @@ export const Dashboard = () => {
   }
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <CommandCenter />
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-        <div className="md:col-span-3">
-          <div className="flex flex-col gap-4">
-            {import.meta.env.VITE_IS_DEMO === "true" ? <Welcome /> : null}
-            <HotContacts />
-          </div>
+      {/* One primary column and one quieter one, rather than four cards of
+          equal weight competing with the hero above */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 min-w-0 flex flex-col gap-6">
+          {totalDeal ? <DealsChart /> : null}
+          <DashboardActivityLog />
         </div>
-        <div className="md:col-span-6">
-          <div className="flex flex-col gap-6">
-            {totalDeal ? <DealsChart /> : null}
-            <DashboardActivityLog />
+        <div className="min-w-0 flex flex-col gap-6">
+          {import.meta.env.VITE_IS_DEMO === "true" ? <Welcome /> : null}
+          <HotContacts />
+          <div id="tasks">
+            <TasksList />
           </div>
-        </div>
-
-        <div className="md:col-span-3" id="tasks">
-          <TasksList />
         </div>
       </div>
     </div>

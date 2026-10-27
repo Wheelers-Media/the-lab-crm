@@ -189,17 +189,17 @@ const PaceChart = ({ pace }: { pace: Pace }) => {
           y2={H - PAD.bottom}
           stroke="var(--color-border)"
         />
-        <path d={previous} fill="none" stroke="#6b7686" strokeWidth={2} />
+        <path d={previous} fill="none" stroke="var(--chart-compare)" strokeWidth={2} />
         {projection ? (
           <path
             d={projection}
             fill="none"
-            stroke="#5c9dff"
+            stroke="var(--chart-selected)"
             strokeWidth={2}
             strokeDasharray="5 5"
           />
         ) : null}
-        <path d={current} fill="none" stroke="#0066FF" strokeWidth={3} />
+        <path d={current} fill="none" stroke="var(--chart-this)" strokeWidth={3} />
         <line
           x1={x(index)}
           x2={x(index)}
@@ -213,12 +213,12 @@ const PaceChart = ({ pace }: { pace: Pace }) => {
             cx={x(index)}
             cy={y(point.current)}
             r={4.5}
-            fill="#0066FF"
+            fill="var(--chart-this)"
             stroke="#fff"
             strokeWidth={1.5}
           />
         ) : null}
-        <circle cx={x(index)} cy={y(point.previous)} r={4} fill="#6b7686" />
+        <circle cx={x(index)} cy={y(point.previous)} r={4} fill="var(--chart-compare)" />
       </svg>
     </div>
   );
@@ -347,7 +347,7 @@ const PaymentStatus = ({
                 onClick={() => onDrill({ title: r.name, orders: r.list })}
                 className="flex w-full items-baseline justify-between gap-2 rounded-md px-1 py-2 text-left text-sm hover:bg-muted"
               >
-                <span className={cn(r.open && "font-medium text-[#ff8a1f]")}>
+                <span className={cn(r.open && "font-medium text-[var(--lab-amber)]")}>
                   {r.name}
                 </span>
                 <span className="lab-num text-muted-foreground">
@@ -397,7 +397,7 @@ const NewVsReturning = ({
             title={`${m.label}: ${m.newCustomers} new, ${m.returning} returning`}
           >
             <div
-              className="bg-[#6b7686]"
+              className="bg-[var(--chart-compare)]"
               style={{ height: `${(m.returning / max) * 100}%` }}
             />
             <div
@@ -412,7 +412,7 @@ const NewVsReturning = ({
           <span className="size-2.5 rounded-sm bg-primary" /> New
         </span>
         <span className="inline-flex items-center gap-1">
-          <span className="size-2.5 rounded-sm bg-[#6b7686]" /> Returning
+          <span className="size-2.5 rounded-sm bg-[var(--chart-compare)]" /> Returning
         </span>
       </p>
     </SectionCard>

@@ -12,6 +12,7 @@ import {
   needsAttention,
   openPipeline,
   orderRevenue,
+  percentChange,
 } from "./metrics";
 import {
   AppointmentRow,
@@ -31,13 +32,38 @@ import { listLink, money } from "./format";
 import { ShopFloorSummary } from "../shopfloor/ShopFloorSummary";
 import { PipelineSnapshot } from "./PipelineSnapshot";
 import { RevenueCard } from "./RevenueCard";
-import { ShopifyMetrics } from "./ShopifyMetrics";
 import { useOperationsData, useRunAutomations } from "./useOperationsData";
 
-const PERIODS: Array<{ value: Period; label: string; vs: string }> = [
-  { value: "today", label: "Today", vs: "vs yesterday" },
-  { value: "week", label: "Week", vs: "vs last week" },
-  { value: "month", label: "Month", vs: "vs last month" },
+const PERIODS: Array<{
+  value: Period;
+  label: string;
+  /** "this month" — titles the cards */
+  thisPeriod: string;
+  /** "last month" — the phrase inside a sentence */
+  comparedWith: string;
+  vs: string;
+}> = [
+  {
+    value: "today",
+    label: "Today",
+    thisPeriod: "today",
+    comparedWith: "yesterday",
+    vs: "vs yesterday",
+  },
+  {
+    value: "week",
+    label: "Week",
+    thisPeriod: "this week",
+    comparedWith: "last week",
+    vs: "vs last week",
+  },
+  {
+    value: "month",
+    label: "Month",
+    thisPeriod: "this month",
+    comparedWith: "last month",
+    vs: "vs last month",
+  },
 ];
 
 const usePeriod = (): [Period, (p: Period) => void] => {
@@ -73,8 +99,9 @@ export const CommandCenter = ({
     const revenue = orderRevenue(data.orders, range);
     const revenueBefore = orderRevenue(data.orders, previous);
     const leads = leadStats(data.deals, range);
+    const leadsBefore = leadStats(data.deals, previous);
     const pipeline = openPipeline(data.deals);
-    return { revenue, revenueBefore, leads, pipeline };
+    return { revenue, revenueBefore, leads, leadsBefore, pipeline };
   }, [data.orders, data.deals, range, previous]);
 
   const today = useMemo(
@@ -148,11 +175,15 @@ export const CommandCenter = ({
   const revenueCard = (
     <RevenueCard
       orders={data.orders}
-      todayKey={todayKey}
       revenue={kpis.revenue}
       previousRevenue={kpis.revenueBefore}
-      periodLabel={periodLabel.label}
+      range={range}
+      previous={previous}
+      now={now}
+      thisPeriod={periodLabel.thisPeriod}
+      comparedWith={periodLabel.comparedWith}
       vs={periodLabel.vs}
+      size={period === "today" ? "hour" : "day"}
     />
   );
   const kpiBlock = (
@@ -162,6 +193,7 @@ export const CommandCenter = ({
           label="New leads"
           to={listLink("deals", inPeriod("created_at"))}
           value={String(kpis.leads.total)}
+          trend={percentChange(kpis.leads.total, kpis.leadsBefore.total)}
           detail={`${kpis.leads.website} from the website`}
         />
         <KpiTile
@@ -186,6 +218,7 @@ export const CommandCenter = ({
       <Card className="p-4 gap-0">
         <SectionTitle
           icon={CalendarCheck}
+          hint="Drop-offs and appointments on the shop clock."
           action={
             <Link
               to="/calendar"
@@ -195,7 +228,7 @@ export const CommandCenter = ({
             </Link>
           }
         >
-          Today
+          Today at the bay
         </SectionTitle>
         {today.length ? (
           <div className="divide-y divide-border">
@@ -223,7 +256,9 @@ export const CommandCenter = ({
   const attentionCard = (
     <>
       <Card className="p-4 gap-0">
-        <SectionTitle icon={BellRing}>Needs attention</SectionTitle>
+        <SectionTitle icon={BellRing} hint="What costs money if it waits.">
+          Needs attention
+        </SectionTitle>
         {attention.length ? (
           <div className="divide-y divide-border">
             {attention.map((item) => (
@@ -241,29 +276,18 @@ export const CommandCenter = ({
   );
   const weekBlock = <WeekStrip loads={weekKeys} todayKey={todayKey} />;
   const floorCard = <ShopFloorSummary deals={data.deals} now={now} />;
-  const shopifyBlock = (
-    <ShopifyMetrics
-      orders={data.orders}
-      checkouts={data.checkouts}
-      range={range}
-      previous={previous}
-      vs={periodLabel.vs}
-      now={now}
-    />
-  );
 
   if (variant === "phone") {
-    // Eric's phone: today's money, what needs him, then today's work
+    // Eric's phone: the money, the numbers under it, then what needs him
     return (
       <div className="flex flex-col gap-4 mt-1">
         {headerBlock}
         {revenueCard}
+        {kpiBlock}
         {attentionCard}
         {todayCard}
         {floorCard}
         <PipelineSnapshot deals={data.deals} />
-        {kpiBlock}
-        {shopifyBlock}
         {weekBlock}
       </div>
     );
@@ -274,7 +298,6 @@ export const CommandCenter = ({
       {headerBlock}
       {revenueCard}
       {kpiBlock}
-      {shopifyBlock}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {todayCard}
         {attentionCard}

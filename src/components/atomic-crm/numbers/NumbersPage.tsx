@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
+import { ShopifyMetrics } from "../operations/ShopifyMetrics";
 import { CustomersSection } from "./CustomersSection";
 import { InsightsSection } from "./InsightsSection";
 import {
@@ -184,6 +185,15 @@ export const NumbersPage = () => {
             onDrill={setDrill}
           />
           <Heading>Products</Heading>
+          {/* The shop's money and mix live here now, beside the product
+              tables, instead of competing with the home screen's hero */}
+          <ShopifyMetrics
+            orders={filtered}
+            range={data.ranges.current}
+            previous={data.ranges.previous}
+            vs={label.vs}
+            thisPeriod={label.label.toLowerCase()}
+          />
           <ProductsSection
             orders={filtered}
             catalog={data.catalog}

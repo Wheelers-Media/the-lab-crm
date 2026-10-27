@@ -208,8 +208,18 @@ body {
   --lab-blue: #0066ff;
   /* Blue for text and selected icons on dark grounds (6.9:1 on the bars) */
   --lab-blue-text: #5c9dff;
+  /* Up and down, for deltas. Never the only cue: the arrows say the same. */
+  --lab-pos: #3fb27f;
+  --lab-neg: #e5484d;
   --lab-ice: #cfe3ff;
   --lab-amber: #ff8a1f;
+  /* Charts: one series per meaning. The pale blues need darker values on a
+     white card to stay above 3:1, so the light scheme overrides them below. */
+  --chart-this: var(--lab-blue);
+  --chart-compare: #6b7686;
+  --chart-pending: var(--lab-ice);
+  --chart-selected: var(--lab-blue-text);
+  --chart-lost: var(--lab-neg);
   --primary: var(--lab-blue);
   --primary-foreground: #ffffff;
   --ring: var(--lab-blue);
@@ -250,6 +260,9 @@ body {
 :root:not(.dark) {
   --lab-segment-track: #f1f1f3;
   --lab-segment-thumb: #ffffff;
+  /* Ice on white is invisible, so the light scheme uses a mid blue instead */
+  --chart-pending: #5b8fd9;
+  --chart-selected: #0047b3;
 }
 
 h1,
@@ -478,6 +491,37 @@ h2 {
    scroll container swallowed every wheel and touch gesture. Only put
    overscroll-behavior on a real nested scroller (a sheet, a table), never on
    the page itself. */
+
+/* Charts: the line draws itself in once, and its area fades up under it, so a
+   period change reads as a change rather than a flash of new pixels. */
+@keyframes lab-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.lab-draw {
+  animation: lab-draw 900ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes lab-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.lab-fade {
+  animation: lab-fade 700ms ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lab-draw,
+  .lab-fade {
+    animation: none;
+  }
+}
 
 /* Charts: the bars grow in once, staggered, so a period change reads as a
    change rather than a flash of new pixels. */
