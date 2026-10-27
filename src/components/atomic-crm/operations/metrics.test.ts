@@ -5,7 +5,7 @@ import {
   bayLoad,
   cartStats,
   cleanProductName,
-  dailyRevenue,
+  cumulativeRevenue,
   dayLoads,
   leadStats,
   needsAttention,
@@ -88,23 +88,32 @@ describe("dashboard numbers", () => {
     expect(orderRevenue(orders, periodRange("month", NOW))).toBe(450);
   });
 
-  it("adds up each of the last days, leaving empty days at zero", () => {
+  it("runs revenue up to today and the same point last month beside it", () => {
     const orders = [
-      { total: 500, refunded_amount: 50, ordered_at: "2026-10-09T18:00:00Z" },
+      { total: 500, refunded_amount: 50, ordered_at: "2026-10-02T18:00:00Z" },
       { total: 200, refunded_amount: 0, ordered_at: "2026-10-07T18:00:00Z" },
-      { total: 50, refunded_amount: 0, ordered_at: "2026-10-07T20:00:00Z" },
       {
         total: 900,
         refunded_amount: 0,
         ordered_at: "2026-10-08T18:00:00Z",
         cancelled_at: "2026-10-08T19:00:00Z",
       },
-      { total: 999, refunded_amount: 0, ordered_at: "2026-09-01T18:00:00Z" },
+      { total: 100, refunded_amount: 0, ordered_at: "2026-09-02T18:00:00Z" },
+      { total: 300, refunded_amount: 0, ordered_at: "2026-09-07T18:00:00Z" },
     ] as Order[];
 
-    const points = dailyRevenue(orders, "2026-10-09", 7);
+    const points = cumulativeRevenue(
+      orders,
+      periodRange("month", NOW),
+      previousPeriodRange("month", NOW),
+      NOW,
+    );
 
+    // Nine shop days so far, and the last one stops at 9 am
+    expect(points).toHaveLength(9);
     expect(points.map((p) => p.key)).toEqual([
+      "2026-10-01",
+      "2026-10-02",
       "2026-10-03",
       "2026-10-04",
       "2026-10-05",
@@ -113,8 +122,64 @@ describe("dashboard numbers", () => {
       "2026-10-08",
       "2026-10-09",
     ]);
-    expect(points.map((p) => p.value)).toEqual([0, 0, 0, 0, 250, 0, 450]);
-    expect(points[6].label).toBe("9");
+    // Empty days hold the running total; the cancelled order never counts
+    expect(points.map((p) => p.value)).toEqual([
+      0, 450, 450, 450, 450, 450, 650, 650, 650,
+    ]);
+    // Last month, same day of the month, same time of day
+    expect(points.map((p) => p.previous)).toEqual([
+      0, 100, 100, 100, 100, 100, 400, 400, 400,
+    ]);
+  });
+
+  it("compares a part-day against the same part of the day last month", () => {
+    const orders = [
+      // 9 am last month, in the same nine hours we have today
+      { total: 111, refunded_amount: 0, ordered_at: "2026-09-09T15:00:00Z" },
+      // 1 pm last month, after the point we have reached
+      { total: 222, refunded_amount: 0, ordered_at: "2026-09-09T20:00:00Z" },
+    ] as Order[];
+
+    const points = cumulativeRevenue(
+      orders,
+      periodRange("month", NOW),
+      previousPeriodRange("month", NOW),
+      NOW,
+    );
+
+    expect(points[points.length - 1].previous).toBe(111);
+  });
+
+  it("steps by the hour for a single day, from opening to now", () => {
+    const orders = [
+      { total: 200, refunded_amount: 0, ordered_at: "2026-10-09T15:00:00Z" },
+      { total: 80, refunded_amount: 0, ordered_at: "2026-10-09T15:30:00Z" },
+    ] as Order[];
+
+    const points = cumulativeRevenue(
+      orders,
+      periodRange("today", NOW),
+      previousPeriodRange("today", NOW),
+      NOW,
+      "hour",
+    );
+
+    // Two whole hours on the shop clock: 7 to 8, and 8 to 9, where it stops
+    expect(points.map((p) => p.label)).toEqual(["7a", "8a"]);
+    expect(points.map((p) => p.value)).toEqual([0, 280]);
+  });
+
+  it("has nothing to chart before the shop opens", () => {
+    const early = new Date("2026-10-09T10:00:00Z"); // 3 am in Fort St. John
+    expect(
+      cumulativeRevenue(
+        [],
+        periodRange("today", early),
+        previousPeriodRange("today", early),
+        early,
+        "hour",
+      ),
+    ).toEqual([]);
   });
 
   it("reports a percent change only when there is something to compare with", () => {

@@ -1,5 +1,7 @@
 import {
+  ArrowDown,
   ArrowRight,
+  ArrowUp,
   CalendarDays,
   CircleDollarSign,
   ClipboardList,
@@ -27,17 +29,23 @@ import { formatShopDay, formatShopTime, shopDayKey } from "./shopTime";
 export const SectionTitle = ({
   icon: Icon,
   children,
+  hint,
   action,
 }: {
   icon: ComponentType<{ className?: string }>;
   children: React.ReactNode;
+  /** Says what the numbers under the title cover, so the title is not a riddle. */
+  hint?: string;
   action?: React.ReactNode;
 }) => (
   <div className="flex items-center gap-2 mb-2">
-    <Icon className="w-5 h-5 text-muted-foreground" />
-    <h2 className="text-lg font-semibold text-muted-foreground flex-1">
-      {children}
-    </h2>
+    <Icon className="w-5 h-5 text-muted-foreground shrink-0" />
+    <div className="flex-1 min-w-0">
+      <h2 className="text-lg font-semibold text-muted-foreground">
+        {children}
+      </h2>
+      {hint ? <p className="text-xs text-muted-foreground/80">{hint}</p> : null}
+    </div>
     {action ? (
       // Links like "Calendar" get a full 44pt tap target
       <span className="-my-2 inline-flex [&>a]:inline-flex [&>a]:min-h-11 [&>a]:items-center">
@@ -83,11 +91,20 @@ export const KpiTile = ({
           <span
             className={cn(
               "mr-1",
-              trend >= 0 ? "text-[#3fb27f]" : "text-[#e5484d]",
+              trend === 0
+                ? "text-muted-foreground"
+                : trend > 0
+                  ? "text-[var(--lab-pos)]"
+                  : "text-[var(--lab-neg)]",
             )}
           >
-            {trend >= 0 ? "+" : ""}
-            {trend}%
+            {/* The arrow carries the direction for anyone who cannot see the hue */}
+            {trend > 0 ? (
+              <ArrowUp className="inline size-3" aria-hidden="true" />
+            ) : trend < 0 ? (
+              <ArrowDown className="inline size-3" aria-hidden="true" />
+            ) : null}
+            {Math.abs(trend)}%
           </span>
         ) : null}
         {detail}
@@ -314,6 +331,7 @@ export const WeekStrip = ({
   <Card className="p-4">
     <SectionTitle
       icon={CalendarDays}
+      hint="Drop-off slots per day, and Eric's jobs beside them."
       action={
         <Link
           to="/calendar"
@@ -323,7 +341,7 @@ export const WeekStrip = ({
         </Link>
       }
     >
-      This week
+      Bay capacity this week
     </SectionTitle>
     <div
       className="grid gap-2"

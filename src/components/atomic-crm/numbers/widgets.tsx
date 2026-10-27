@@ -15,11 +15,20 @@ export const Delta = ({ value: raw }: { value: number | null | undefined }) => {
     <span
       className={cn(
         "lab-num text-xs",
-        value >= 0 ? "text-[#3fb27f]" : "text-[#e5484d]",
+        value === 0
+          ? "text-muted-foreground"
+          : value > 0
+            ? "text-[var(--lab-pos)]"
+            : "text-[var(--lab-neg)]",
       )}
     >
-      {value > 0 ? "+" : ""}
-      {value.toLocaleString("en-CA")}%
+      {/* The arrow carries the direction for anyone who cannot see the hue */}
+      {value > 0 ? (
+        <ArrowUp className="inline size-3" aria-hidden="true" />
+      ) : value < 0 ? (
+        <ArrowDown className="inline size-3" aria-hidden="true" />
+      ) : null}
+      {Math.abs(value).toLocaleString("en-CA")}%
     </span>
   );
 };

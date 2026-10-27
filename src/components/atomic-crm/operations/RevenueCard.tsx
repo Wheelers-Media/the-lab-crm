@@ -1,52 +1,73 @@
-import { ArrowRight } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUp } from "lucide-react";
 import { Link } from "react-router";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 import { money } from "./format";
-import { dailyRevenue, percentChange } from "./metrics";
-import { formatShopDay } from "./shopTime";
+import { cumulativeRevenue, percentChange } from "./metrics";
+import { RevenueChart } from "./RevenueChart";
+import { addDays, shopDayKey, type DateRange } from "./shopTime";
 import type { Order } from "../types";
 
+const capitalise = (text: string) =>
+  text.charAt(0).toUpperCase() + text.slice(1);
+
+const netOf = (order: Order) =>
+  Math.max(0, Number(order.total) - Number(order.refunded_amount ?? 0));
+
 /**
- * The shop's revenue for the chosen period, with the last two weeks beside it
- * so a slow Tuesday stands out at a glance. The bars are decorative: the
- * figcaption carries the same numbers for screen readers.
+ * What the shop has taken so far, against the same point in the period before.
+ * The line answers "are we ahead?" at a glance and the sentence under it says
+ * by how much — a percentage alone leaves you doing the subtraction yourself.
  */
 export const RevenueCard = ({
   orders,
-  todayKey,
   revenue,
   previousRevenue,
-  periodLabel,
+  range,
+  previous,
+  now,
+  thisPeriod,
+  comparedWith,
   vs,
+  size = "day",
 }: {
   orders: Order[];
-  todayKey: string;
   revenue: number;
   previousRevenue: number;
-  periodLabel: string;
+  range: DateRange;
+  previous: DateRange;
+  now: Date;
+  /** "this month" — titles the card and names the solid line. */
+  thisPeriod: string;
+  /** "last month" — the phrase inside the sentence, and the dashed line. */
+  comparedWith: string;
+  /** "vs last month", beside the percentage. */
   vs: string;
+  size?: "hour" | "day";
 }) => {
-  const points = dailyRevenue(orders, todayKey, 14);
-  const max = Math.max(1, ...points.map((p) => p.value));
-  const today = points[points.length - 1]?.value ?? 0;
-  const yesterday = points[points.length - 2]?.value ?? 0;
-  const total = points.reduce((sum, p) => sum + p.value, 0);
-  const best = points.reduce((top, p) => (p.value > top.value ? p : top));
-  const trend = percentChange(revenue, previousRevenue);
-  const todayTrend = percentChange(today, yesterday);
+  const points = cumulativeRevenue(orders, range, previous, now, size);
+  const last = points[points.length - 1];
+  const gap = revenue - previousRevenue;
+  // Math.round gives -0 for a tiny drop, which would point the arrow the
+  // wrong way against a sentence that says "behind"
+  const change = percentChange(revenue, previousRevenue);
+  const trend = change === 0 ? 0 : change;
 
-  const summary =
-    `Revenue ${periodLabel}: ${money(revenue)}. ${vs} ${money(previousRevenue)}. ` +
-    `Today ${money(today)}, yesterday ${money(yesterday)}. ` +
-    `Last 14 days: ${money(total)}, best day ${formatShopDay(best.key)} at ${money(best.value)}.`;
+  const onDay = (key: string) =>
+    orders
+      .filter((o) => !o.cancelled_at && shopDayKey(o.ordered_at) === key)
+      .reduce((sum, o) => sum + netOf(o), 0);
+  const todayKey = shopDayKey(now);
+  const today = onDay(todayKey);
+  const yesterday = onDay(addDays(todayKey, -1));
+  const todayTrend = percentChange(today, yesterday);
 
   return (
     <Card className="p-4 gap-3">
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 className="lab-eyebrow">Revenue · {periodLabel}</h2>
+        <div className="min-w-0">
+          <h2 className="lab-eyebrow">Revenue · {thisPeriod}</h2>
           <p className="mt-1 text-3xl font-semibold tabular-nums">
             {money(revenue)}
           </p>
@@ -54,14 +75,25 @@ export const RevenueCard = ({
             <span
               className={cn(
                 "mr-1 font-medium",
-                trend == null
+                trend == null || trend === 0
                   ? "text-muted-foreground"
-                  : trend >= 0
-                    ? "text-[#3fb27f]"
-                    : "text-[#e5484d]",
+                  : trend > 0
+                    ? "text-[var(--lab-pos)]"
+                    : "text-[var(--lab-neg)]",
               )}
             >
-              {trend == null ? "—" : `${trend > 0 ? "+" : ""}${trend}%`}
+              {trend == null ? (
+                "—"
+              ) : (
+                <>
+                  {trend > 0 ? (
+                    <ArrowUp className="inline size-3" aria-hidden="true" />
+                  ) : trend < 0 ? (
+                    <ArrowDown className="inline size-3" aria-hidden="true" />
+                  ) : null}
+                  {Math.abs(trend)}%
+                </>
+              )}
             </span>{" "}
             {vs}
           </p>
@@ -75,8 +107,7 @@ export const RevenueCard = ({
         </Link>
       </div>
 
-      <figure className="m-0">
-        <figcaption className="sr-only">{summary}</figcaption>
+      <div>
         <p className="mb-2 text-xs text-muted-foreground tabular-nums">
           Today{" "}
           <span className="font-medium text-foreground">{money(today)}</span>
@@ -85,11 +116,17 @@ export const RevenueCard = ({
               {" "}
               <span
                 className={
-                  todayTrend >= 0 ? "text-[#3fb27f]" : "text-[#e5484d]"
+                  todayTrend > 0
+                    ? "text-[var(--lab-pos)]"
+                    : "text-[var(--lab-neg)]"
                 }
               >
-                {todayTrend > 0 ? "+" : ""}
-                {todayTrend}%
+                {todayTrend >= 0 ? (
+                  <ArrowUp className="inline size-3" aria-hidden="true" />
+                ) : (
+                  <ArrowDown className="inline size-3" aria-hidden="true" />
+                )}
+                {Math.abs(todayTrend)}%
               </span>
             </>
           ) : null}
@@ -100,62 +137,33 @@ export const RevenueCard = ({
           </span>
         </p>
 
-        <div aria-hidden="true" className="relative">
-          {/* Faint gridlines give the bars a scale without an axis */}
-          <div className="pointer-events-none absolute inset-x-0 top-0 flex h-24 flex-col justify-between">
-            {[0, 1, 2].map((line) => (
-              <span key={line} className="h-px w-full bg-border/70" />
-            ))}
-          </div>
-          <div className="relative flex h-24 items-end gap-[3px]">
-            {points.map((point, i) => {
-              const isToday = point.key === todayKey;
-              const isBest = point.key === best.key && best.value > 0;
-              const height = Math.round((point.value / max) * 100);
-              return (
-                <div
-                  key={point.key}
-                  className="flex h-full flex-1 items-end"
-                  title={`${formatShopDay(point.key)}: ${money(point.value)}`}
+        <RevenueChart
+          points={points}
+          thisPeriod={`${capitalise(thisPeriod)} so far`}
+          lastPeriod={capitalise(comparedWith)}
+        />
+
+        {last ? (
+          <p className="mt-1 text-[11px] tabular-nums text-muted-foreground">
+            {last.previous === 0 ? (
+              <>Nothing to compare with — {comparedWith} had no sales.</>
+            ) : gap === 0 ? (
+              <>Level with {comparedWith} at this point.</>
+            ) : (
+              <>
+                <span
+                  className={
+                    gap > 0 ? "text-[var(--lab-pos)]" : "text-[var(--lab-neg)]"
+                  }
                 >
-                  <span
-                    className={cn(
-                      "lab-bar-rise w-full rounded-t-[4px]",
-                      point.value === 0
-                        ? "bg-border"
-                        : isToday
-                          ? "bg-primary shadow-[0_0_18px_-4px_var(--lab-blue)]"
-                          : isBest
-                            ? "bg-gradient-to-t from-[var(--lab-blue)]/25 to-[var(--lab-blue)]/80"
-                            : "bg-gradient-to-t from-[var(--lab-blue)]/15 to-[var(--lab-blue)]/55",
-                    )}
-                    style={{
-                      height: point.value === 0 ? 2 : `${Math.max(6, height)}%`,
-                      animationDelay: `${i * 24}ms`,
-                    }}
-                  />
-                </div>
-              );
-            })}
-          </div>
-          <div className="mt-1 flex gap-[3px] text-[10px] text-muted-foreground tabular-nums">
-            {points.map((point, i) => (
-              <span key={point.key} className="flex-1 text-center">
-                {i % 3 === 0 || point.key === todayKey ? point.label : ""}
-              </span>
-            ))}
-          </div>
-          <p className="mt-2 flex items-baseline justify-between text-[11px] text-muted-foreground tabular-nums">
-            <span>
-              Best day{" "}
-              {formatShopDay(best.key, { month: "short", day: "numeric" })}
-            </span>
-            <span className="font-medium text-foreground">
-              {money(best.value)}
-            </span>
+                  {money(Math.abs(gap))} {gap > 0 ? "ahead of" : "behind"}
+                </span>{" "}
+                {comparedWith} at this point.
+              </>
+            )}
           </p>
-        </div>
-      </figure>
+        ) : null}
+      </div>
     </Card>
   );
 };

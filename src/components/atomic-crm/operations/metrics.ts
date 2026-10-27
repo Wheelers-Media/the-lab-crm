@@ -3,11 +3,11 @@
 import type { Appointment, Deal, Order, ShopifyCheckout, Task } from "../types";
 import { PARTS_NUDGE_DAYS, PICKUP_NUDGE_DAYS } from "../shopfloor/workStatus";
 import {
-  addDays,
   type DateRange,
   formatShopDay,
   inRange,
   shopDayKey,
+  shopHour,
 } from "./shopTime";
 
 export const OPEN_STAGES = ["intake", "qualified", "quoted", "booked"];
@@ -50,38 +50,87 @@ const netTotal = (o: Order): number =>
 export const orderRevenue = (orders: Order[], range: DateRange): number =>
   countedOrders(orders, range).reduce((sum, o) => sum + netTotal(o), 0);
 
-export interface RevenuePoint {
+export interface RevenueLinePoint {
   key: string;
-  /** Day of the month, for the axis under the bars. */
   label: string;
+  /** Net revenue from the start of the period to the end of this step. */
   value: number;
+  /** The same running total, this far into the period before. */
+  previous: number;
 }
 
+const HOUR_MS = 3_600_000;
+/** The bay opens at 7, so an empty morning is not half a chart of nothing. */
+const SHOP_OPEN_HOUR = 7;
+
+/** "9a", "12p", "5p" — short enough for an axis under a phone-width chart. */
+const hourLabel = (date: Date): string => {
+  const hour = shopHour(date);
+  return `${hour % 12 === 0 ? 12 : hour % 12}${hour < 12 ? "a" : "p"}`;
+};
+
 /**
- * Net revenue for each of the last `days` shop days, ending with `endKey`.
- * Days with no orders are kept as zeroes so the bars stay evenly spaced.
+ * Running net revenue across the period, with the same stretch of the period
+ * before beside it, so "ahead of last month" is a line you can see rather than
+ * a percentage you have to take on faith. Steps are hours for a single day and
+ * shop days otherwise: a cumulative line only reads honestly over equal steps.
+ * The last step is cut at `now` on both lines, so the two are compared at the
+ * same point in the period rather than a part-day against a whole one.
  */
-export const dailyRevenue = (
+export const cumulativeRevenue = (
   orders: Order[],
-  endKey: string,
-  days = 14,
-): RevenuePoint[] => {
-  const keys = Array.from({ length: days }, (_, i) =>
-    addDays(endKey, i - days + 1),
-  );
-  const wanted = new Set(keys);
-  const totals = new Map<string, number>();
-  for (const o of orders) {
-    if (o.cancelled_at) continue;
-    const key = shopDayKey(o.ordered_at);
-    if (!wanted.has(key)) continue;
-    totals.set(key, (totals.get(key) ?? 0) + netTotal(o));
+  range: DateRange,
+  previous: DateRange,
+  now: Date,
+  size: "hour" | "day" = "day",
+): RevenueLinePoint[] => {
+  const step = size === "hour" ? HOUR_MS : DAY_MS;
+  const to = Math.min(range.end.getTime(), now.getTime());
+  const sales = orders.filter((o) => !o.cancelled_at);
+  const between = (from: number, until: number): number =>
+    sales.reduce((sum, o) => {
+      const t = new Date(o.ordered_at).getTime();
+      return t >= from && t < until ? sum + netTotal(o) : sum;
+    }, 0);
+
+  let from = range.start.getTime();
+  if (size === "hour") {
+    // Start at opening, or at the first sale if anything sold before opening.
+    const first = sales
+      .map((o) => new Date(o.ordered_at).getTime())
+      .filter((t) => t >= from && t < to)
+      .sort((a, b) => a - b)[0];
+    const openHour =
+      first == null
+        ? SHOP_OPEN_HOUR
+        : Math.min(SHOP_OPEN_HOUR, Math.floor((first - from) / HOUR_MS));
+    from += Math.max(0, openHour) * HOUR_MS;
   }
-  return keys.map((key) => ({
-    key,
-    label: formatShopDay(key, { day: "numeric" }),
-    value: totals.get(key) ?? 0,
-  }));
+  if (to <= from) return [];
+
+  const points: RevenueLinePoint[] = [];
+  let running = 0;
+  let runningBefore = 0;
+  for (let start = from; start < to; start += step) {
+    const end = Math.min(start + step, to);
+    const before = previous.start.getTime() + (start - from);
+    running += between(start, end);
+    runningBefore += between(before, before + (end - start));
+    const key =
+      size === "hour"
+        ? new Date(start).toISOString()
+        : shopDayKey(new Date(start));
+    points.push({
+      key,
+      label:
+        size === "hour"
+          ? hourLabel(new Date(start))
+          : formatShopDay(key, { day: "numeric" }),
+      value: running,
+      previous: runningBefore,
+    });
+  }
+  return points;
 };
 
 /** Change between two values as a whole percentage, or null when there is no base. */
