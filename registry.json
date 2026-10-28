@@ -70,6 +70,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/tasks/TasksPage.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/tasks/TasksListFilter.tsx",
           "type": "registry:component"
         },
@@ -299,6 +303,10 @@
         },
         {
           "path": "src/components/atomic-crm/root/useConfigurationLoader.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/root/lazyPages.ts",
           "type": "registry:component"
         },
         {
@@ -610,6 +618,14 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/operations/attentionSnooze.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/operations/attentionModel.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/operations/TrendTiles.tsx",
           "type": "registry:component"
         },
@@ -642,6 +658,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/operations/LoadError.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/operations/GoalsCard.tsx",
           "type": "registry:component"
         },
@@ -651,6 +671,10 @@
         },
         {
           "path": "src/components/atomic-crm/operations/CommandCenter.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/operations/AttentionCard.tsx",
           "type": "registry:component"
         },
         {
@@ -890,6 +914,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/misc/ImageEditorDialog.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/misc/EditSheet.tsx",
           "type": "registry:component"
         },
@@ -1079,6 +1107,10 @@
         },
         {
           "path": "src/components/atomic-crm/deals/DealColumn.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/deals/DealCardContent.tsx",
           "type": "registry:component"
         },
         {
