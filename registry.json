@@ -594,6 +594,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/operations/goalsModel.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/operations/format.ts",
           "type": "registry:component"
         },
@@ -635,6 +639,10 @@
         },
         {
           "path": "src/components/atomic-crm/operations/MoversCard.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/operations/GoalsCard.tsx",
           "type": "registry:component"
         },
         {
