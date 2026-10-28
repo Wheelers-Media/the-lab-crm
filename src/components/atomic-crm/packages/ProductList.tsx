@@ -151,7 +151,7 @@ const MobileProductCard = ({ pkg }: { pkg: Package }) => (
     >
       <ProductThumb pkg={pkg} size={72} />
       <div className="flex-1 min-w-0">
-        <p className="truncate text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+        <p className="truncate text-xs font-medium uppercase tracking-wide text-muted-foreground">
           {pkg.vendor || "THE LAB"}
         </p>
         <p className="font-medium leading-snug line-clamp-2">{pkg.title}</p>
@@ -170,7 +170,7 @@ const MobileProductCard = ({ pkg }: { pkg: Package }) => (
 export const MobileProductList = () => (
   <MobileListPage<Package>
     resource="packages"
-    title="Packages"
+    title="Packages and products"
     filter={{ "status@neq": "deleted" }}
     sort={{ field: "title", order: "ASC" }}
     empty="Nothing in the catalog yet."

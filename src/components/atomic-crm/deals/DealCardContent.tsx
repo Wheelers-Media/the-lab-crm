@@ -13,11 +13,9 @@ import { NumberField } from "@/components/admin/number-field";
 import { SelectField } from "@/components/admin/select-field";
 import { Card, CardContent } from "@/components/ui/card";
 
-import { CompanyAvatar } from "../companies/CompanyAvatar";
 import { useConfigurationContext } from "../root/ConfigurationContext";
 import type { Contact, Deal } from "../types";
 import { VehicleLabelField } from "../vehicles/VehicleField";
-import { bayClassName } from "./dealBay";
 import { WORK_STATUS_LABEL } from "../shopfloor/workStatus";
 
 export const DealCardContent = ({
@@ -47,7 +45,7 @@ export const DealCardContent = ({
     >
       <RecordContextProvider value={deal}>
         <Card
-          className={`py-3 transition-all duration-200 ${bayClassName(deal.category)} ${
+          className={`py-3 transition-all duration-200 ${
             snapshot?.isDragging
               ? "opacity-90 transform rotate-1 shadow-lg"
               : "shadow-sm hover:shadow-md"
@@ -58,26 +56,20 @@ export const DealCardContent = ({
               <p className="flex-1 text-sm font-semibold leading-snug">
                 {deal.name}
               </p>
+            </div>
+            <p className="text-xs text-muted-foreground truncate">
+              {deal.contact_ids?.length ? (
+                <DealCustomerName contactId={deal.contact_ids[0]} />
+              ) : null}
+              {/* The business by name: a lone initial in a circle said nothing */}
+              {deal.contact_ids?.length && deal.company_id ? " · " : null}
               {deal.company_id ? (
                 <ReferenceField
                   source="company_id"
                   reference="companies"
                   link={false}
-                >
-                  <CompanyAvatar width={20} height={20} />
-                </ReferenceField>
-              ) : null}
-            </div>
-            <p className="text-xs text-muted-foreground truncate">
-              {deal.contact_ids?.length ? (
-                <DealCustomerName contactId={deal.contact_ids[0]} />
-              ) : (
-                <ReferenceField
-                  source="company_id"
-                  reference="companies"
-                  link={false}
                 />
-              )}
+              ) : null}
             </p>
             {deal.vehicle_id ? (
               <p className="text-xs text-muted-foreground truncate">

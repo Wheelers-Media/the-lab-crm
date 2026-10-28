@@ -13,6 +13,8 @@ const raSupabaseEnglishMessagesOverride = {
       password_reset: "Check your emails for a Reset Password message.",
     },
   },
+  // "Log out" is the verb; "Logout" is a noun
+  ra: { auth: { logout: "Log out" } },
 };
 
 const raSupabaseFrenchMessagesOverride = {

@@ -7,6 +7,7 @@ import {
   suggestTarget,
   targetForPeriod,
 } from "./goalsModel";
+import { startOfShopDay } from "./shopTime";
 
 describe("targetForPeriod", () => {
   it("scales a monthly goal to a week and to one working day", () => {
@@ -68,12 +69,29 @@ describe("monthlyTargets", () => {
 });
 
 describe("elapsedShare", () => {
-  it("is the share of the period that has gone by, clamped to 0 to 1", () => {
-    const range = {
-      start: new Date("2026-10-01T00:00:00Z"),
-      end: new Date("2026-10-11T00:00:00Z"),
+  // Mon Oct 5 to Mon Oct 12 2026, in shop days
+  const week = {
+    start: startOfShopDay("2026-10-05"),
+    end: startOfShopDay("2026-10-12"),
+  };
+
+  it("counts weekdays only, so the weekend does not put the shop behind", () => {
+    // Saturday: all five weekdays are behind us
+    expect(elapsedShare(week, startOfShopDay("2026-10-10"))).toBe(1);
+    // Wednesday at the start of the day: two of five weekdays done
+    expect(elapsedShare(week, startOfShopDay("2026-10-07"))).toBeCloseTo(0.4);
+  });
+
+  it("clamps to 0 before the period and 1 after it", () => {
+    expect(elapsedShare(week, startOfShopDay("2026-10-01"))).toBe(0);
+    expect(elapsedShare(week, startOfShopDay("2026-11-01"))).toBe(1);
+  });
+
+  it("counts a single day by the clock", () => {
+    const day = {
+      start: new Date("2026-10-06T00:00:00Z"),
+      end: new Date("2026-10-07T00:00:00Z"),
     };
-    expect(elapsedShare(range, new Date("2026-10-06T00:00:00Z"))).toBe(0.5);
-    expect(elapsedShare(range, new Date("2026-12-01T00:00:00Z"))).toBe(1);
+    expect(elapsedShare(day, new Date("2026-10-06T12:00:00Z"))).toBe(0.5);
   });
 });

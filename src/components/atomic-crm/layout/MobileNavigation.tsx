@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import {
+  CalendarPlus,
   ChevronRight,
   KanbanSquare,
   ListTodo,
@@ -29,6 +30,8 @@ import { useState } from "react";
 import { NoteCreateSheet } from "../notes/NoteCreateSheet";
 import { TaskCreateSheet } from "../tasks/TaskCreateSheet";
 import { ActionSheet } from "../misc/ActionSheet";
+import { AppointmentCreateDialog } from "../calendar/AddAppointment";
+import { shopDayKey } from "../operations/shopTime";
 import {
   isInGroup,
   isOnPage,
@@ -95,25 +98,36 @@ const NavigationButton = ({
     )}
   >
     <Icon className="size-6" strokeWidth={isActive ? 2.25 : 1.75} />
-    <span className="text-[11px] font-medium leading-tight">{label}</span>
+    <span className="text-xs font-medium leading-tight">{label}</span>
   </Link>
 );
 
 /**
- * The top bar's + button: new customer, job, note or task. An action lives
- * in the toolbar, not in the tab bar.
+ * The top bar's + button: new customer, job, appointment, task or note. An
+ * action lives in the toolbar, not in the tab bar. Settings has nothing to
+ * add, so the button is left off there.
  */
 export const CreateMenu = () => {
   const translate = useTranslate();
   const contact_id = useMatch("/contacts/:id/*")?.params.id;
+  const onSettings = useMatch("/settings/*") != null;
+  const [appointmentOpen, setAppointmentOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [contactCreateOpen, setContactCreateOpen] = useState(false);
   const [noteCreateOpen, setNoteCreateOpen] = useState(false);
   const [taskCreateOpen, setTaskCreateOpen] = useState(false);
   const navigate = useNavigate();
 
+  if (onSettings) return null;
   return (
     <>
+      {appointmentOpen ? (
+        <AppointmentCreateDialog
+          open={appointmentOpen}
+          onOpenChange={setAppointmentOpen}
+          defaults={{ day: shopDayKey(new Date()), contact_id }}
+        />
+      ) : null}
       <ContactCreateSheet
         open={contactCreateOpen}
         onOpenChange={setContactCreateOpen}
@@ -131,7 +145,7 @@ export const CreateMenu = () => {
       <button
         type="button"
         onClick={() => setSheetOpen(true)}
-        aria-label={translate("ra.action.create")}
+        aria-label="New customer, job, appointment, task or note"
         className="grid size-11 place-items-center rounded-full text-[var(--lab-blue-text)]"
       >
         <Plus className="size-7" strokeWidth={2.25} />
@@ -150,6 +164,11 @@ export const CreateMenu = () => {
             label: translate("resources.deals.forcedCaseName", { _: "Job" }),
             icon: KanbanSquare,
             onSelect: () => navigate("/deals/create"),
+          },
+          {
+            label: "Appointment",
+            icon: CalendarPlus,
+            onSelect: () => setAppointmentOpen(true),
           },
           {
             label: translate("resources.tasks.forcedCaseName"),
@@ -187,7 +206,7 @@ const MoreButton = ({ isActive }: { isActive: boolean }) => {
         )}
       >
         <Menu className="size-6" strokeWidth={isActive ? 2.25 : 1.75} />
-        <span className="text-[11px] font-medium leading-tight">More</span>
+        <span className="text-xs font-medium leading-tight">More</span>
       </button>
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent

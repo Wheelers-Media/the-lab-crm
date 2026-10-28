@@ -228,7 +228,7 @@ export const GoalsCard = ({
         </div>
       )}
       {anySuggested && !isPending ? (
-        <p className="text-[11px] text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           Suggested from last month plus 10%. Tap Set goals to choose your own.
         </p>
       ) : null}

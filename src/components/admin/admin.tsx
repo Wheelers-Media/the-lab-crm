@@ -56,7 +56,7 @@ const AdminUI = (props: CoreAdminUIProps) => {
   }, [disableTelemetry]);
 
   return (
-    <ThemeProvider defaultTheme="dark">
+    <ThemeProvider defaultTheme="system">
       <CoreAdminUI
         layout={Layout}
         loginPage={LoginPage}

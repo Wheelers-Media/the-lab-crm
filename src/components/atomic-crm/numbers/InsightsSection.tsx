@@ -64,7 +64,7 @@ const WhenCustomersBuy = ({
         {bands.map((b) => (
           <span
             key={b}
-            className="text-center text-[10px] text-muted-foreground lab-num"
+            className="text-center text-xs text-muted-foreground lab-num"
           >
             {b % 2 === 0 ? hourTick(b * HOUR_BAND) : ""}
           </span>
@@ -245,7 +245,7 @@ const PaceChart = ({ pace }: { pace: Pace }) => {
             vectorEffect="non-scaling-stroke"
           />
         </svg>
-        <span className="pointer-events-none absolute right-0 top-0 text-[10px] tabular-nums text-muted-foreground">
+        <span className="pointer-events-none absolute right-0 top-0 text-xs tabular-nums text-muted-foreground">
           {money(max)}
         </span>
         <span
@@ -267,7 +267,7 @@ const PaceChart = ({ pace }: { pace: Pace }) => {
           />
         ) : null}
       </div>
-      <p className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
+      <p className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
         <span className="inline-flex items-center gap-1.5">
           <span
             className="h-0.5 w-4 rounded-full bg-[var(--chart-this)]"
@@ -491,7 +491,7 @@ const NewReturningBars = ({
             <span key={g} className="h-px w-full bg-border/60" />
           ))}
         </div>
-        <span className="pointer-events-none absolute -top-0.5 right-0 bg-card pl-1 text-[10px] tabular-nums text-muted-foreground">
+        <span className="pointer-events-none absolute -top-0.5 right-0 bg-card pl-1 text-xs tabular-nums text-muted-foreground">
           {max}
         </span>
         <div className="absolute inset-0 flex items-end gap-px">
@@ -526,7 +526,7 @@ const NewReturningBars = ({
           ))}
         </div>
       </div>
-      <div className="flex gap-px text-[10px] text-muted-foreground">
+      <div className="flex gap-px text-xs text-muted-foreground">
         {mix.map((m, i) => (
           <span
             key={m.key}

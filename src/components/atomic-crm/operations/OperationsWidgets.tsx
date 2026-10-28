@@ -27,9 +27,7 @@ export const SectionTitle = ({
       <h2 className="text-lg font-semibold text-foreground">{children}</h2>
       {/* Hints help on a desk; on a phone they push the numbers down */}
       {hint ? (
-        <p className="hidden text-xs text-muted-foreground/80 sm:block">
-          {hint}
-        </p>
+        <p className="hidden text-xs text-muted-foreground sm:block">{hint}</p>
       ) : null}
     </div>
     {action ? (
@@ -235,8 +233,10 @@ export const WeekStrip = ({
                     ? "lab-chip-muted"
                     : "lab-chip-bay",
               )}
+              aria-label={bay.label}
+              title={bay.label}
             >
-              {bay.label}
+              {bay.short}
             </span>
             <span
               className={cn(

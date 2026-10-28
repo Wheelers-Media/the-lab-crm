@@ -292,7 +292,7 @@ const ContactItemContentMobile = ({ contact }: { contact: Contact }) => {
                 <div className="font-medium">
                   <RecordRepresentation />
                 </div>
-                <Status status={contact.status} />
+                <Status status={contact.status} withLabel />
               </div>
               <div className="text-sm text-muted-foreground">
                 <div className="flex flex-col gap-1">

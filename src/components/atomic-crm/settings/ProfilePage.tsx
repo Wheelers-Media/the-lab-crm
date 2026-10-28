@@ -1,3 +1,4 @@
+import { ChevronRight } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 import { Check, CircleX, Copy, Pencil, Save } from "lucide-react";
 import {
@@ -238,43 +239,55 @@ const ProfileForm = ({
           </div>
         </CardContent>
       </Card>
-      {import.meta.env.VITE_INBOUND_EMAIL && (
-        <Card>
-          <CardContent>
-            <div className="space-y-4 justify-between">
-              <h2 className="text-xl font-semibold text-muted-foreground">
-                {translate("crm.profile.inbound.title")}
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                {translate("crm.profile.inbound.description", {
-                  _: "You can start sending emails to your server's inbound email address, e.g. by adding it to the Cc: field. THE LAB CRM will process the emails and add notes to the corresponding contacts.",
-                  field: "Cc:",
-                })}
-              </p>
-              <CopyPaste value={import.meta.env.VITE_INBOUND_EMAIL} />
-            </div>
-          </CardContent>
-        </Card>
-      )}
-      <Card>
-        <CardContent>
-          <div className="space-y-4 justify-between">
-            <h2 className="text-xl font-semibold text-muted-foreground">
-              {translate("crm.profile.mcp.title", {
-                _: "MCP Server",
-              })}
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              {translate("crm.profile.mcp.description", {
-                _: "Use this URL to connect your AI assistant to your CRM data via the Model Context Protocol (MCP).",
-              })}
-            </p>
-            <CopyPaste
-              value={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mcp`}
-            />
-          </div>
-        </CardContent>
-      </Card>
+      {/* Set-up items nobody needs day to day, folded away under one line */}
+      <details className="group">
+        <summary className="flex min-h-11 cursor-pointer list-none items-center gap-1 text-sm font-medium text-muted-foreground">
+          <ChevronRight
+            className="size-4 transition-transform group-open:rotate-90"
+            aria-hidden
+          />
+          Advanced
+        </summary>
+        <div className="mt-2 flex flex-col gap-4">
+          {import.meta.env.VITE_INBOUND_EMAIL && (
+            <Card>
+              <CardContent>
+                <div className="space-y-4 justify-between">
+                  <h2 className="text-xl font-semibold text-muted-foreground">
+                    {translate("crm.profile.inbound.title")}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    {translate("crm.profile.inbound.description", {
+                      _: "You can start sending emails to your server's inbound email address, e.g. by adding it to the Cc: field. THE LAB CRM will process the emails and add notes to the corresponding contacts.",
+                      field: "Cc:",
+                    })}
+                  </p>
+                  <CopyPaste value={import.meta.env.VITE_INBOUND_EMAIL} />
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          <Card>
+            <CardContent>
+              <div className="space-y-4 justify-between">
+                <h2 className="text-xl font-semibold text-muted-foreground">
+                  {translate("crm.profile.mcp.title", {
+                    _: "MCP Server",
+                  })}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {translate("crm.profile.mcp.description", {
+                    _: "Use this URL to connect your AI assistant to your CRM data via the Model Context Protocol (MCP).",
+                  })}
+                </p>
+                <CopyPaste
+                  value={`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/mcp`}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </details>
     </div>
   );
 };

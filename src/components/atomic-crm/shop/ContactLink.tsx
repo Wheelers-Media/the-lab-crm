@@ -21,8 +21,10 @@ export const ContactLink = ({ fallback }: { fallback?: string | null }) => {
     return <span className="text-muted-foreground">{fallback || "—"}</span>;
   }
   return (
-    <ReferenceField source="contact_id" reference="contacts" link="show">
-      <ContactName />
-    </ReferenceField>
+    <span className="lab-tap-links">
+      <ReferenceField source="contact_id" reference="contacts" link="show">
+        <ContactName />
+      </ReferenceField>
+    </span>
   );
 };

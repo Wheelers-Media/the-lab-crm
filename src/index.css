@@ -196,6 +196,14 @@ body {
   font-family: "Barlow", ui-sans-serif, system-ui, sans-serif;
 }
 
+/* index.html paints the boot screen ink-dark so opening never flashes white.
+   Once the app runs, the page follows the theme: without this the boot
+   colour stayed under a light theme, with dark text on it. */
+html body {
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
 /* THE LAB brand layer (live site tokens: thelabfsj.ca lab.css).
    Dark is the default theme. Performance Blue is for actions only. */
 :root {
@@ -377,11 +385,8 @@ h2 {
   transform: translateY(-100%);
 }
 
-/* "Two Bays": a 3px top bar in the bay colour. Ice is the Boutique
-   (detailing, tint, lighting, installs), amber is the Parts Store (diesel). */
-.lab-bay-boutique {
-  box-shadow: inset 0 3px 0 0 var(--lab-ice);
-}
+/* An amber 3px top bar, for a card that also says why in words (a big
+   abandoned cart is labelled "Call personally"). */
 .lab-bay-parts {
   box-shadow: inset 0 3px 0 0 var(--lab-amber);
 }
@@ -759,17 +764,50 @@ html {
   }
 }
 
-/* Phone legibility floor: chart labels and captions written at 10-12px for a
-   desk are bumped a step on a phone, held at arm's length in a bright shop. */
+/* Phone legibility floor: 12px captions written for a desk are bumped a
+   step on a phone, held at arm's length in a bright shop. */
 @media (max-width: 767px) {
-  .text-\[10px\] {
-    font-size: 11px;
-  }
-  .text-\[11px\] {
-    font-size: 12px;
-  }
   .text-xs {
     font-size: 0.8125rem;
     line-height: 1.15rem;
   }
+}
+
+/* Bigger tap areas for inline links on touch screens. A name link in a card
+   is about 20px tall; the invisible ring below makes it about 40px without
+   moving anything. Put .lab-tap on a link, or .lab-tap-links on a wrapper. */
+@media (pointer: coarse) {
+  .lab-tap,
+  .lab-tap-links a {
+    position: relative;
+  }
+  .lab-tap::after,
+  .lab-tap-links a::after {
+    content: "";
+    position: absolute;
+    inset: -10px -6px;
+  }
+}
+
+/* Light scheme contrast. The brand values were picked on the dark ground;
+   on a white card the green, red, link blue and grey text all fell under
+   4.5:1, so the light scheme uses deeper versions of the same hues. */
+:root:not(.dark) {
+  --muted-foreground: #5c6066;
+  --lab-pos: #12744a;
+  --lab-neg: #c42a30;
+  --lab-blue-text: #0052d6;
+}
+:root:not(.dark) .lab-chip-bay {
+  color: color-mix(in oklab, #3fb27f 45%, var(--foreground));
+}
+:root:not(.dark) .lab-chip-eric {
+  color: color-mix(in oklab, var(--lab-blue) 55%, var(--foreground));
+}
+:root:not(.dark) .lab-chip-warn,
+:root:not(.dark) .lab-chip-parts {
+  color: color-mix(in oklab, var(--lab-amber) 45%, var(--foreground));
+}
+:root:not(.dark) .lab-chip-danger {
+  color: color-mix(in oklab, #e5484d 55%, var(--foreground));
 }

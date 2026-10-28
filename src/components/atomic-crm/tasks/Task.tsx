@@ -193,7 +193,7 @@ export const Task = ({
                     reference="contacts"
                     record={task}
                     link="show"
-                    className="inline text-sm text-muted-foreground"
+                    className="lab-tap-links inline text-sm text-muted-foreground"
                     render={({ referenceRecord }) => {
                       if (!referenceRecord) return null;
                       return (

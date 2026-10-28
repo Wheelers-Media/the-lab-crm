@@ -1,5 +1,5 @@
 import { useTranslate } from "ra-core";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, MessageSquare, Phone } from "lucide-react";
 import { DataTable } from "@/components/admin/data-table";
 import { DateField } from "@/components/admin/date-field";
 import { List } from "@/components/admin/list";
@@ -42,6 +42,35 @@ export const RecoveryLink = ({ url }: { url: string | null }) => {
         })}
       </a>
     </Button>
+  );
+};
+
+/**
+ * Call, Text and Open cart for one abandoned cart: the same three on a phone
+ * and on a desk, so following up never depends on which one is to hand.
+ */
+export const CartFollowUp = ({ checkout }: { checkout: ShopifyCheckout }) => {
+  const phone = checkout.phone?.replace(/[^\d+]/g, "");
+  return (
+    <div className="flex flex-wrap gap-2">
+      {phone ? (
+        <>
+          <Button asChild size="sm" variant="outline">
+            <a href={`tel:${phone}`}>
+              <Phone className="size-3.5" aria-hidden />
+              Call
+            </a>
+          </Button>
+          <Button asChild size="sm" variant="outline">
+            <a href={`sms:${phone}`}>
+              <MessageSquare className="size-3.5" aria-hidden />
+              Text
+            </a>
+          </Button>
+        </>
+      ) : null}
+      <RecoveryLink url={checkout.recovery_url} />
+    </div>
   );
 };
 
@@ -114,7 +143,7 @@ export const CheckoutList = () => {
         <DataTable.Col<ShopifyCheckout>
           label={false}
           disableSort
-          render={(c) => <RecoveryLink url={c.recovery_url} />}
+          render={(c) => <CartFollowUp checkout={c} />}
         />
       </DataTable>
     </List>

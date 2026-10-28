@@ -103,7 +103,7 @@ const FloorCard = ({
       <div className="flex items-start justify-between gap-2">
         <Link
           to={`/deals/${deal.id}/show`}
-          className="text-sm font-semibold leading-snug hover:underline"
+          className="lab-tap text-sm font-semibold leading-snug hover:underline"
         >
           {deal.name}
         </Link>
@@ -121,7 +121,7 @@ const FloorCard = ({
       {contact ? (
         <Link
           to={`/contacts/${contact.id}/show`}
-          className="text-xs text-muted-foreground hover:underline"
+          className="lab-tap self-start text-xs text-muted-foreground hover:underline"
         >
           {contactName(contact)}
         </Link>

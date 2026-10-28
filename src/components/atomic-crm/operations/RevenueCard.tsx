@@ -152,7 +152,7 @@ export const RevenueCard = ({
         />
 
         {last ? (
-          <p className="mt-1 text-[11px] tabular-nums text-muted-foreground">
+          <p className="mt-1 text-xs tabular-nums text-muted-foreground">
             {last.previous === 0 ? (
               <>Nothing to compare with — {comparedWith} had no sales.</>
             ) : gap === 0 ? (

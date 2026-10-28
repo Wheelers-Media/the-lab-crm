@@ -237,7 +237,7 @@ export const TrendChart = ({
         />
       </div>
       {compare ? (
-        <p className="mt-1 flex flex-wrap gap-x-4 text-[11px] text-muted-foreground">
+        <p className="mt-1 flex flex-wrap gap-x-4 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">
             <span
               className="h-2.5 w-2 rounded-[2px]"

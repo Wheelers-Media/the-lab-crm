@@ -81,7 +81,7 @@ export const RevenueChart = ({
     <figure className="m-0">
       <figcaption className="sr-only">{summary}</figcaption>
 
-      <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
+      <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
         <span className="inline-flex items-center gap-1.5">
           <span
             className="h-[2px] w-4 rounded-full bg-[var(--lab-blue)]"
@@ -105,7 +105,7 @@ export const RevenueChart = ({
       {/* The figures for the point under the finger; quiet until touched,
           since the legend above already gives the totals */}
       <p
-        className="mb-1 min-h-5 text-[11px] tabular-nums text-muted-foreground"
+        className="mb-1 min-h-5 text-xs tabular-nums text-muted-foreground"
         aria-live="polite"
       >
         {focused ? (
@@ -224,7 +224,7 @@ export const RevenueChart = ({
         )}
       </div>
 
-      <div className="mt-1 flex text-[10px] text-muted-foreground">
+      <div className="mt-1 flex text-xs text-muted-foreground">
         {points.map((p, i) => (
           <span key={p.key} className="flex-1 text-center">
             {(i % labelStep === 0 &&

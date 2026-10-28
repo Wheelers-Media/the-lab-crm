@@ -80,7 +80,7 @@ export const MoversCard = ({
                       )}
                     </span>
                   </div>
-                  <div className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1 text-[11px] tabular-nums text-muted-foreground">
+                  <div className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1 text-xs tabular-nums text-muted-foreground">
                     <span className="h-1.5 overflow-hidden rounded-full bg-muted">
                       <span
                         className="block h-full rounded-full bg-[var(--chart-this)]"
@@ -106,7 +106,7 @@ export const MoversCard = ({
               );
             })}
           </ul>
-          <p className="flex flex-wrap gap-x-4 text-[11px] text-muted-foreground">
+          <p className="flex flex-wrap gap-x-4 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1.5">
               <span
                 className="h-1.5 w-4 rounded-full bg-[var(--chart-this)]"

@@ -88,7 +88,7 @@ const AvatarGroupIterator = () => {
           className="relative flex size-8 shrink-0 overflow-hidden rounded-full w-[25px] h-[25px]"
           data-slot="avatar"
         >
-          <span className="bg-muted flex size-full items-center justify-center rounded-full text-[10px]">
+          <span className="bg-muted flex size-full items-center justify-center rounded-full text-xs">
             +{total - MAX_AVATARS}
           </span>
         </span>

@@ -134,14 +134,14 @@ export const DonutChart = ({
           aria-live="polite"
         >
           <div className="max-w-[70%]">
-            <p className="truncate text-[11px] text-muted-foreground">
+            <p className="truncate text-xs text-muted-foreground">
               {focused ? focused.label : centreLabel}
             </p>
             <p className="text-lg font-semibold leading-tight">
               {format(focused ? focused.value : total)}
             </p>
             {focused ? (
-              <p className="text-[11px] tabular-nums text-muted-foreground">
+              <p className="text-xs tabular-nums text-muted-foreground">
                 {percent(focused.value)}% of {format(total)}
               </p>
             ) : null}

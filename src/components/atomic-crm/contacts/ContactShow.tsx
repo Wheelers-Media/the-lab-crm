@@ -163,7 +163,7 @@ const ContactShowContentMobile = () => {
               Visits
             </TabsTrigger>
             <TabsTrigger value="purchases" className="px-0.5 text-[12px]">
-              Bought
+              Purchases
             </TabsTrigger>
             <TabsTrigger value="tasks" className="px-0.5 text-[12px]">
               {translate("crm.common.task_count", {

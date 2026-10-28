@@ -18,8 +18,10 @@ export interface BayLoad {
   capacity: number;
   /** Drop-offs beyond what the bay takes, 0 when the day still fits. */
   over: number;
-  /** "Bay 1/2", "Bay 2/2 full", "Bay 3/2 over by 1". */
+  /** "1 of 2 drop-offs", "2 of 2 drop-offs, full", "3 of 2 drop-offs, over by 1". */
   label: string;
+  /** "1/2", for a chip too narrow for the words; pair it with `label` for screen readers. */
+  short: string;
 }
 
 /**
@@ -29,12 +31,17 @@ export interface BayLoad {
 export const bayLoad = (booked: number): BayLoad => {
   const capacity = BAY_SLOTS_PER_DAY;
   const over = Math.max(0, booked - capacity);
-  const suffix = over ? ` over by ${over}` : booked >= capacity ? " full" : "";
+  const suffix = over
+    ? `, over by ${over}`
+    : booked >= capacity
+      ? ", full"
+      : "";
   return {
     booked,
     capacity,
     over,
-    label: `Bay ${booked}/${capacity}${suffix}`,
+    label: `${booked} of ${capacity} drop-offs${suffix}`,
+    short: `${booked}/${capacity}`,
   };
 };
 

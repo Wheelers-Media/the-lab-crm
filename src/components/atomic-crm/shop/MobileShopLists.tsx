@@ -1,11 +1,9 @@
-import { MessageSquare, Phone } from "lucide-react";
 import { RecordContextProvider } from "ra-core";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 
 import { MobileFilterChip, MobileListPage } from "../layout/MobileListPage";
 import type { Order, ShopifyCheckout } from "../types";
-import { BIG_CART_THRESHOLD, RecoveryLink } from "./CheckoutList";
+import { BIG_CART_THRESHOLD, CartFollowUp } from "./CheckoutList";
 import { ContactLink } from "./ContactLink";
 import {
   formatMoney,
@@ -79,7 +77,6 @@ export const MobileOrderList = () => (
 
 const CheckoutCard = ({ checkout }: { checkout: ShopifyCheckout }) => {
   const big = checkout.total >= BIG_CART_THRESHOLD;
-  const phone = checkout.phone?.replace(/[^\d+]/g, "");
   return (
     <RecordContextProvider value={checkout}>
       <Card className={`p-3 gap-1 ${big ? "lab-bay-parts" : ""}`}>
@@ -109,24 +106,8 @@ const CheckoutCard = ({ checkout }: { checkout: ShopifyCheckout }) => {
             <span className="lab-chip lab-chip-muted">Call task added</span>
           ) : null}
         </div>
-        <div className="flex flex-wrap gap-2 pt-2">
-          {phone ? (
-            <>
-              <Button asChild size="sm" variant="outline">
-                <a href={`tel:${phone}`}>
-                  <Phone className="size-3.5" />
-                  Call
-                </a>
-              </Button>
-              <Button asChild size="sm" variant="outline">
-                <a href={`sms:${phone}`}>
-                  <MessageSquare className="size-3.5" />
-                  Text
-                </a>
-              </Button>
-            </>
-          ) : null}
-          <RecoveryLink url={checkout.recovery_url} />
+        <div className="pt-2">
+          <CartFollowUp checkout={checkout} />
         </div>
       </Card>
     </RecordContextProvider>

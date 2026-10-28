@@ -171,7 +171,7 @@ export const RevenueMixCard = ({
                 <span key={g} className="h-px w-full bg-border/60" />
               ))}
             </div>
-            <span className="pointer-events-none absolute -top-0.5 right-0 z-[1] bg-card pl-1 text-[10px] tabular-nums text-muted-foreground">
+            <span className="pointer-events-none absolute -top-0.5 right-0 z-[1] bg-card pl-1 text-xs tabular-nums text-muted-foreground">
               {compact(top)}
             </span>
             {/* The bands sweep in from the left the first time they scroll into view */}
@@ -216,7 +216,7 @@ export const RevenueMixCard = ({
               />
             ) : null}
           </div>
-          <div className="flex justify-between text-[10px] text-muted-foreground">
+          <div className="flex justify-between text-xs text-muted-foreground">
             {done.map((week, i) => (
               <span
                 key={week.key}

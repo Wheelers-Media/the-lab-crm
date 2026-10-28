@@ -418,10 +418,14 @@ describe("bayLoad", () => {
       booked: 0,
       capacity: 2,
       over: 0,
-      label: "Bay 0/2",
+      label: "0 of 2 drop-offs",
+      short: "0/2",
     });
-    expect(bayLoad(1).label).toBe("Bay 1/2");
-    expect(bayLoad(2)).toMatchObject({ over: 0, label: "Bay 2/2 full" });
+    expect(bayLoad(1).label).toBe("1 of 2 drop-offs");
+    expect(bayLoad(2)).toMatchObject({
+      over: 0,
+      label: "2 of 2 drop-offs, full",
+    });
   });
 
   it("says how far over an overbooked day is, instead of looking merely full", () => {
@@ -429,7 +433,8 @@ describe("bayLoad", () => {
       booked: 4,
       capacity: 2,
       over: 2,
-      label: "Bay 4/2 over by 2",
+      label: "4 of 2 drop-offs, over by 2",
+      short: "4/2",
     });
   });
 });

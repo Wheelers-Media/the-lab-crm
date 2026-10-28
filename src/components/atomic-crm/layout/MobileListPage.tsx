@@ -129,7 +129,7 @@ export const MobileSearch = ({ placeholder }: { placeholder: string }) => {
       }}
       placeholder={placeholder}
       aria-label={placeholder}
-      className="w-full h-11 rounded-md border border-input bg-transparent px-3 text-base dark:bg-input/30"
+      className="w-full h-11 rounded-md border border-input bg-transparent px-3 text-base placeholder:text-muted-foreground dark:bg-input/30"
     />
   );
 };

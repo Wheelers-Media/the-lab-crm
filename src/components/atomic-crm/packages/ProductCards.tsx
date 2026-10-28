@@ -43,7 +43,7 @@ export const ProductCard = ({ pkg }: { pkg: Package }) => {
           </div>
         </div>
         <div className="flex flex-col gap-1 p-3">
-          <p className="truncate text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+          <p className="truncate text-xs font-medium uppercase tracking-wide text-muted-foreground">
             {pkg.vendor || "THE LAB"}
           </p>
           <p className="line-clamp-2 text-sm font-medium leading-snug">

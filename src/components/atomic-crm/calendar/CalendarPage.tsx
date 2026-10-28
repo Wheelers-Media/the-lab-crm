@@ -75,7 +75,9 @@ const AppointmentCard = ({
         }}
         className={cn(
           "p-3 gap-1 cursor-pointer transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary outline-none",
-          appointment.status !== "booked" && "opacity-70",
+          // Finished bookings sit back on a quieter background; fading the
+          // whole card took the grey text under readable contrast
+          appointment.status !== "booked" && "bg-muted/40",
         )}
       >
         <div className="flex items-center justify-between gap-2">

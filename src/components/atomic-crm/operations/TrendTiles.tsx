@@ -14,7 +14,15 @@ interface Tile {
   format: (n: number | null) => string;
   detail: (f: PeriodFigures) => string;
   to: string;
+  /**
+   * How many things the figure is counted from. Below SMALL_BASE in either
+   * period a percentage swings wildly (10 leads against 4 is "up 150%"), so
+   * the tile shows last period's figure instead.
+   */
+  base?: (f: PeriodFigures) => number;
 }
+
+const SMALL_BASE = 20;
 
 const count = (n: number | null) => (n == null ? "-" : String(n));
 const percent = (n: number | null) => (n == null ? "-" : `${n}%`);
@@ -27,6 +35,7 @@ const TILES: Tile[] = [
     format: count,
     detail: (f) => `${dollars(f.revenue)} taken`,
     to: "/orders",
+    base: (f) => f.salesOrders,
   },
   {
     label: "Average ticket",
@@ -34,6 +43,7 @@ const TILES: Tile[] = [
     format: dollars,
     detail: () => "Per sales order, deposits left out",
     to: "/numbers",
+    base: (f) => f.salesOrders,
   },
   {
     label: "New customers",
@@ -41,6 +51,7 @@ const TILES: Tile[] = [
     format: count,
     detail: () => "First order ever",
     to: "/numbers",
+    base: (f) => f.newCustomers,
   },
   {
     label: "Returning customers",
@@ -54,6 +65,7 @@ const TILES: Tile[] = [
       return share == null ? "Bought before" : `${share}% of buyers`;
     },
     to: "/numbers",
+    base: (f) => f.returningCustomers,
   },
   {
     label: "New leads",
@@ -61,6 +73,7 @@ const TILES: Tile[] = [
     format: count,
     detail: (f) => `${f.bookedLeads} booked so far`,
     to: "/deals",
+    base: (f) => f.leads,
   },
   {
     label: "Lead to booked",
@@ -68,6 +81,7 @@ const TILES: Tile[] = [
     format: percent,
     detail: (f) => `${f.bookedLeads} of ${f.leads}`,
     to: "/deals",
+    base: (f) => f.leads,
   },
   {
     label: "Bay booked",
@@ -95,6 +109,8 @@ export const TrendTiles = ({
   /** Open pipeline, which has no history to trend. */
   pipeline: { amount: number; count: number };
 }) => {
+  // "vs last month" -> "last month", for "4 last month" under a small count
+  const comparedWith = vs.replace(/^vs\s+/, "");
   if (isPending) {
     return (
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-busy="true">
@@ -115,14 +131,23 @@ export const TrendTiles = ({
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {TILES.map((tile) => {
           const current = tile.value(trends.current);
+          const previous = tile.value(trends.previous);
+          const isSmall =
+            tile.base != null &&
+            Math.min(tile.base(trends.current), tile.base(trends.previous)) <
+              SMALL_BASE;
           return (
             <KpiTile
               key={tile.label}
               label={tile.label}
               to={tile.to}
               value={tile.format(current)}
-              trend={changeOf(current, tile.value(trends.previous))}
-              detail={tile.detail(trends.current)}
+              trend={isSmall ? null : changeOf(current, previous)}
+              detail={
+                isSmall
+                  ? `${tile.format(previous)} ${comparedWith} · ${tile.detail(trends.current)}`
+                  : tile.detail(trends.current)
+              }
             />
           );
         })}

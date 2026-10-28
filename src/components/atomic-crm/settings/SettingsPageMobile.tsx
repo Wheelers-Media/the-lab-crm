@@ -70,8 +70,10 @@ export const SettingsPageMobile = () => {
           <div className="space-y-6">
             <ProfileSection />
             <PreferencesSection />
-            <InboundEmailSection />
-            <McpServerSection />
+            <AdvancedSection>
+              <InboundEmailSection />
+              <McpServerSection />
+            </AdvancedSection>
             <AboutSection />
           </div>
 
@@ -485,6 +487,20 @@ const ThemeRow = () => {
     </Item>
   );
 };
+
+/** Set-up items nobody needs day to day, folded away under one line. */
+const AdvancedSection = ({ children }: { children: React.ReactNode }) => (
+  <details className="group">
+    <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between px-1 text-sm font-medium text-muted-foreground">
+      Advanced
+      <ChevronRight
+        className="size-4 transition-transform group-open:rotate-90"
+        aria-hidden
+      />
+    </summary>
+    <div className="mt-2 flex flex-col gap-6">{children}</div>
+  </details>
+);
 
 const InboundEmailSection = () => {
   const translate = useTranslate();

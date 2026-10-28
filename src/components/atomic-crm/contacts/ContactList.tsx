@@ -126,6 +126,8 @@ const ContactListLayoutMobile = () => {
         <ContactListFilter />
       </MobileHeader>
       <MobileContent>
+        {/* The search bar takes the header's place; screen readers still need a page title */}
+        <h1 className="sr-only">Customers</h1>
         <ContactListFilterSummary />
         <ContactListContentMobile />
         {!error && (

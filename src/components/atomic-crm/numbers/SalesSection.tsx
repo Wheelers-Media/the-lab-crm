@@ -201,6 +201,7 @@ export const SalesSection = ({
           <div className="flex items-center gap-2 shrink-0">
             <Switch
               id="numbers-compare"
+              aria-label="Compare with the period before"
               checked={compare}
               onCheckedChange={setCompare}
             />

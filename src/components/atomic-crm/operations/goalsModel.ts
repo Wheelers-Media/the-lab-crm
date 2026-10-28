@@ -3,7 +3,13 @@
 // shop should be by now to hit it. Plain numbers in and out, so it is tested
 // without a screen.
 import type { MonthlyTargets } from "../root/ConfigurationContext";
-import type { DateRange, Period } from "./shopTime";
+import {
+  addDays,
+  type DateRange,
+  type Period,
+  shopDayKey,
+  startOfShopDay,
+} from "./shopTime";
 
 export type GoalKey = "revenue" | "orders" | "newCustomers";
 
@@ -19,14 +25,39 @@ export const targetForPeriod = (monthly: number, period: Period): number =>
       ? monthly / WEEKS_PER_MONTH
       : monthly / WORKDAYS_PER_MONTH;
 
-/** How far through the period we are, 0 to 1. */
+const DAY_MS = 86_400_000;
+const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
+const isWeekend = (key: string) => {
+  const day = new Date(`${key}T12:00:00Z`).getUTCDay();
+  return day === 0 || day === 6;
+};
+
+/**
+ * How far through the period we are, 0 to 1, counted in weekdays: the shop
+ * is closed at weekends, and the week and day goals are weekday goals, so a
+ * Monday morning is not "behind" for the Saturday and Sunday before it.
+ * A single day is counted by the clock.
+ */
 export const elapsedShare = (range: DateRange, now: Date): number => {
-  const total = range.end.getTime() - range.start.getTime();
-  if (total <= 0) return 1;
-  return Math.min(
-    1,
-    Math.max(0, (now.getTime() - range.start.getTime()) / total),
-  );
+  const start = range.start.getTime();
+  const end = range.end.getTime();
+  if (end <= start) return 1;
+  const byClock = clamp01((now.getTime() - start) / (end - start));
+  if (end - start <= 1.5 * DAY_MS) return byClock;
+  let weekdays = 0;
+  let done = 0;
+  for (
+    let key = shopDayKey(range.start);
+    startOfShopDay(key).getTime() < end;
+    key = addDays(key, 1)
+  ) {
+    if (isWeekend(key)) continue;
+    const dayStart = startOfShopDay(key).getTime();
+    const dayEnd = startOfShopDay(addDays(key, 1)).getTime();
+    weekdays += 1;
+    done += clamp01((now.getTime() - dayStart) / (dayEnd - dayStart));
+  }
+  return weekdays ? done / weekdays : byClock;
 };
 
 /** A round number a little above last month, as a starting suggestion. */

@@ -624,13 +624,13 @@ export const englishCrmMessages = {
         "Other addresses you send emails from. Leave one empty to remove it.",
       inbound: {
         description:
-          "You can start sending emails to your server's inbound email address, e.g. by adding it to the %{field} field. THE LAB CRM will process the emails and add notes to the corresponding customers.",
-        title: "Inbound email",
+          "Put this address in the %{field} line of an email to a customer, and the email is saved as a note on their profile.",
+        title: "Save emails as notes",
       },
       mcp: {
-        title: "MCP Server",
+        title: "Connect an AI assistant",
         description:
-          "Use this URL to connect your AI assistant to your CRM data via the Model Context Protocol (MCP).",
+          "For connecting an AI assistant such as Claude to the CRM's data (MCP). Not needed for everyday use.",
       },
       password: {
         change: "Change password",

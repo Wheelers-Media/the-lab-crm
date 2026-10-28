@@ -49,7 +49,7 @@ export const TaskListFilter = ({
               listContext.setPerPage(listContext.perPage + 10);
               e.preventDefault();
             }}
-            className="text-sm underline hover:no-underline"
+            className="inline-flex min-h-11 items-center px-4 text-sm underline hover:no-underline"
           >
             {translate("crm.common.load_more")}
           </a>

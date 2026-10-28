@@ -327,6 +327,7 @@ export const TrafficSection = ({
               <div className="flex items-center gap-2 shrink-0">
                 <Switch
                   id="traffic-compare"
+                  aria-label="Compare with the period before"
                   checked={compare}
                   onCheckedChange={setCompare}
                 />
