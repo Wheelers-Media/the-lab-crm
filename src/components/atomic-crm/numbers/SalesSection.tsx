@@ -194,7 +194,7 @@ export const SalesSection = ({
 
       <SectionCard
         title={`${meta.label} over time`}
-        hint="Blue is this period, grey is the same stretch before. Net sales are before tax and shipping, after discounts. Tap a figure above to chart it; tap a bar for its orders."
+        hint="Bars are this period; the line across each bar is the same stretch before. Net sales are before tax and shipping, after discounts. Tap a figure above to chart it; tap a bar for its orders."
         actions={
           <div className="flex items-center gap-2 shrink-0">
             <Switch
@@ -214,7 +214,7 @@ export const SalesSection = ({
             value={metric}
             onValueChange={(v) => v && onMetric(v as SalesMetric)}
             aria-label="Chart metric"
-            className="flex-wrap"
+            className="lab-scroll-x"
           >
             {SALES_METRICS.map((m) => (
               <ToggleGroupItem
@@ -252,7 +252,7 @@ export const SalesSection = ({
         />
       </SectionCard>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
         <SectionCard
           title="By kind of work"
           hint="Tap a row to filter the whole screen to it. Discounts are spread over each order's lines."

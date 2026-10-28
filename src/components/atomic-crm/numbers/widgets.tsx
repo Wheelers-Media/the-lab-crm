@@ -56,7 +56,7 @@ export const SectionCard = ({
   <Card className="p-4 gap-3 min-w-0">
     <div className="flex items-start justify-between gap-3">
       <div className="min-w-0">
-        <h2 className="text-lg font-semibold text-muted-foreground">{title}</h2>
+        <h2 className="text-lg font-semibold text-foreground">{title}</h2>
         {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
       </div>
       {actions}
@@ -150,6 +150,8 @@ export const StatTable = <T,>({
                     className={cn(
                       "py-1 pr-3 font-medium whitespace-nowrap",
                       c.numeric ? "text-right" : "text-left",
+                      // The name column stays put while the numbers scroll
+                      columns.indexOf(c) === 0 && "sticky left-0 z-[1] bg-card",
                     )}
                   >
                     <button
@@ -201,6 +203,9 @@ export const StatTable = <T,>({
                           c.numeric
                             ? "text-right lab-num whitespace-nowrap"
                             : "max-w-[18rem] truncate",
+                          i === 0 &&
+                            "sticky left-0 z-[1] max-w-[11rem] bg-card sm:max-w-[18rem]",
+                          i === 0 && selected && "bg-muted",
                         )}
                       >
                         {onRowClick && i === 0 ? (

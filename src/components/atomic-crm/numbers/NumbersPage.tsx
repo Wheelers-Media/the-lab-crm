@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
-import { ShopifyMetrics } from "../operations/ShopifyMetrics";
 import { CustomersSection } from "./CustomersSection";
 import { InsightsSection } from "./InsightsSection";
 import {
@@ -23,6 +22,7 @@ import { type NumbersPeriod, NUMBERS_PERIODS } from "./periods";
 import { PipelineSection } from "./PipelineSection";
 import { ProductsSection } from "./ProductsSection";
 import { SalesSection } from "./SalesSection";
+import { type NumbersSection, SectionNav } from "./SectionNav";
 import { ShopSection } from "./ShopSection";
 import { TrafficSection } from "./TrafficSection";
 import { isTrafficMetric, type TrafficMetric } from "./trafficModel";
@@ -31,8 +31,22 @@ import { useNumbersData } from "./useNumbersData";
 const isPeriod = (value: string | null): value is NumbersPeriod =>
   NUMBERS_PERIODS.some((p) => p.value === value);
 
-const Heading = ({ children }: { children: string }) => (
-  <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground mt-4">
+const SECTIONS: NumbersSection[] = [
+  { id: "sales", label: "Sales" },
+  { id: "traffic", label: "Traffic" },
+  { id: "patterns", label: "Patterns" },
+  { id: "products", label: "Products" },
+  { id: "customers", label: "Customers" },
+  { id: "leads", label: "Leads" },
+  { id: "stock", label: "Stock and capacity" },
+];
+
+/** A part of the screen: a clear heading the jump bar scrolls to. */
+const Heading = ({ id, children }: { id: string; children: string }) => (
+  <h2
+    id={id}
+    className="mt-8 scroll-mt-28 border-t border-border pt-5 text-2xl tracking-wide text-foreground first-of-type:mt-2"
+  >
     {children}
   </h2>
 );
@@ -107,7 +121,7 @@ export const NumbersPage = () => {
             if (v) setParam("period", v);
           }}
           aria-label="Period"
-          className="flex-wrap"
+          className="lab-scroll-x"
         >
           {NUMBERS_PERIODS.map((p) => (
             <ToggleGroupItem
@@ -151,7 +165,8 @@ export const NumbersPage = () => {
         </div>
       ) : (
         <>
-          <Heading>Sales</Heading>
+          <SectionNav sections={SECTIONS} />
+          <Heading id="sales">Sales</Heading>
           <SalesSection
             orders={filtered}
             breakdownOrders={data.orders}
@@ -163,7 +178,7 @@ export const NumbersPage = () => {
             onSegment={pickSegment}
             onDrill={setDrill}
           />
-          <Heading>Traffic</Heading>
+          <Heading id="traffic">Traffic</Heading>
           <TrafficSection
             traffic={data.traffic}
             ranges={data.ranges}
@@ -174,7 +189,7 @@ export const NumbersPage = () => {
             onSource={(key) => pickTraffic("source", trafficFilter.source, key)}
             onDevice={(key) => pickTraffic("device", trafficFilter.device, key)}
           />
-          <Heading>Patterns</Heading>
+          <Heading id="patterns">Patterns</Heading>
           <InsightsSection
             orders={filtered}
             ledgerOrders={data.ledgerOrders}
@@ -184,28 +199,19 @@ export const NumbersPage = () => {
             segmentActive={segment != null}
             onDrill={setDrill}
           />
-          <Heading>Products</Heading>
-          {/* The shop's money and mix live here now, beside the product
-              tables, instead of competing with the home screen's hero */}
-          <ShopifyMetrics
-            orders={filtered}
-            range={data.ranges.current}
-            previous={data.ranges.previous}
-            vs={label.vs}
-            thisPeriod={label.label.toLowerCase()}
-          />
+          <Heading id="products">Products</Heading>
           <ProductsSection
             orders={filtered}
             catalog={data.catalog}
             ranges={data.ranges}
           />
-          <Heading>Customers</Heading>
+          <Heading id="customers">Customers</Heading>
           <CustomersSection
             orders={data.ledgerOrders}
             ranges={data.ranges}
             now={data.now}
           />
-          <Heading>Leads and carts</Heading>
+          <Heading id="leads">Leads and carts</Heading>
           <PipelineSection
             deals={data.deals}
             changes={data.changes}
@@ -213,7 +219,7 @@ export const NumbersPage = () => {
             ranges={data.ranges}
             now={data.now}
           />
-          <Heading>Stock and shop capacity</Heading>
+          <Heading id="stock">Stock and shop capacity</Heading>
           <ShopSection
             catalog={data.catalog}
             orders={data.orders}

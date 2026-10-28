@@ -126,7 +126,7 @@ export const CustomersSection = ({
           detail="of orders, mostly in-shop sales"
         />
       </div>
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
         <SectionCard
           title="Top customers"
           hint="By money collected over their lifetime, refunds taken off."

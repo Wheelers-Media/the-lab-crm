@@ -93,7 +93,7 @@ export const ProductsSection = ({
   ];
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-5 gap-4">
+    <div className="grid grid-cols-1 xl:grid-cols-5 gap-4 items-start">
       <div className="xl:col-span-3 min-w-0">
         <SectionCard
           title="Top products"

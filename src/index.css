@@ -256,6 +256,23 @@ body {
   --sidebar-border: var(--lab-rule);
 }
 
+/* Categorical chart colours, one per kind of thing being compared (detailing,
+   tint, lighting, parts; new and returning customers). Fixed order, checked
+   for colour-blind separation and contrast on each scheme's card with the
+   dataviz palette validator; never reused for good/bad. */
+.dark {
+  --viz-1: #0066ff;
+  --viz-2: #199e70;
+  --viz-3: #9085e9;
+  --viz-4: #d95926;
+}
+:root:not(.dark) {
+  --viz-1: #0066ff;
+  --viz-2: #1baf7a;
+  --viz-3: #6250d6;
+  --viz-4: #eb6834;
+}
+
 /* Segmented controls read as a track with a raised thumb in either scheme. */
 :root:not(.dark) {
   --lab-segment-track: #f1f1f3;
@@ -659,6 +676,24 @@ html {
   [data-slot="button"][data-size="icon"] {
     min-width: 2.75rem;
   }
+  /* A switch keeps its pill shape at the iOS size (51 x 31) instead of being
+     stretched into a 44pt circle by the rule above; its label widens the
+     target further. */
+  [data-slot="switch"] {
+    min-width: 0;
+    min-height: 0;
+    width: 3.1875rem;
+    height: 1.9375rem;
+    padding: 2px;
+  }
+  [data-slot="switch-thumb"] {
+    width: 1.6875rem;
+    height: 1.6875rem;
+    translate: 0 0;
+  }
+  [data-slot="switch-thumb"][data-state="checked"] {
+    translate: 1.25rem 0;
+  }
 }
 
 /* More contrast on request: body copy and rules get stronger, not just bigger. */
@@ -673,5 +708,32 @@ html {
   }
   .lab-chip {
     border: 1px solid currentColor;
+  }
+}
+
+/* A segmented control with more options than fit on a phone scrolls sideways
+   in one row, like iOS, instead of wrapping into a lumpy two-line block. The
+   right edge fades so it is clear there is more to swipe to. */
+.lab-scroll-x {
+  flex-wrap: nowrap;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.lab-scroll-x::-webkit-scrollbar {
+  display: none;
+}
+.lab-scroll-x > * {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+@media (max-width: 767px) {
+  .lab-scroll-x {
+    mask-image: linear-gradient(
+      to right,
+      #000 calc(100% - 1.5rem),
+      transparent
+    );
   }
 }

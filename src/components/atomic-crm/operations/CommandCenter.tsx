@@ -322,7 +322,7 @@ export const CommandCenter = ({
         {mixCard}
         {moversCard}
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
         {todayCard}
         {attentionCard}
       </div>

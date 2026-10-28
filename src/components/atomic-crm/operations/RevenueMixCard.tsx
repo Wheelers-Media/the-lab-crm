@@ -14,15 +14,14 @@ import {
 } from "./trendsModel";
 
 /**
- * One colour per kind of work, following the shop's "two bays": blues for the
- * Boutique (detailing, tint, lighting), amber for the Parts Store. The tokens
- * swap to darker values in the light scheme.
+ * One validated colour per kind of work (see --viz-* in index.css). Distinct
+ * hues rather than shades of one blue, so tint and detailing never blur.
  */
 const MIX_COLOURS: Record<MixGroup, string> = {
-  detail: "var(--lab-blue)",
-  tint: "var(--chart-selected)",
-  lighting: "var(--chart-pending)",
-  parts: "var(--lab-amber)",
+  detail: "var(--viz-1)",
+  tint: "var(--viz-2)",
+  lighting: "var(--viz-3)",
+  parts: "var(--viz-4)",
   other: "var(--chart-compare)",
 };
 
@@ -153,7 +152,7 @@ export const RevenueMixCard = ({
                   )}
                 >
                   <span
-                    className="block w-full lab-bar-rise"
+                    className="mx-auto block w-full max-w-6 lab-bar-rise"
                     style={{
                       height: `${(week.total / top) * 100}%`,
                       animationDelay: `${i * 30}ms`,
@@ -161,7 +160,7 @@ export const RevenueMixCard = ({
                   >
                     <span
                       className={cn(
-                        "flex h-full w-full flex-col-reverse overflow-hidden rounded-t-[3px]",
+                        "flex h-full w-full flex-col-reverse overflow-hidden rounded-t-[4px]",
                         week.partial && "opacity-55",
                       )}
                     >
@@ -169,7 +168,7 @@ export const RevenueMixCard = ({
                         week.groups[group] > 0 ? (
                           <span
                             key={group}
-                            className="block w-full border-t border-card/70 last:border-t-0"
+                            className="block w-full border-t-2 border-card last:border-t-0"
                             style={{
                               height: `${(week.groups[group] / week.total) * 100}%`,
                               background: MIX_COLOURS[group],

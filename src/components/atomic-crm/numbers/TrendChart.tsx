@@ -1,15 +1,53 @@
-import { ResponsiveBar } from "@nivo/bar";
+import { type BarCustomLayerProps, ResponsiveBar } from "@nivo/bar";
 import { type KeyboardEvent, useMemo, useState } from "react";
 
 import { money } from "../operations/format";
-import { useChartPalette, usePrefersReducedMotion } from "../operations/chartTheme";
+import {
+  useChartPalette,
+  usePrefersReducedMotion,
+} from "../operations/chartTheme";
 import type { MetricPoint } from "./insightsModel";
 
 const axisText = { ticks: { text: { fill: "var(--color-muted-foreground)" } } };
 
+type Datum = { key: string; label: string; value: number; previous: number };
+
 /**
- * The chosen metric per day, week or month, with the previous period beside
- * each bar. Click a bar for the orders behind it; the picked bar stays lit.
+ * The period before, as a short line across each bar at its value, instead
+ * of a second bar beside it. One bar per day keeps a month readable on a
+ * phone; the marker answers "more or less than last time?" at a glance.
+ */
+const PreviousMarkers = ({
+  bars,
+  yScale,
+  colour,
+}: BarCustomLayerProps<Datum> & { colour: string }) => (
+  <g aria-hidden="true">
+    {bars.map((bar) => {
+      const previous = bar.data.data.previous;
+      if (!previous) return null;
+      const y = (yScale as unknown as (v: number) => number)(previous);
+      const overhang = Math.min(4, bar.width * 0.25);
+      return (
+        <line
+          key={bar.key}
+          x1={bar.x - overhang}
+          x2={bar.x + bar.width + overhang}
+          y1={y}
+          y2={y}
+          stroke={colour}
+          strokeWidth={2}
+          strokeLinecap="round"
+        />
+      );
+    })}
+  </g>
+);
+
+/**
+ * The chosen metric per day, week or month, one bar each, with the period
+ * before marked as a line across the bar. Click a bar for the orders behind
+ * it; the picked bar stays lit.
  * The bars are drawn for the eye only: the same numbers are in the table below
  * for a screen reader, and the chart can be driven with the arrow keys.
  */
@@ -48,7 +86,7 @@ export const TrendChart = ({
     () => points.filter((_, i) => i % step === 0).map((p) => p.label),
     [points, step],
   );
-  const data = useMemo(
+  const data = useMemo<Datum[]>(
     () =>
       points.map((p) => ({
         key: p.key,
@@ -114,18 +152,43 @@ export const TrendChart = ({
         <ResponsiveBar
           data={data}
           indexBy="label"
-          keys={compare ? ["previous", "value"] : ["value"]}
-          groupMode="grouped"
+          keys={["value"]}
+          // The scale must reach the period before's peak too, or its
+          // markers would be cut off above the tallest bar
+          valueScale={{
+            type: "linear",
+            min: 0,
+            max: Math.max(
+              1,
+              ...points.map((p) =>
+                compare ? Math.max(p.value, p.previous) : p.value,
+              ),
+            ),
+            nice: true,
+          }}
           colors={(bar) =>
-            bar.id === "previous"
-              ? palette.compare
-              : bar.data.key === selectedKey
-                ? palette.selected
-                : palette.thisPeriod
+            bar.data.key === selectedKey ? palette.selected : palette.thisPeriod
           }
+          borderRadius={2}
           margin={{ top: 10, right: 10, bottom: 30, left: 48 }}
-          padding={0.25}
-          innerPadding={1}
+          padding={points.length > 20 ? 0.3 : 0.45}
+          layers={[
+            "grid",
+            "axes",
+            "bars",
+            ...(compare
+              ? [
+                  (props: BarCustomLayerProps<Datum>) => (
+                    <PreviousMarkers
+                      {...props}
+                      colour="var(--color-muted-foreground)"
+                    />
+                  ),
+                ]
+              : []),
+            "markers",
+            "legends",
+          ]}
           enableLabel={false}
           // The bars still settle into place for anyone who has not asked for
           // less motion; the numbers are readable either way
@@ -154,15 +217,17 @@ export const TrendChart = ({
           theme={{
             grid: { line: { stroke: "var(--color-border)", strokeWidth: 1 } },
           }}
-          tooltip={({ id, value, indexValue }) => (
-            <div className="px-2 py-1 bg-secondary rounded shadow text-secondary-foreground text-sm">
-              <strong>{indexValue}</strong>
-              <span className="text-muted-foreground">
-                {" "}
-                {id === "value" ? "this period" : "previous"}:{" "}
-              </span>
-              {show(Number(value))}
-              {onSelect && id === "value" ? (
+          tooltip={({ value, indexValue, data: datum }) => (
+            <div className="px-2.5 py-1.5 bg-popover border border-border rounded-md shadow-lg text-popover-foreground text-sm">
+              <strong className="block">{indexValue}</strong>
+              <span className="tabular-nums">{show(Number(value))}</span>
+              <span className="text-muted-foreground"> this period</span>
+              {compare ? (
+                <span className="block tabular-nums text-muted-foreground">
+                  {show(Number(datum.previous))} the period before
+                </span>
+              ) : null}
+              {onSelect ? (
                 <span className="block text-xs text-muted-foreground">
                   {clickHint}
                 </span>
@@ -171,6 +236,26 @@ export const TrendChart = ({
           )}
         />
       </div>
+      {compare ? (
+        <p className="mt-1 flex flex-wrap gap-x-4 text-[11px] text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5">
+            <span
+              className="h-2.5 w-2 rounded-[2px]"
+              style={{ background: palette.thisPeriod }}
+              aria-hidden="true"
+            />
+            This period
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span
+              className="h-0.5 w-3 rounded-full"
+              style={{ background: palette.compare }}
+              aria-hidden="true"
+            />
+            Same point, period before
+          </span>
+        </p>
+      ) : null}
       <p className="sr-only" aria-live="polite">
         {focused
           ? `${focused.label}: ${show(focused.value)} this period, ${show(focused.previous)} the period before.`

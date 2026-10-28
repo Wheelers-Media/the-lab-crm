@@ -95,7 +95,7 @@ const WhenCustomersBuy = ({
                       ),
                     })
                   }
-                  className="h-8 rounded-sm border border-border disabled:cursor-default enabled:hover:border-foreground"
+                  className="h-8 rounded-[3px] bg-muted/50 disabled:cursor-default enabled:hover:ring-2 enabled:hover:ring-foreground"
                   style={
                     cell.orders
                       ? {
@@ -171,55 +171,124 @@ const PaceChart = ({ pace }: { pace: Pace }) => {
         {money(point.previous)}
         <span className="text-muted-foreground"> last period</span>
       </p>
-      <svg
-        viewBox={`0 0 ${W} ${H}`}
-        className="w-full h-48 touch-pan-y"
-        role="img"
-        aria-label="Running net sales this period against the period before"
-        tabIndex={0}
-        onPointerMove={(e) => fromPointer(e.clientX, e.currentTarget)}
-        onPointerDown={(e) => fromPointer(e.clientX, e.currentTarget)}
-        onPointerLeave={() => setHover(null)}
-        onKeyDown={onKey}
-      >
-        <line
-          x1={PAD.left}
-          x2={W - PAD.right}
-          y1={H - PAD.bottom}
-          y2={H - PAD.bottom}
-          stroke="var(--color-border)"
-        />
-        <path d={previous} fill="none" stroke="var(--chart-compare)" strokeWidth={2} />
-        {projection ? (
-          <path
-            d={projection}
-            fill="none"
-            stroke="var(--chart-selected)"
-            strokeWidth={2}
-            strokeDasharray="5 5"
+      {/* The lines stretch to the card's width; the dots are HTML so the
+          stretch does not squash them into ovals */}
+      <div className="relative h-48 w-full sm:h-56">
+        <svg
+          viewBox={`0 0 ${W} ${H}`}
+          preserveAspectRatio="none"
+          className="absolute inset-0 h-full w-full touch-pan-y outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+          role="img"
+          aria-label="Running net sales this period against the period before"
+          tabIndex={0}
+          onPointerMove={(e) => fromPointer(e.clientX, e.currentTarget)}
+          onPointerDown={(e) => fromPointer(e.clientX, e.currentTarget)}
+          onPointerLeave={() => setHover(null)}
+          onKeyDown={onKey}
+        >
+          {[0.25, 0.5, 0.75].map((f) => (
+            <line
+              key={f}
+              x1={PAD.left}
+              x2={W - PAD.right}
+              y1={y(max * f)}
+              y2={y(max * f)}
+              stroke="var(--color-border)"
+              strokeOpacity={0.6}
+              vectorEffect="non-scaling-stroke"
+            />
+          ))}
+          <line
+            x1={PAD.left}
+            x2={W - PAD.right}
+            y1={H - PAD.bottom}
+            y2={H - PAD.bottom}
+            stroke="var(--color-border)"
+            vectorEffect="non-scaling-stroke"
           />
-        ) : null}
-        <path d={current} fill="none" stroke="var(--chart-this)" strokeWidth={3} />
-        <line
-          x1={x(index)}
-          x2={x(index)}
-          y1={PAD.top}
-          y2={H - PAD.bottom}
-          stroke="var(--color-muted-foreground)"
-          strokeOpacity={0.5}
+          <path
+            d={previous}
+            fill="none"
+            stroke="var(--chart-compare)"
+            strokeWidth={2}
+            vectorEffect="non-scaling-stroke"
+          />
+          {projection ? (
+            <path
+              d={projection}
+              fill="none"
+              stroke="var(--chart-selected)"
+              strokeWidth={2}
+              strokeDasharray="5 5"
+              vectorEffect="non-scaling-stroke"
+            />
+          ) : null}
+          <path
+            d={current}
+            fill="none"
+            stroke="var(--chart-this)"
+            strokeWidth={2.5}
+            strokeLinejoin="round"
+            strokeLinecap="round"
+            vectorEffect="non-scaling-stroke"
+          />
+          <line
+            x1={x(index)}
+            x2={x(index)}
+            y1={PAD.top}
+            y2={H - PAD.bottom}
+            stroke="var(--color-muted-foreground)"
+            strokeOpacity={0.5}
+            vectorEffect="non-scaling-stroke"
+          />
+        </svg>
+        <span className="pointer-events-none absolute right-0 top-0 text-[10px] tabular-nums text-muted-foreground">
+          {money(max)}
+        </span>
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--chart-compare)] ring-2 ring-card"
+          style={{
+            left: `${(x(index) / W) * 100}%`,
+            top: `${(y(point.previous) / H) * 100}%`,
+          }}
         />
         {point.current != null ? (
-          <circle
-            cx={x(index)}
-            cy={y(point.current)}
-            r={4.5}
-            fill="var(--chart-this)"
-            stroke="#fff"
-            strokeWidth={1.5}
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--chart-this)] ring-2 ring-card"
+            style={{
+              left: `${(x(index) / W) * 100}%`,
+              top: `${(y(point.current) / H) * 100}%`,
+            }}
           />
         ) : null}
-        <circle cx={x(index)} cy={y(point.previous)} r={4} fill="var(--chart-compare)" />
-      </svg>
+      </div>
+      <p className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
+        <span className="inline-flex items-center gap-1.5">
+          <span
+            className="h-0.5 w-4 rounded-full bg-[var(--chart-this)]"
+            aria-hidden="true"
+          />
+          This period
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span
+            className="h-0.5 w-4 rounded-full bg-[var(--chart-compare)]"
+            aria-hidden="true"
+          />
+          Period before
+        </span>
+        {projection ? (
+          <span className="inline-flex items-center gap-1.5">
+            <span
+              className="w-4 border-t-2 border-dashed border-[var(--chart-selected)]"
+              aria-hidden="true"
+            />
+            At this pace
+          </span>
+        ) : null}
+      </p>
     </div>
   );
 };
@@ -347,7 +416,11 @@ const PaymentStatus = ({
                 onClick={() => onDrill({ title: r.name, orders: r.list })}
                 className="flex w-full items-baseline justify-between gap-2 rounded-md px-1 py-2 text-left text-sm hover:bg-muted"
               >
-                <span className={cn(r.open && "font-medium text-[var(--lab-amber)]")}>
+                <span
+                  className={cn(
+                    r.open && "font-medium text-[var(--lab-amber)]",
+                  )}
+                >
                   {r.name}
                 </span>
                 <span className="lab-num text-muted-foreground">
@@ -364,6 +437,115 @@ const PaymentStatus = ({
   );
 };
 
+/**
+ * New customers stacked under returning ones, per day, week or month. Thin
+ * columns with a gap between the two parts, a readout of the one under the
+ * finger, and dates along the bottom so a bar can be placed in time.
+ */
+const NewReturningBars = ({
+  mix,
+}: {
+  mix: Array<{
+    key: string;
+    label: string;
+    newCustomers: number;
+    returning: number;
+  }>;
+}) => {
+  const [active, setActive] = useState<number | null>(null);
+  const max = Math.max(1, ...mix.map((m) => m.newCustomers + m.returning));
+  const shown = active != null ? mix[active] : null;
+  const step = Math.max(1, Math.ceil(mix.length / 7));
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="min-h-5 text-sm tabular-nums" aria-live="polite">
+        {shown ? (
+          <>
+            <span className="text-muted-foreground">{shown.label}: </span>
+            {shown.newCustomers} new
+            <span className="text-muted-foreground"> · </span>
+            {shown.returning} returning
+          </>
+        ) : (
+          <span className="text-muted-foreground">
+            Tap or hover a bar for its numbers.
+          </span>
+        )}
+      </p>
+      <div
+        className="relative h-40"
+        role="img"
+        aria-label={mix
+          .map(
+            (m) =>
+              `${m.label}: ${m.newCustomers} new, ${m.returning} returning`,
+          )
+          .join("; ")}
+        onPointerLeave={() => setActive(null)}
+      >
+        <div className="pointer-events-none absolute inset-0 flex flex-col justify-between">
+          {[0, 1, 2].map((g) => (
+            <span key={g} className="h-px w-full bg-border/60" />
+          ))}
+        </div>
+        <span className="pointer-events-none absolute -top-0.5 right-0 bg-card pl-1 text-[10px] tabular-nums text-muted-foreground">
+          {max}
+        </span>
+        <div className="absolute inset-0 flex items-end gap-px">
+          {mix.map((m, i) => (
+            <div
+              key={m.key}
+              onPointerEnter={() => setActive(i)}
+              onPointerDown={() => setActive(i)}
+              className={cn(
+                "flex h-full min-w-0 flex-1 flex-col justify-end transition-opacity",
+                active != null && active !== i && "opacity-45",
+              )}
+            >
+              <div className="mx-auto flex w-full max-w-6 flex-col gap-[2px]">
+                {m.returning ? (
+                  <span
+                    className="block w-full rounded-t-[4px] bg-[var(--viz-2)]"
+                    style={{ height: `${(m.returning / max) * 160}px` }}
+                  />
+                ) : null}
+                {m.newCustomers ? (
+                  <span
+                    className={cn(
+                      "block w-full bg-[var(--viz-1)]",
+                      !m.returning && "rounded-t-[4px]",
+                    )}
+                    style={{ height: `${(m.newCustomers / max) * 160}px` }}
+                  />
+                ) : null}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="flex gap-px text-[10px] text-muted-foreground">
+        {mix.map((m, i) => (
+          <span
+            key={m.key}
+            className="min-w-0 flex-1 whitespace-nowrap text-center"
+          >
+            {i % step === 0 ? m.label : ""}
+          </span>
+        ))}
+      </div>
+      <p className="flex gap-4 text-xs text-muted-foreground">
+        <span className="inline-flex items-center gap-1.5">
+          <span className="size-2.5 rounded-[2px] bg-[var(--viz-1)]" /> New
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="size-2.5 rounded-[2px] bg-[var(--viz-2)]" />{" "}
+          Returning
+        </span>
+      </p>
+    </div>
+  );
+};
+
 const NewVsReturning = ({
   ledgerOrders,
   ranges,
@@ -377,44 +559,14 @@ const NewVsReturning = ({
     () => newVsReturning(ledgerOrders, ranges),
     [ledgerOrders, ranges],
   );
-  const max = Math.max(1, ...mix.map((m) => m.newCustomers + m.returning));
   const fresh = mix.reduce((s, m) => s + m.newCustomers, 0);
   const back = mix.reduce((s, m) => s + m.returning, 0);
   return (
     <SectionCard
       title="New and returning customers"
-      hint={`${fresh} first-time and ${back} repeat customer visits, by ${ranges.bucket}. ${segmentActive ? "Shows every customer; the filter above does not apply here. " : ""}Hover a bar for its numbers.`}
+      hint={`${fresh} first-time and ${back} repeat customer visits, by ${ranges.bucket}. ${segmentActive ? "Shows every customer; the filter above does not apply here. " : ""}`}
     >
-      <div
-        className="flex h-40 items-end gap-1"
-        role="img"
-        aria-label={`${fresh} first-time and ${back} repeat customer visits`}
-      >
-        {mix.map((m) => (
-          <div
-            key={m.key}
-            className="flex h-full min-w-0 flex-1 flex-col justify-end"
-            title={`${m.label}: ${m.newCustomers} new, ${m.returning} returning`}
-          >
-            <div
-              className="bg-[var(--chart-compare)]"
-              style={{ height: `${(m.returning / max) * 100}%` }}
-            />
-            <div
-              className="bg-primary"
-              style={{ height: `${(m.newCustomers / max) * 100}%` }}
-            />
-          </div>
-        ))}
-      </div>
-      <p className="flex gap-4 text-xs text-muted-foreground">
-        <span className="inline-flex items-center gap-1">
-          <span className="size-2.5 rounded-sm bg-primary" /> New
-        </span>
-        <span className="inline-flex items-center gap-1">
-          <span className="size-2.5 rounded-sm bg-[var(--chart-compare)]" /> Returning
-        </span>
-      </p>
+      <NewReturningBars mix={mix} />
     </SectionCard>
   );
 };
@@ -442,7 +594,7 @@ export const InsightsSection = ({
     [orders, period, now],
   );
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
       {pace ? (
         <div className="lg:col-span-2">
           <PaceCard pace={pace} />

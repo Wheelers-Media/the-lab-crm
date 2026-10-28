@@ -41,9 +41,7 @@ export const SectionTitle = ({
   <div className="flex items-center gap-2 mb-2">
     <Icon className="w-5 h-5 text-muted-foreground shrink-0" />
     <div className="flex-1 min-w-0">
-      <h2 className="text-lg font-semibold text-muted-foreground">
-        {children}
-      </h2>
+      <h2 className="text-lg font-semibold text-foreground">{children}</h2>
       {hint ? <p className="text-xs text-muted-foreground/80">{hint}</p> : null}
     </div>
     {action ? (

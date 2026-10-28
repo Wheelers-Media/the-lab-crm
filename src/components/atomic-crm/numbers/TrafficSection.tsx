@@ -320,7 +320,7 @@ export const TrafficSection = ({
 
           <SectionCard
             title={`${meta.label} over time`}
-            hint="Blue is this period, grey is the same stretch before. Tap a figure above to chart it; tap a bar to see where those visits came from."
+            hint="Bars are this period; the line across each bar is the same stretch before. Tap a figure above to chart it; tap a bar to see where those visits came from."
             actions={
               <div className="flex items-center gap-2 shrink-0">
                 <Switch
@@ -340,7 +340,7 @@ export const TrafficSection = ({
                 value={metric}
                 onValueChange={(v) => v && onMetric(v as TrafficMetric)}
                 aria-label="Traffic chart metric"
-                className="flex-wrap"
+                className="lab-scroll-x"
               >
                 {TRAFFIC_METRICS.map((m) => (
                   <ToggleGroupItem
@@ -380,7 +380,7 @@ export const TrafficSection = ({
             />
           </SectionCard>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
             <SectionCard
               title="Path to a purchase"
               hint="Each step against all sessions. A visit can go straight to checkout, so a step can be bigger than the one above. Tap a step to chart it."
