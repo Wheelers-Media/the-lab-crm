@@ -1,7 +1,7 @@
 import { startOfShopDay } from "../operations/shopTime";
 
 export type AppointmentForm = {
-  contact_id?: number;
+  contact_id?: number | string;
   title: string;
   resource: string;
   day: string;

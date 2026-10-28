@@ -37,6 +37,8 @@ import { ContactVehicles } from "../vehicles/ContactVehicles";
 import { CustomerPackages } from "../packages/CustomerPackages";
 import { ContactQuotes } from "../packages/ContactQuotes";
 import { ContactQuickActions } from "./contactActions";
+import { ContactAppointments } from "./ContactAppointments";
+import { CustomerOverview } from "./CustomerOverview";
 
 export const ContactShow = (props: ShowBaseProps = {}) => {
   const isMobile = useIsMobile();
@@ -145,23 +147,30 @@ const ContactShowContentMobile = () => {
         </div>
 
         <div className="mb-6">
+          <CustomerOverview contact={record} />
+        </div>
+
+        <div className="mb-6">
           <ContactQuotes contact={record} />
         </div>
 
         <Tabs defaultValue="notes" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 h-11">
-            <TabsTrigger value="notes" className="px-1 text-[13px]">
+          <TabsList className="grid w-full grid-cols-5 h-11">
+            <TabsTrigger value="notes" className="px-0.5 text-[12px]">
               {translate("resources.notes.name", { smart_count: 2 })}
             </TabsTrigger>
-            <TabsTrigger value="purchases" className="px-1 text-[13px]">
-              Purchases
+            <TabsTrigger value="visits" className="px-0.5 text-[12px]">
+              Visits
             </TabsTrigger>
-            <TabsTrigger value="tasks" className="px-1 text-[13px]">
+            <TabsTrigger value="purchases" className="px-0.5 text-[12px]">
+              Bought
+            </TabsTrigger>
+            <TabsTrigger value="tasks" className="px-0.5 text-[12px]">
               {translate("crm.common.task_count", {
                 smart_count: taskCount ?? 0,
               })}
             </TabsTrigger>
-            <TabsTrigger value="details" className="px-1 text-[13px]">
+            <TabsTrigger value="details" className="px-0.5 text-[12px]">
               {translate("crm.common.details")}
             </TabsTrigger>
           </TabsList>
@@ -197,6 +206,10 @@ const ContactShowContentMobile = () => {
             >
               <NotesIteratorMobile contactId={record.id} showStatus />
             </InfiniteListBase>
+          </TabsContent>
+
+          <TabsContent value="visits" className="mt-4">
+            <ContactAppointments contact={record} />
           </TabsContent>
 
           <TabsContent value="purchases" className="mt-4">
@@ -320,15 +333,22 @@ const ContactShowContent = () => {
               </div>
             </div>
             <div className="mt-6">
+              <CustomerOverview contact={record} />
+            </div>
+            <div className="mt-8">
               <ContactQuotes contact={record} />
             </div>
-            <Tabs defaultValue="notes" className="w-full mt-6">
-              <TabsList className="grid w-full max-w-sm grid-cols-2 h-11">
+            <Tabs defaultValue="notes" className="w-full mt-8">
+              <TabsList className="grid w-full max-w-md grid-cols-3 h-11">
                 <TabsTrigger value="notes">
                   {translate("resources.notes.name", { smart_count: 2 })}
                 </TabsTrigger>
+                <TabsTrigger value="visits">Visits</TabsTrigger>
                 <TabsTrigger value="purchases">Purchases</TabsTrigger>
               </TabsList>
+              <TabsContent value="visits" className="mt-4">
+                <ContactAppointments contact={record} />
+              </TabsContent>
               <TabsContent value="notes" className="mt-4">
                 <InfiniteListBase
                   resource="contact_notes"

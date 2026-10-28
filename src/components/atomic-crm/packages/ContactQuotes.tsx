@@ -1,6 +1,6 @@
-import { ChevronRight, FileText, Plus } from "lucide-react";
+import { ChevronRight, FileText, KanbanSquare, Plus } from "lucide-react";
 import { useGetList } from "ra-core";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 
 import { isClosedStage } from "../deals/pipelineView";
@@ -28,40 +28,63 @@ const quoteStatus = (deal: Deal) => {
   return "No quote yet";
 };
 
+/** The new-job form, with this customer (and their business) filled in. */
+const newJobLink = (contact: Contact): string =>
+  `/deals/create?source=${encodeURIComponent(
+    JSON.stringify({
+      contact_ids: [contact.id],
+      ...(contact.company_id != null ? { company_id: contact.company_id } : {}),
+    }),
+  )}`;
+
 /**
  * The customer's open jobs with a "Build quote" button on each, and a way to
- * start a new quote. This is where Eric builds the quote from an intake.
+ * start a new quote or job. Every profile has it, so a sale can start from
+ * wherever Eric is looking at the customer.
  */
 export const ContactQuotes = ({ contact }: { contact: Contact }) => {
   const { dealStages } = useConfigurationContext();
   const { startQuote, isStarting } = useStartQuote();
+  const navigate = useNavigate();
   const { data: deals = [], isPending } = useGetList<Deal>("deals", {
     filter: { "contact_ids@cs": `{${contact.id}}`, "archived_at@is": null },
     sort: { field: "updated_at", order: "DESC" },
     pagination: { page: 1, perPage: 20 },
   });
   const open = deals.filter((d) => !isClosedStage(d.stage));
+  const closed = deals.length - open.length;
 
   if (isPending) return null;
   return (
     <section className="flex flex-col gap-2" aria-labelledby="contact-quotes">
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h2
           id="contact-quotes"
           className="text-base font-semibold normal-case leading-snug"
         >
-          Quotes
+          Jobs and quotes
         </h2>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => startQuote(contact)}
-          disabled={isStarting}
-        >
-          <Plus className="size-4" />
-          New quote
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate(newJobLink(contact))}
+          >
+            <KanbanSquare className="size-4" />
+            New job
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => startQuote(contact)}
+            disabled={isStarting}
+            className="active:scale-[0.97]"
+          >
+            <Plus className="size-4" />
+            Build quote
+          </Button>
+        </div>
       </div>
       {open.length ? (
         <ul className="flex flex-col gap-2">
@@ -94,10 +117,21 @@ export const ContactQuotes = ({ contact }: { contact: Contact }) => {
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-muted-foreground">
-          No open jobs. Start a new quote to price parts and labour.
+        <p className="rounded-lg border border-dashed border-border p-3 text-sm text-muted-foreground">
+          No open jobs. Build a quote to price parts and labour, or add a job to
+          track it on the board.
         </p>
       )}
+      {closed > 0 ? (
+        <Link
+          to={`/deals?filter=${encodeURIComponent(
+            JSON.stringify({ "contact_ids@cs": `{${contact.id}}` }),
+          )}`}
+          className="self-start text-xs text-muted-foreground underline-offset-4 hover:underline"
+        >
+          {closed} past {closed === 1 ? "job" : "jobs"}
+        </Link>
+      ) : null}
     </section>
   );
 };

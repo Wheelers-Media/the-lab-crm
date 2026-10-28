@@ -1,5 +1,11 @@
 import { Plus } from "lucide-react";
-import { CreateBase, Form, required, useNotify } from "ra-core";
+import {
+  CreateBase,
+  Form,
+  type Identifier,
+  required,
+  useNotify,
+} from "ra-core";
 import { useState } from "react";
 import { AutocompleteInput } from "@/components/admin/autocomplete-input";
 import { BooleanInput } from "@/components/admin/boolean-input";
@@ -45,21 +51,57 @@ const RESOURCE_CHOICES = [
 
 export const AddAppointment = ({ defaultDay }: { defaultDay: string }) => {
   const [open, setOpen] = useState(false);
-  const notify = useNotify();
   return (
     <>
       <Button size="sm" onClick={() => setOpen(true)}>
         <Plus className="w-4 h-4" />
         Add appointment
       </Button>
+      <AppointmentCreateDialog
+        open={open}
+        onOpenChange={setOpen}
+        defaults={{ day: defaultDay }}
+      />
+    </>
+  );
+};
+
+export interface AppointmentDefaults {
+  day: string;
+  contact_id?: Identifier;
+  title?: string;
+  vehicle?: string | null;
+  resource?: "detailing-bay" | "eric";
+}
+
+/**
+ * The booking form on its own, so a customer's profile can open it with the
+ * customer, their truck and the service already filled in.
+ */
+export const AppointmentCreateDialog = ({
+  open,
+  onOpenChange,
+  defaults,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  defaults: AppointmentDefaults;
+}) => {
+  const notify = useNotify();
+  const setOpen = onOpenChange;
+  return (
+    <>
       <CreateBase
         resource="appointments"
         record={{
-          resource: "detailing-bay",
-          day: defaultDay,
+          resource: defaults.resource ?? "detailing-bay",
+          day: defaults.day,
           time: "480",
           duration: "60",
           deposit_paid: false,
+          contact_id: defaults.contact_id,
+          title: defaults.title,
+          vehicle: defaults.vehicle ?? undefined,
         }}
         transform={(values: AppointmentForm) => toAppointment(values)}
         redirect={false}
