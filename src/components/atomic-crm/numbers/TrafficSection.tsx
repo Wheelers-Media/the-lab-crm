@@ -44,6 +44,8 @@ import {
   trafficTotals,
   trafficTrend,
 } from "./trafficModel";
+import { DonutChart } from "../operations/DonutChart";
+import { sourceKindSlices } from "./donutSlices";
 import { TrendChart } from "./TrendChart";
 import type { Column } from "./widgets";
 import { Delta, SectionCard, StatTable } from "./widgets";
@@ -437,6 +439,11 @@ export const TrafficSection = ({
             title="Where visitors come from"
             hint="Tap a row to filter the traffic section to that source. thelabfsj.ca is visits that came from the website."
           >
+            <DonutChart
+              centreLabel="sessions"
+              format={(n) => n.toLocaleString("en-CA")}
+              slices={sourceKindSlices(data.sources)}
+            />
             <StatTable
               rows={data.sources}
               rowKey={(r) => r.key}

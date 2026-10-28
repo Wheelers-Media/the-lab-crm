@@ -19,6 +19,7 @@ import {
   SectionTitle,
   WeekStrip,
 } from "./OperationsWidgets";
+import { Reveal } from "./Reveal";
 import { RevenueMixCard } from "./RevenueMixCard";
 import { TrendTiles } from "./TrendTiles";
 import { movers, trends, weeklyMix } from "./trendsModel";
@@ -296,19 +297,22 @@ export const CommandCenter = ({
   const floorCard = <ShopFloorSummary deals={data.deals} now={now} />;
 
   if (variant === "phone") {
-    // Eric's phone: the money, the numbers under it, then what needs him
+    // Eric's phone: the money, the numbers under it, then what needs him.
+    // Each block rises in as it scrolls into view.
     return (
       <div className="flex flex-col gap-4 mt-1">
         {headerBlock}
         {revenueCard}
-        {trendBlock}
-        {attentionCard}
-        {todayCard}
-        {mixCard}
-        {moversCard}
-        {floorCard}
-        <PipelineSnapshot deals={data.deals} />
-        {weekBlock}
+        <Reveal>{trendBlock}</Reveal>
+        <Reveal>{attentionCard}</Reveal>
+        <Reveal>{todayCard}</Reveal>
+        <Reveal>{mixCard}</Reveal>
+        <Reveal>{moversCard}</Reveal>
+        <Reveal>{floorCard}</Reveal>
+        <Reveal>
+          <PipelineSnapshot deals={data.deals} />
+        </Reveal>
+        <Reveal>{weekBlock}</Reveal>
       </div>
     );
   }
@@ -317,19 +321,21 @@ export const CommandCenter = ({
     <div className="flex flex-col gap-4 mt-1">
       {headerBlock}
       {revenueCard}
-      {trendBlock}
+      <Reveal>{trendBlock}</Reveal>
       <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-4">
-        {mixCard}
-        {moversCard}
+        <Reveal>{mixCard}</Reveal>
+        <Reveal delay={120}>{moversCard}</Reveal>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-        {todayCard}
-        {attentionCard}
+        <Reveal>{todayCard}</Reveal>
+        <Reveal delay={120}>{attentionCard}</Reveal>
       </div>
-      {floorCard}
+      <Reveal>{floorCard}</Reveal>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {weekBlock}
-        <PipelineSnapshot deals={data.deals} />
+        <Reveal>{weekBlock}</Reveal>
+        <Reveal delay={120}>
+          <PipelineSnapshot deals={data.deals} />
+        </Reveal>
       </div>
     </div>
   );

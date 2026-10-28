@@ -30,6 +30,8 @@ import {
   salesSummary,
   withPrevious,
 } from "./salesModel";
+import { DonutChart } from "../operations/DonutChart";
+import { categorySlices, channelSlices } from "./donutSlices";
 import { TrendChart } from "./TrendChart";
 import type { Column } from "./widgets";
 import { Delta, SectionCard, StatTable } from "./widgets";
@@ -255,8 +257,17 @@ export const SalesSection = ({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
         <SectionCard
           title="By kind of work"
-          hint="Tap a row to filter the whole screen to it. Discounts are spread over each order's lines."
+          hint="Tap a slice or row to filter the whole screen to it. Discounts are spread over each order's lines."
         >
+          <DonutChart
+            centreLabel="net sales"
+            format={money}
+            slices={categorySlices(now.categories)}
+            selectedKey={segment?.kind === "category" ? segment.value : null}
+            onSelect={(key) =>
+              key !== "other" && onSegment({ kind: "category", value: key })
+            }
+          />
           <StatTable
             rows={now.categories}
             rowKey={(r) => r.name}
@@ -270,8 +281,17 @@ export const SalesSection = ({
         </SectionCard>
         <SectionCard
           title="By channel"
-          hint="Tap a row to filter. Draft orders are the pay links made from quotes."
+          hint="Tap a slice or row to filter. Draft orders are the pay links made from quotes."
         >
+          <DonutChart
+            centreLabel="net sales"
+            format={money}
+            slices={channelSlices(now.channels)}
+            selectedKey={segment?.kind === "channel" ? segment.value : null}
+            onSelect={(key) =>
+              key !== "other" && onSegment({ kind: "channel", value: key })
+            }
+          />
           <StatTable
             rows={now.channels}
             rowKey={(r) => r.name}

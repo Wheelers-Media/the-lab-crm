@@ -21,6 +21,7 @@ import { type Drill, OrderDrillSheet } from "./OrderDrillSheet";
 import { type NumbersPeriod, NUMBERS_PERIODS } from "./periods";
 import { PipelineSection } from "./PipelineSection";
 import { ProductsSection } from "./ProductsSection";
+import { Reveal } from "../operations/Reveal";
 import { SalesSection } from "./SalesSection";
 import { type NumbersSection, SectionNav } from "./SectionNav";
 import { ShopSection } from "./ShopSection";
@@ -167,66 +168,84 @@ export const NumbersPage = () => {
         <>
           <SectionNav sections={SECTIONS} />
           <Heading id="sales">Sales</Heading>
-          <SalesSection
-            orders={filtered}
-            breakdownOrders={data.orders}
-            ranges={data.ranges}
-            vs={label.vs}
-            metric={metric}
-            onMetric={(m) => setParam("metric", m === "netSales" ? null : m)}
-            segment={segment}
-            onSegment={pickSegment}
-            onDrill={setDrill}
-          />
+          <Reveal className="flex flex-col gap-4">
+            <SalesSection
+              orders={filtered}
+              breakdownOrders={data.orders}
+              ranges={data.ranges}
+              vs={label.vs}
+              metric={metric}
+              onMetric={(m) => setParam("metric", m === "netSales" ? null : m)}
+              segment={segment}
+              onSegment={pickSegment}
+              onDrill={setDrill}
+            />
+          </Reveal>
           <Heading id="traffic">Traffic</Heading>
-          <TrafficSection
-            traffic={data.traffic}
-            ranges={data.ranges}
-            vs={label.vs}
-            metric={trafficMetric}
-            onMetric={(m) => setParam("traffic", m === "sessions" ? null : m)}
-            filter={trafficFilter}
-            onSource={(key) => pickTraffic("source", trafficFilter.source, key)}
-            onDevice={(key) => pickTraffic("device", trafficFilter.device, key)}
-          />
+          <Reveal className="flex flex-col gap-4">
+            <TrafficSection
+              traffic={data.traffic}
+              ranges={data.ranges}
+              vs={label.vs}
+              metric={trafficMetric}
+              onMetric={(m) => setParam("traffic", m === "sessions" ? null : m)}
+              filter={trafficFilter}
+              onSource={(key) =>
+                pickTraffic("source", trafficFilter.source, key)
+              }
+              onDevice={(key) =>
+                pickTraffic("device", trafficFilter.device, key)
+              }
+            />
+          </Reveal>
           <Heading id="patterns">Patterns</Heading>
-          <InsightsSection
-            orders={filtered}
-            ledgerOrders={data.ledgerOrders}
-            ranges={data.ranges}
-            period={period}
-            now={data.now}
-            segmentActive={segment != null}
-            onDrill={setDrill}
-          />
+          <Reveal className="flex flex-col gap-4">
+            <InsightsSection
+              orders={filtered}
+              ledgerOrders={data.ledgerOrders}
+              ranges={data.ranges}
+              period={period}
+              now={data.now}
+              segmentActive={segment != null}
+              onDrill={setDrill}
+            />
+          </Reveal>
           <Heading id="products">Products</Heading>
-          <ProductsSection
-            orders={filtered}
-            catalog={data.catalog}
-            ranges={data.ranges}
-          />
+          <Reveal className="flex flex-col gap-4">
+            <ProductsSection
+              orders={filtered}
+              catalog={data.catalog}
+              ranges={data.ranges}
+            />
+          </Reveal>
           <Heading id="customers">Customers</Heading>
-          <CustomersSection
-            orders={data.ledgerOrders}
-            ranges={data.ranges}
-            now={data.now}
-          />
+          <Reveal className="flex flex-col gap-4">
+            <CustomersSection
+              orders={data.ledgerOrders}
+              ranges={data.ranges}
+              now={data.now}
+            />
+          </Reveal>
           <Heading id="leads">Leads and carts</Heading>
-          <PipelineSection
-            deals={data.deals}
-            changes={data.changes}
-            checkouts={data.checkouts}
-            ranges={data.ranges}
-            now={data.now}
-          />
+          <Reveal className="flex flex-col gap-4">
+            <PipelineSection
+              deals={data.deals}
+              changes={data.changes}
+              checkouts={data.checkouts}
+              ranges={data.ranges}
+              now={data.now}
+            />
+          </Reveal>
           <Heading id="stock">Stock and shop capacity</Heading>
-          <ShopSection
-            catalog={data.catalog}
-            orders={data.orders}
-            appointments={data.appointments}
-            ranges={data.ranges}
-            now={data.now}
-          />
+          <Reveal className="flex flex-col gap-4">
+            <ShopSection
+              catalog={data.catalog}
+              orders={data.orders}
+              appointments={data.appointments}
+              ranges={data.ranges}
+              now={data.now}
+            />
+          </Reveal>
         </>
       )}
       <OrderDrillSheet drill={drill} onClose={() => setDrill(null)} />

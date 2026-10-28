@@ -1,5 +1,6 @@
 import { type KeyboardEvent, useId, useState } from "react";
 
+import { smoothPath } from "./chartGeometry";
 import { money } from "./format";
 import type { RevenueLinePoint } from "./metrics";
 
@@ -31,13 +32,9 @@ export const RevenueChart = ({
   const x = (i: number) =>
     points.length === 1 ? 50 : (i / (points.length - 1)) * 100;
   const y = (v: number) => 100 - (v / top) * 100;
+  // Smooth but never overshooting, so a running total never seems to dip
   const line = (get: (p: RevenueLinePoint) => number) =>
-    points
-      .map(
-        (p, i) =>
-          `${i === 0 ? "M" : "L"}${x(i).toFixed(2)},${y(get(p)).toFixed(2)}`,
-      )
-      .join(" ");
+    smoothPath(points.map((p, i) => [x(i), y(get(p))] as const));
   const area = `${line((p) => p.value)} L100,100 L0,100 Z`;
 
   const shown = (active != null ? points[active] : null) ?? last;

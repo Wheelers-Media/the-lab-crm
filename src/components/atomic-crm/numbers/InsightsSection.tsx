@@ -1,7 +1,9 @@
 import { Fragment, type KeyboardEvent, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 
+import { smoothPath } from "../operations/chartGeometry";
 import { money } from "../operations/format";
+import { useInView } from "../operations/useInView";
 import type { Order } from "../types";
 import type { LedgerOrder } from "./customerModel";
 import {
@@ -122,6 +124,7 @@ const PAD = { left: 8, right: 8, top: 10, bottom: 8 };
 const PaceChart = ({ pace }: { pace: Pace }) => {
   const last = pace.daysElapsed - 1;
   const [hover, setHover] = useState<number | null>(null);
+  const [ref, inView] = useInView<HTMLDivElement>(0.3);
   const n = pace.points.length;
   const index = Math.min(n - 1, hover ?? Math.max(0, last));
   const max = Math.max(1, pace.previousTotal, pace.projected ?? 0, pace.soFar);
@@ -129,15 +132,11 @@ const PaceChart = ({ pace }: { pace: Pace }) => {
     PAD.left + (i / Math.max(1, n - 1)) * (W - PAD.left - PAD.right);
   const y = (v: number) =>
     H - PAD.bottom - (v / max) * (H - PAD.top - PAD.bottom);
+  // Smooth, never overshooting: a running total must not seem to dip
   const path = (values: Array<number | null>) =>
-    values
-      .map((v, i) =>
-        v == null
-          ? null
-          : `${i === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(v).toFixed(1)}`,
-      )
-      .filter(Boolean)
-      .join(" ");
+    smoothPath(
+      values.flatMap((v, i) => (v == null ? [] : [[x(i), y(v)] as const])),
+    );
   const current = path(pace.points.map((p) => p.current));
   const previous = path(pace.points.map((p) => p.previous));
   const projection =
@@ -173,7 +172,7 @@ const PaceChart = ({ pace }: { pace: Pace }) => {
       </p>
       {/* The lines stretch to the card's width; the dots are HTML so the
           stretch does not squash them into ovals */}
-      <div className="relative h-48 w-full sm:h-56">
+      <div ref={ref} className="relative h-48 w-full sm:h-56">
         <svg
           viewBox={`0 0 ${W} ${H}`}
           preserveAspectRatio="none"
@@ -227,6 +226,10 @@ const PaceChart = ({ pace }: { pace: Pace }) => {
             d={current}
             fill="none"
             stroke="var(--chart-this)"
+            pathLength={1}
+            strokeDasharray={1}
+            strokeDashoffset={inView ? 0 : 1}
+            className="transition-[stroke-dashoffset] duration-[1400ms] ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none"
             strokeWidth={2.5}
             strokeLinejoin="round"
             strokeLinecap="round"
