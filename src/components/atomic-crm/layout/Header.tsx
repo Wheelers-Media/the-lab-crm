@@ -1,6 +1,6 @@
 import { FileText, Import, Settings, User, Users } from "lucide-react";
 import { CanAccess, useTranslate, useUserMenu } from "ra-core";
-import { Link, matchPath, useLocation } from "react-router";
+import { Link } from "react-router";
 import { RefreshButton } from "@/components/admin/refresh-button";
 import { ThemeModeToggle } from "@/components/admin/theme-mode-toggle";
 import { UserMenu } from "@/components/admin/user-menu";
@@ -9,38 +9,10 @@ import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { useConfigurationContext } from "../root/ConfigurationContext";
 import { ImportPage } from "../misc/ImportPage";
 import { ChangelogPage } from "../misc/ChangelogPage";
+import { DesktopNavigation } from "./DesktopNavigation";
 
 const Header = () => {
   const { darkModeLogo, lightModeLogo, title } = useConfigurationContext();
-  const location = useLocation();
-  const translate = useTranslate();
-
-  let currentPath: string | boolean = "/";
-  if (matchPath("/", location.pathname)) {
-    currentPath = "/";
-  } else if (matchPath("/contacts/*", location.pathname)) {
-    currentPath = "/contacts";
-  } else if (matchPath("/companies/*", location.pathname)) {
-    currentPath = "/companies";
-  } else if (matchPath("/deals/*", location.pathname)) {
-    currentPath = "/deals";
-  } else if (matchPath("/calendar", location.pathname)) {
-    currentPath = "/calendar";
-  } else if (matchPath("/appointments/*", location.pathname)) {
-    currentPath = "/calendar";
-  } else if (matchPath("/shop-floor", location.pathname)) {
-    currentPath = "/shop-floor";
-  } else if (matchPath("/numbers", location.pathname)) {
-    currentPath = "/numbers";
-  } else if (matchPath("/packages/*", location.pathname)) {
-    currentPath = "/packages";
-  } else if (matchPath("/orders/*", location.pathname)) {
-    currentPath = "/orders";
-  } else if (matchPath("/shopify_checkouts/*", location.pathname)) {
-    currentPath = "/shopify_checkouts";
-  } else {
-    currentPath = false;
-  }
 
   return (
     <>
@@ -67,69 +39,8 @@ const Header = () => {
                   CRM
                 </span>
               </Link>
-              <div className="min-w-0 flex-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                <nav className="flex w-max mx-auto">
-                  <NavigationTab
-                    label={translate("ra.page.dashboard")}
-                    to="/"
-                    isActive={currentPath === "/"}
-                  />
-                  <NavigationTab
-                    label="Numbers"
-                    to="/numbers"
-                    isActive={currentPath === "/numbers"}
-                  />
-                  <NavigationTab
-                    label="Calendar"
-                    to="/calendar"
-                    isActive={currentPath === "/calendar"}
-                  />
-                  <NavigationTab
-                    label="Shop floor"
-                    to="/shop-floor"
-                    isActive={currentPath === "/shop-floor"}
-                  />
-                  <NavigationTab
-                    label={translate("resources.contacts.name", {
-                      smart_count: 2,
-                    })}
-                    to="/contacts"
-                    isActive={currentPath === "/contacts"}
-                  />
-                  <NavigationTab
-                    label={translate("resources.companies.name", {
-                      smart_count: 2,
-                    })}
-                    to="/companies"
-                    isActive={currentPath === "/companies"}
-                  />
-                  <NavigationTab
-                    label={translate("resources.deals.name", {
-                      smart_count: 2,
-                    })}
-                    to="/deals"
-                    isActive={currentPath === "/deals"}
-                  />
-                  <NavigationTab
-                    label="Packages"
-                    to="/packages"
-                    isActive={currentPath === "/packages"}
-                  />
-                  <NavigationTab
-                    label={translate("resources.orders.name", {
-                      smart_count: 2,
-                    })}
-                    to="/orders"
-                    isActive={currentPath === "/orders"}
-                  />
-                  <NavigationTab
-                    label={translate("resources.shopify_checkouts.name", {
-                      smart_count: 2,
-                    })}
-                    to="/shopify_checkouts"
-                    isActive={currentPath === "/shopify_checkouts"}
-                  />
-                </nav>
+              <div className="min-w-0 flex-1 flex justify-center">
+                <DesktopNavigation />
               </div>
               <div className="flex items-center">
                 <ThemeModeToggle />
@@ -153,24 +64,6 @@ const Header = () => {
     </>
   );
 };
-
-const NavigationTab = ({
-  label,
-  to,
-  isActive,
-}: {
-  label: string;
-  to: string;
-  isActive: boolean;
-}) => (
-  <Link
-    to={to}
-    className="lab-nav-link"
-    aria-current={isActive ? "page" : undefined}
-  >
-    {label}
-  </Link>
-);
 
 const UsersMenu = () => {
   const translate = useTranslate();

@@ -1,21 +1,13 @@
 import { cn } from "@/lib/utils";
 import {
-  BarChart3,
-  Building2,
-  CalendarDays,
   ChevronRight,
-  Home,
   KanbanSquare,
   ListTodo,
   Menu,
-  Package,
   Plus,
-  Receipt,
   Settings,
-  ShoppingCart,
   StickyNote,
   Users,
-  Wrench,
 } from "lucide-react";
 import {
   Sheet,
@@ -37,25 +29,18 @@ import { useState } from "react";
 import { NoteCreateSheet } from "../notes/NoteCreateSheet";
 import { TaskCreateSheet } from "../tasks/TaskCreateSheet";
 import { ActionSheet } from "../misc/ActionSheet";
+import {
+  isInGroup,
+  isOnPage,
+  type NavIcon,
+  PHONE_MORE,
+  PHONE_TABS,
+} from "./navigation";
 
 export const MobileNavigation = () => {
-  const location = useLocation();
+  const { pathname } = useLocation();
   const translate = useTranslate();
-
-  let currentPath: string | boolean = "/";
-  if (matchPath("/", location.pathname)) {
-    currentPath = "/";
-  } else if (matchPath("/contacts/*", location.pathname)) {
-    currentPath = "/contacts";
-  } else if (matchPath("/companies/*", location.pathname)) {
-    currentPath = "/companies";
-  } else if (matchPath("/tasks/*", location.pathname)) {
-    currentPath = "/tasks";
-  } else if (matchPath("/deals/*", location.pathname)) {
-    currentPath = "/deals";
-  } else {
-    currentPath = false;
-  }
+  const onMorePage = PHONE_MORE.some((group) => isInGroup(group, pathname));
 
   // Check if the app is running as a PWA (standalone mode)
   const isPwa = window.matchMedia("(display-mode: standalone)").matches;
@@ -74,35 +59,16 @@ export const MobileNavigation = () => {
     >
       {/* Tabs navigate; creating lives in the top bar's + button */}
       <div className="mx-auto flex max-w-lg">
-        <NavigationButton
-          href="/"
-          Icon={Home}
-          label="Home"
-          isActive={currentPath === "/"}
-        />
-        <NavigationButton
-          href="/deals"
-          Icon={KanbanSquare}
-          label={translate("resources.deals.name", { smart_count: 2 })}
-          isActive={currentPath === "/deals"}
-        />
-        <NavigationButton
-          href="/contacts"
-          Icon={Users}
-          label={translate("resources.contacts.name", {
-            smart_count: 2,
-          })}
-          isActive={currentPath === "/contacts"}
-        />
-        <NavigationButton
-          href="/tasks"
-          Icon={ListTodo}
-          label="Tasks"
-          isActive={currentPath === "/tasks"}
-        />
-        <MoreButton
-          isActive={currentPath === false || currentPath === "/companies"}
-        />
+        {PHONE_TABS.map((page) => (
+          <NavigationButton
+            key={page.to}
+            href={page.to}
+            Icon={page.Icon}
+            label={page.label}
+            isActive={isOnPage(page, pathname)}
+          />
+        ))}
+        <MoreButton isActive={onMorePage} />
       </div>
     </nav>
   );
@@ -116,7 +82,7 @@ const NavigationButton = ({
   isActive,
 }: {
   href: string;
-  Icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  Icon: NavIcon;
   label: string;
   isActive: boolean;
 }) => (
@@ -201,67 +167,22 @@ export const CreateMenu = () => {
   );
 };
 
-const MORE_LINKS = [
-  {
-    href: "/calendar",
-    label: "Calendar",
-    hint: "Drop-offs and Eric's bookings",
-    Icon: CalendarDays,
-  },
-  {
-    href: "/numbers",
-    label: "Numbers",
-    hint: "Sales, products, customers, leads and stock",
-    Icon: BarChart3,
-  },
-  {
-    href: "/shop-floor",
-    label: "Shop floor",
-    hint: "Who is here, waiting on parts, ready for pickup",
-    Icon: Wrench,
-  },
-  {
-    href: "/packages",
-    label: "Packages and products",
-    hint: "The Shopify catalog, prices and stock",
-    Icon: Package,
-  },
-  {
-    href: "/orders",
-    label: "Orders",
-    hint: "Shopify orders and deposits",
-    Icon: Receipt,
-  },
-  {
-    href: "/shopify_checkouts",
-    label: "Abandoned carts",
-    hint: "Call or text to recover",
-    Icon: ShoppingCart,
-  },
-  {
-    href: "/companies",
-    label: "Businesses",
-    hint: "Fleets and commercial accounts",
-    Icon: Building2,
-  },
-  {
-    href: "/settings",
-    label: "Settings",
-    hint: "Profile, team and app",
-    Icon: Settings,
-  },
-];
-
+/**
+ * Every other page, grouped the way the work is: the shop, the numbers, the
+ * store, then accounts. Shown as a sheet so a page is two taps from anywhere.
+ */
 const MoreButton = ({ isActive }: { isActive: boolean }) => {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   return (
     <>
       <button
         type="button"
         onClick={() => setOpen(true)}
+        aria-current={isActive ? "page" : undefined}
         className={cn(
-          "flex min-h-[49px] flex-1 flex-col items-center justify-center gap-0.5 pt-1.5",
+          "lab-tab flex min-h-[49px] flex-1 flex-col items-center justify-center gap-0.5 pt-1.5",
           isActive ? "text-[var(--lab-blue-text)]" : "text-muted-foreground",
         )}
       >
@@ -269,35 +190,60 @@ const MoreButton = ({ isActive }: { isActive: boolean }) => {
         <span className="text-[11px] font-medium leading-tight">More</span>
       </button>
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="bottom" className="pb-8 rounded-t-lg">
-          <SheetHeader>
+        <SheetContent
+          side="bottom"
+          className="max-h-[85dvh] overflow-y-auto rounded-t-2xl pb-[calc(env(safe-area-inset-bottom,0px)+1.5rem)]"
+        >
+          <SheetHeader className="pb-1">
             <SheetTitle className="font-display uppercase tracking-wide">
-              All pages
+              More
             </SheetTitle>
             <SheetDescription className="sr-only">
-              Every part of the CRM
+              Every other part of the CRM
             </SheetDescription>
           </SheetHeader>
-          <nav className="flex flex-col px-2">
-            {MORE_LINKS.map(({ href, label, hint, Icon }) => (
-              <button
-                key={href}
-                type="button"
-                onClick={() => {
-                  setOpen(false);
-                  navigate(href);
-                }}
-                className="flex items-center gap-3 rounded-md px-3 py-3 text-left hover:bg-accent min-h-14"
-              >
-                <Icon className="size-5 text-muted-foreground" />
-                <span className="flex-1">
-                  <span className="block font-medium">{label}</span>
-                  <span className="block text-xs text-muted-foreground">
-                    {hint}
-                  </span>
-                </span>
-                <ChevronRight className="size-4 text-muted-foreground" />
-              </button>
+          <nav className="flex flex-col gap-5 px-4">
+            {PHONE_MORE.map((group) => (
+              <section key={group.label} aria-label={group.label}>
+                <h3 className="lab-eyebrow mb-1.5">{group.label}</h3>
+                <ul className="divide-y divide-border overflow-hidden rounded-xl bg-card">
+                  {group.pages.map((page) => {
+                    const { to, label, hint, Icon } = page;
+                    const current = isOnPage(page, pathname);
+                    return (
+                      <li key={to}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setOpen(false);
+                            navigate(to);
+                          }}
+                          aria-current={current ? "page" : undefined}
+                          className="flex w-full items-center gap-3 px-3 py-2.5 text-left min-h-14 active:bg-accent"
+                        >
+                          <span
+                            className={cn(
+                              "grid size-9 shrink-0 place-items-center rounded-lg",
+                              current
+                                ? "bg-[var(--lab-blue)] text-white"
+                                : "bg-muted text-muted-foreground",
+                            )}
+                          >
+                            <Icon className="size-5" aria-hidden="true" />
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block font-medium">{label}</span>
+                            <span className="block truncate text-xs text-muted-foreground">
+                              {hint}
+                            </span>
+                          </span>
+                          <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
             ))}
           </nav>
         </SheetContent>
