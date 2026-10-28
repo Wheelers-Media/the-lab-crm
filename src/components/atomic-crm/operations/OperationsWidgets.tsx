@@ -65,8 +65,6 @@ export interface KpiTileProps {
   /** Makes the tile a toggle (the Numbers screen picks its chart metric this way) */
   onSelect?: () => void;
   selected?: boolean;
-  /** A small trend picture beside the number, such as a sparkline. */
-  spark?: React.ReactNode;
 }
 
 export const KpiTile = ({
@@ -77,7 +75,6 @@ export const KpiTile = ({
   to,
   onSelect,
   selected,
-  spark,
 }: KpiTileProps) => {
   const tile = (
     <Card
@@ -88,14 +85,7 @@ export const KpiTile = ({
       )}
     >
       <p className="text-sm text-muted-foreground">{label}</p>
-      {spark ? (
-        <div className="flex items-end justify-between gap-3">
-          <p className="text-2xl font-semibold lab-num">{value}</p>
-          <div className="w-20 shrink-0 pb-1 sm:w-24">{spark}</div>
-        </div>
-      ) : (
-        <p className="text-2xl font-semibold lab-num">{value}</p>
-      )}
+      <p className="text-2xl font-semibold lab-num">{value}</p>
       <p className="text-xs text-muted-foreground lab-num">
         {trend != null ? (
           <span

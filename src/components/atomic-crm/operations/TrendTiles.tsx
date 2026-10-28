@@ -4,7 +4,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { money } from "./format";
 import { KpiTile, SectionTitle } from "./OperationsWidgets";
 import { changeOf, type PeriodFigures, type Trends } from "./trendsModel";
-import { Sparkline } from "./Sparkline";
 
 const rate = (part: number, whole: number): number | null =>
   whole ? Math.round((part / whole) * 100) : null;
@@ -81,22 +80,18 @@ const TILES: Tile[] = [
 
 /**
  * The shop's numbers for the period, each against the same point in the
- * period before, with the last eight periods drawn beside it. A number with
- * no trend is a snapshot; with one, it says whether things are getting better.
+ * period before, so each one says whether things are getting better.
  */
 export const TrendTiles = ({
   trends,
   isPending,
   vs,
-  unit,
   pipeline,
 }: {
   trends: Trends;
   isPending: boolean;
   /** "vs last month" */
   vs: string;
-  /** "months", for the sparkline's screen reader label. */
-  unit: string;
   /** Open pipeline, which has no history to trend. */
   pipeline: { amount: number; count: number };
 }) => {
@@ -113,14 +108,13 @@ export const TrendTiles = ({
     <section aria-labelledby="trend-tiles" className="flex flex-col gap-2">
       <SectionTitle
         icon={TrendingUp}
-        hint={`Each figure ${vs} at the same point; the line is the last 8 ${unit}.`}
+        hint={`Each figure ${vs}, compared at the same point in the period.`}
       >
         <span id="trend-tiles">Trending</span>
       </SectionTitle>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {TILES.map((tile) => {
           const current = tile.value(trends.current);
-          const series = trends.series.map(tile.value);
           return (
             <KpiTile
               key={tile.label}
@@ -129,14 +123,6 @@ export const TrendTiles = ({
               value={tile.format(current)}
               trend={changeOf(current, tile.value(trends.previous))}
               detail={tile.detail(trends.current)}
-              spark={
-                <Sparkline
-                  values={series}
-                  label={`${tile.label}, last ${series.length} ${unit}: ${series
-                    .map((v) => tile.format(v))
-                    .join(", ")}`}
-                />
-              }
             />
           );
         })}

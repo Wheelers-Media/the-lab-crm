@@ -44,8 +44,6 @@ const PERIODS: Array<{
   /** "last month" — the phrase inside a sentence */
   comparedWith: string;
   vs: string;
-  /** Plural of one step on the sparklines: "days", "weeks", "months". */
-  unit: string;
 }> = [
   {
     value: "today",
@@ -53,7 +51,6 @@ const PERIODS: Array<{
     thisPeriod: "today",
     comparedWith: "yesterday",
     vs: "vs yesterday",
-    unit: "days",
   },
   {
     value: "week",
@@ -61,7 +58,6 @@ const PERIODS: Array<{
     thisPeriod: "this week",
     comparedWith: "last week",
     vs: "vs last week",
-    unit: "weeks",
   },
   {
     value: "month",
@@ -69,7 +65,6 @@ const PERIODS: Array<{
     thisPeriod: "this month",
     comparedWith: "last month",
     vs: "vs last month",
-    unit: "months",
   },
 ];
 
@@ -224,7 +219,6 @@ export const CommandCenter = ({
       trends={trend}
       isPending={history.isPending || data.isPending}
       vs={periodLabel.vs}
-      unit={periodLabel.unit}
       pipeline={kpis.pipeline}
     />
   );
