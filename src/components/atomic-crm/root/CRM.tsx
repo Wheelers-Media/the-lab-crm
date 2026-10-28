@@ -25,20 +25,12 @@ import { MobileLayout } from "../layout/MobileLayout";
 import { MobilePage } from "../layout/MobilePage";
 import { SignupPage } from "../login/SignupPage";
 import { ConfirmationRequired } from "../login/ConfirmationRequired";
-import { ImportPage } from "../misc/ImportPage";
-import { CalendarPage } from "../calendar/CalendarPage";
-import { ShopFloorPage } from "../shopfloor/ShopFloorPage";
-import { NumbersPage } from "../numbers/NumbersPage";
-import { ChangelogPage } from "../misc/ChangelogPage";
 import {
   getAuthProvider as defaultAuthProviderBuilder,
   getDataProvider as defaultDataProviderBuilder,
 } from "../providers/supabase";
 import sales from "../sales";
 import { AppointmentList, CheckoutList, OrderList } from "../shop";
-import { SettingsPageMobile } from "../settings/SettingsPageMobile";
-import { ProfilePage } from "../settings/ProfilePage";
-import { SettingsPage } from "../settings/SettingsPage";
 import {
   CONFIGURATION_STORE_KEY,
   type ConfigurationContextValue,
@@ -60,16 +52,29 @@ import { i18nProvider as defaulti18nProvider } from "../providers/commons/i18nPr
 import { StartPage } from "../login/StartPage.tsx";
 import { useIsMobile } from "@/hooks/use-mobile.ts";
 import { MobileTasksList } from "../tasks/MobileTasksList.tsx";
+import { TasksPage } from "../tasks/TasksPage.tsx";
 import { MobileCompanyList } from "../companies/MobileCompanyList";
 import { MobileDealList } from "../deals/MobileDealList";
-import { MobileProductList, ProductList } from "../packages/ProductList";
-import { QuoteBuilderPage } from "../packages/QuoteBuilderPage";
-import { ProductShow } from "../packages/ProductShow";
 import { MobileCheckoutList, MobileOrderList } from "../shop/MobileShopLists";
 import { ContactListMobile } from "../contacts/ContactList.tsx";
 import { ContactShow } from "../contacts/ContactShow.tsx";
 import { CompanyShow } from "../companies/CompanyShow.tsx";
 import { NoteShowPage } from "../notes/NoteShowPage.tsx";
+import {
+  CalendarPage,
+  ChangelogPage,
+  ImportPage,
+  MobileProductList,
+  NumbersPage,
+  PAGE_PATHS,
+  ProductList,
+  ProductShow,
+  ProfilePage,
+  QuoteBuilderPage,
+  SettingsPage,
+  SettingsPageMobile,
+  ShopFloorPage,
+} from "./lazyPages";
 
 const defaultStore = localStorageStore(undefined, "CRM");
 
@@ -268,21 +273,21 @@ const DesktopAdmin = (
       </CustomRoutes>
 
       <CustomRoutes>
-        <Route path={ProfilePage.path} element={<ProfilePage />} />
-        <Route path={SettingsPage.path} element={<SettingsPage />} />
-        <Route path={ImportPage.path} element={<ImportPage />} />
-        <Route path={ChangelogPage.path} element={<ChangelogPage />} />
-        <Route path={CalendarPage.path} element={<CalendarPage />} />
-        <Route path={ShopFloorPage.path} element={<ShopFloorPage />} />
-        <Route path={NumbersPage.path} element={<NumbersPage />} />
-        <Route path={QuoteBuilderPage.path} element={<QuoteBuilderPage />} />
+        <Route path={PAGE_PATHS.profile} element={<ProfilePage />} />
+        <Route path={PAGE_PATHS.settings} element={<SettingsPage />} />
+        <Route path={PAGE_PATHS.import} element={<ImportPage />} />
+        <Route path={PAGE_PATHS.changelog} element={<ChangelogPage />} />
+        <Route path={PAGE_PATHS.calendar} element={<CalendarPage />} />
+        <Route path={PAGE_PATHS.shopFloor} element={<ShopFloorPage />} />
+        <Route path={PAGE_PATHS.numbers} element={<NumbersPage />} />
+        <Route path={PAGE_PATHS.quoteBuilder} element={<QuoteBuilderPage />} />
       </CustomRoutes>
       <Resource name="deals" {...deals} />
       <Resource name="contacts" {...contacts} />
       <Resource name="companies" {...companies} />
       <Resource name="contact_notes" />
       <Resource name="deal_notes" />
-      <Resource name="tasks" />
+      <Resource name="tasks" list={TasksPage} />
       <Resource name="orders" list={OrderList} />
       <Resource name="shopify_checkouts" list={CheckoutList} />
       <Resource name="appointments" list={AppointmentList} />
@@ -346,13 +351,10 @@ const MobileAdmin = (
           <Route path={OAuthConsentPage.path} element={<OAuthConsentPage />} />
         </CustomRoutes>
         <CustomRoutes>
+          <Route path={PAGE_PATHS.settings} element={<SettingsPageMobile />} />
+          <Route path={PAGE_PATHS.changelog} element={<ChangelogPage />} />
           <Route
-            path={SettingsPageMobile.path}
-            element={<SettingsPageMobile />}
-          />
-          <Route path={ChangelogPage.path} element={<ChangelogPage />} />
-          <Route
-            path={QuoteBuilderPage.path}
+            path={PAGE_PATHS.quoteBuilder}
             element={
               <MobilePage>
                 <QuoteBuilderPage />
@@ -360,7 +362,7 @@ const MobileAdmin = (
             }
           />
           <Route
-            path={CalendarPage.path}
+            path={PAGE_PATHS.calendar}
             element={
               <MobilePage>
                 <CalendarPage />
@@ -368,7 +370,7 @@ const MobileAdmin = (
             }
           />
           <Route
-            path={ShopFloorPage.path}
+            path={PAGE_PATHS.shopFloor}
             element={
               <MobilePage>
                 <ShopFloorPage />
@@ -376,7 +378,7 @@ const MobileAdmin = (
             }
           />
           <Route
-            path={NumbersPage.path}
+            path={PAGE_PATHS.numbers}
             element={
               <MobilePage>
                 <NumbersPage />

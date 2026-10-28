@@ -7,7 +7,12 @@ import type { Identifier } from "ra-core";
 import { customerLedger, type LedgerOrder } from "../numbers/customerModel";
 import { cleanPurchaseName } from "../shop/purchasesModel";
 import type { Appointment, Deal, Order } from "../types";
-import { BAY_SLOTS_PER_DAY, NOT_A_PRODUCT, percentChange } from "./metrics";
+import {
+  BAY_SLOTS_PER_DAY,
+  isSale,
+  NOT_A_PRODUCT,
+  percentChange,
+} from "./metrics";
 import { lineRevenueKind } from "./serviceKinds";
 import {
   addDays,
@@ -26,8 +31,6 @@ const DAY_MS = 86_400_000;
 const num = (value: unknown): number => Number(value) || 0;
 const net = (o: Pick<Order, "total" | "refunded_amount">): number =>
   Math.max(0, num(o.total) - num(o.refunded_amount));
-const isSale = (o: Pick<Order, "cancelled_at" | "is_deposit">): boolean =>
-  !o.cancelled_at && !o.is_deposit;
 
 /** A shop day near the middle of the period that starts at this key. */
 const noonOf = (key: string): Date =>
@@ -125,7 +128,9 @@ export const periodFigures = (
       inRange(a.start_at, range),
   ).length;
   return {
-    revenue: inPeriod.reduce((s, o) => s + net(o), 0),
+    // Deposits are credited against the final bill, so like Numbers they
+    // are not sales: revenue here is what Numbers calls collected
+    revenue: salesTotal,
     salesOrders: sales.length,
     averageTicket: sales.length ? salesTotal / sales.length : null,
     newCustomers,

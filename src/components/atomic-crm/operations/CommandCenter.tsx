@@ -1,4 +1,4 @@
-import { BellRing, CalendarCheck } from "lucide-react";
+import { CalendarCheck } from "lucide-react";
 import { useGetIdentity } from "ra-core";
 import { useMemo } from "react";
 import { Link, useSearchParams } from "react-router";
@@ -8,17 +8,15 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   activeAppointments,
   dayLoads,
-  needsAttention,
   openPipeline,
+  depositsHeld,
   orderRevenue,
 } from "./metrics";
+import { AttentionCard } from "./AttentionCard";
+import { needsAttention } from "./attentionModel";
+import { LoadError } from "./LoadError";
 import { MoversCard } from "./MoversCard";
-import {
-  AppointmentRow,
-  AttentionRow,
-  SectionTitle,
-  WeekStrip,
-} from "./OperationsWidgets";
+import { AppointmentRow, SectionTitle, WeekStrip } from "./OperationsWidgets";
 import { Reveal } from "./Reveal";
 import { RevenueMixCard } from "./RevenueMixCard";
 import { GoalsCard } from "./GoalsCard";
@@ -104,8 +102,9 @@ export const CommandCenter = ({
   const kpis = useMemo(() => {
     const revenue = orderRevenue(data.orders, range);
     const revenueBefore = orderRevenue(data.orders, previous);
+    const deposits = depositsHeld(data.orders, range);
     const pipeline = openPipeline(data.deals);
-    return { revenue, revenueBefore, pipeline };
+    return { revenue, revenueBefore, deposits, pipeline };
   }, [data.orders, data.deals, range, previous]);
 
   // Longer history for the trend lines, the revenue mix and the movers
@@ -277,6 +276,7 @@ export const CommandCenter = ({
       orders={data.orders}
       revenue={kpis.revenue}
       previousRevenue={kpis.revenueBefore}
+      deposits={kpis.deposits}
       range={range}
       previous={previous}
       now={now}
@@ -352,29 +352,24 @@ export const CommandCenter = ({
       </Card>
     </>
   );
-  const attentionCard = (
-    <>
-      <Card className="p-4 gap-0">
-        <SectionTitle icon={BellRing} hint="What costs money if it waits.">
-          Needs attention
-        </SectionTitle>
-        {attention.length ? (
-          <div className="divide-y divide-border">
-            {attention.map((item) => (
-              <AttentionRow key={item.kind} item={item} now={now} />
-            ))}
-          </div>
-        ) : (
-          <p className="text-sm text-muted-foreground py-2">
-            All caught up. New requests, waiting quotes, unpaid deposits and big
-            abandoned carts show up here.
-          </p>
-        )}
-      </Card>
-    </>
-  );
+  const attentionCard = <AttentionCard items={attention} now={now} />;
   const weekBlock = <WeekStrip loads={weekKeys} todayKey={todayKey} />;
   const floorCard = <ShopFloorSummary deals={data.deals} now={now} />;
+
+  const loadError = data.error ?? history.error;
+  if (loadError) {
+    return (
+      <div className="flex flex-col gap-4 mt-1">
+        {headerBlock}
+        <LoadError
+          onRetry={() => {
+            data.retry();
+            history.retry();
+          }}
+        />
+      </div>
+    );
+  }
 
   if (variant === "phone") {
     // Eric's phone: the money, the numbers under it, then what needs him.

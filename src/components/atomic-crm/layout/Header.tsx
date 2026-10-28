@@ -7,8 +7,7 @@ import { UserMenu } from "@/components/admin/user-menu";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 import { useConfigurationContext } from "../root/ConfigurationContext";
-import { ImportPage } from "../misc/ImportPage";
-import { ChangelogPage } from "../misc/ChangelogPage";
+import { PAGE_PATHS } from "../root/lazyPages";
 import { DesktopNavigation } from "./DesktopNavigation";
 
 const Header = () => {
@@ -121,7 +120,7 @@ const ImportFromJsonMenuItem = () => {
   }
   return (
     <DropdownMenuItem asChild onClick={userMenuContext.onClose}>
-      <Link to={ImportPage.path} className="flex items-center gap-2">
+      <Link to={PAGE_PATHS.import} className="flex items-center gap-2">
         <Import />
         {translate("crm.header.import_data")}
       </Link>
@@ -137,7 +136,7 @@ const ChangelogMenuItem = () => {
   }
   return (
     <DropdownMenuItem asChild onClick={userMenuContext.onClose}>
-      <Link to={ChangelogPage.path} className="flex items-center gap-2">
+      <Link to={PAGE_PATHS.changelog} className="flex items-center gap-2">
         <FileText />
         {translate("crm.changelog.title")}
       </Link>

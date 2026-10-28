@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 import { money } from "./format";
-import { cumulativeRevenue, percentChange } from "./metrics";
+import { cumulativeRevenue, isSale, percentChange } from "./metrics";
 import { RevenueChart } from "./RevenueChart";
 import { addDays, shopDayKey, type DateRange } from "./shopTime";
 import type { Order } from "../types";
@@ -24,6 +24,7 @@ export const RevenueCard = ({
   orders,
   revenue,
   previousRevenue,
+  deposits = 0,
   range,
   previous,
   now,
@@ -35,6 +36,8 @@ export const RevenueCard = ({
   orders: Order[];
   revenue: number;
   previousRevenue: number;
+  /** Booking deposits taken in the period, shown beside the sales. */
+  deposits?: number;
   range: DateRange;
   previous: DateRange;
   now: Date;
@@ -56,7 +59,7 @@ export const RevenueCard = ({
 
   const onDay = (key: string) =>
     orders
-      .filter((o) => !o.cancelled_at && shopDayKey(o.ordered_at) === key)
+      .filter((o) => isSale(o) && shopDayKey(o.ordered_at) === key)
       .reduce((sum, o) => sum + netOf(o), 0);
   const todayKey = shopDayKey(now);
   const today = onDay(todayKey);
@@ -97,6 +100,11 @@ export const RevenueCard = ({
             </span>{" "}
             {vs}
           </p>
+          {deposits > 0 ? (
+            <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
+              Plus {money(deposits)} in deposits held
+            </p>
+          ) : null}
         </div>
         <Link
           to="/numbers"

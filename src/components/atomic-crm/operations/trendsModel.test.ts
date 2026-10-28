@@ -103,7 +103,7 @@ describe("trends", () => {
     expect(current.averageTicket).toBe(239.5);
   });
 
-  it("keeps deposits in revenue but out of the order count and ticket", () => {
+  it("leaves deposits out of revenue, the order count and the ticket", () => {
     const orders = [
       order("2026-10-05T18:00:00Z", [["Standard Signature", 329]]),
       order("2026-10-06T18:00:00Z", [["$50 Secure Booking Deposit", 50]], {
@@ -115,7 +115,7 @@ describe("trends", () => {
       "month",
       NOW,
     );
-    expect(current.revenue).toBe(379);
+    expect(current.revenue).toBe(329);
     expect(current.salesOrders).toBe(1);
     expect(current.averageTicket).toBe(329);
   });

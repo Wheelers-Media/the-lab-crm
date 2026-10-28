@@ -4,7 +4,6 @@ import { ActionSheet } from "../misc/ActionSheet";
 import { SwipeRow } from "../misc/SwipeRow";
 import { Phone } from "lucide-react";
 import { useContactActions } from "./contactActions";
-import { difference, union } from "lodash";
 import {
   type Identifier,
   RecordContextProvider,
@@ -60,8 +59,8 @@ export const ContactListContent = () => {
 
         const isClickedItemSelected = selectedIds?.includes(id);
         const newSelectedIds = isClickedItemSelected
-          ? difference(selectedIds, idsBetweenSelections)
-          : union(selectedIds, idsBetweenSelections);
+          ? selectedIds.filter((id) => !idsBetweenSelections.includes(id))
+          : [...new Set([...selectedIds, ...idsBetweenSelections])];
 
         onSelect?.(newSelectedIds);
       } else {

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 import type { Deal } from "../types";
-import { DealCardContent } from "./DealCard";
+import { DealCardContent } from "./DealCardContent";
 import { getRelativeTimeString } from "./dealUtils";
 
 export const DealArchivedList = () => {

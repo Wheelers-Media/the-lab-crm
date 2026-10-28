@@ -44,7 +44,7 @@ import {
 
 import { MobileContent } from "../layout/MobileContent";
 import MobileHeader from "../layout/MobileHeader";
-import { ChangelogPage } from "../misc/ChangelogPage";
+import { PAGE_PATHS } from "../root/lazyPages";
 import ImageEditorField from "../misc/ImageEditorField";
 import type { CrmDataProvider } from "../providers/types";
 import { getSalesErrorNotification } from "../sales/salesErrorNotification";
@@ -537,7 +537,7 @@ const AboutSection = () => {
       <SectionLabel>{translate("crm.settings.about")}</SectionLabel>
       <ItemGroup className="rounded-lg border overflow-hidden">
         <Item asChild size="sm" className="cursor-pointer">
-          <Link to={ChangelogPage.path}>
+          <Link to={PAGE_PATHS.changelog}>
             <ItemContent>
               <ItemTitle className="font-normal">
                 {translate("crm.changelog.title")}

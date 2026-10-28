@@ -29,6 +29,10 @@ export const useTrendsData = (period: Period, now: Date) => {
     ledgerOrders: ledgerOrders.data ?? [],
     appointments: appointments.data ?? [],
     isPending: orders.isPending || ledgerOrders.isPending,
-    error: orders.error ?? ledgerOrders.error,
+    error: orders.error ?? ledgerOrders.error ?? appointments.error,
+    retry: () => {
+      for (const q of [orders, ledgerOrders, appointments])
+        if (q.error) q.refetch();
+    },
   };
 };

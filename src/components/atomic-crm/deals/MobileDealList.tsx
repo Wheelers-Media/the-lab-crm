@@ -17,7 +17,7 @@ import { ActionSheet, type SheetAction } from "../misc/ActionSheet";
 import { MobileContent } from "../layout/MobileContent";
 import { useConfigurationContext } from "../root/ConfigurationContext";
 import type { Deal } from "../types";
-import { DealCardContent } from "./DealCard";
+import { DealCardContent } from "./DealCardContent";
 import { DealCreate } from "./DealCreate";
 import { DealEdit } from "./DealEdit";
 import { DealShow } from "./DealShow";

@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useStore } from "ra-core";
 
+import type { AttentionSnoozes } from "../operations/attentionSnooze";
 import type { DealStage, LabeledValue, NoteStatus } from "../types";
 import { defaultConfiguration } from "./defaultConfiguration";
 
@@ -19,6 +20,8 @@ export interface ConfigurationContextValue {
   lightModeLogo: string;
   /** Monthly goals for the home screen's rings; unset means "suggest one". */
   targets?: MonthlyTargets;
+  /** Rows of Home's Needs attention card hidden for now, shared across devices. */
+  attentionSnoozed?: AttentionSnoozes;
 }
 
 export interface MonthlyTargets {

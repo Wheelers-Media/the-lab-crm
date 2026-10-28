@@ -143,6 +143,7 @@ export const DESKTOP_NAV: DesktopNavItem[] = [
   PAGES.calendar,
   PAGES.shopFloor,
   PAGES.jobs,
+  PAGES.tasks,
   { label: "Customers", pages: [PAGES.customers, PAGES.businesses] },
   { label: "Store", pages: [PAGES.orders, PAGES.carts, PAGES.packages] },
   PAGES.numbers,

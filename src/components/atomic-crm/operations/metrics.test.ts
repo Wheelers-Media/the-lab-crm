@@ -7,11 +7,11 @@ import {
   cumulativeRevenue,
   dayLoads,
   leadStats,
-  needsAttention,
   openPipeline,
   orderRevenue,
   percentChange,
 } from "./metrics";
+import { needsAttention } from "./attentionModel";
 import {
   addDays,
   mondayOf,
@@ -285,6 +285,44 @@ describe("needs attention", () => {
     ]);
     expect(items[0].amount).toBe(2640);
     expect(items[1].detail).toBe("Highlander");
+  });
+
+  it("counts requests, quotes and tasks older than 60 days as older, not as today's work", () => {
+    // Arrange: one of each from this month, one of each from last spring
+    const spring = "2026-04-01T16:00:00Z";
+    const items = needsAttention({
+      now: NOW,
+      checkouts: [],
+      appointments: [],
+      deals: [
+        deal({ stage: "intake" }),
+        deal({ stage: "intake", created_at: spring }),
+        deal({ stage: "quoted", stage_changed_at: "2026-10-01T16:00:00Z" }),
+        deal({ stage: "quoted", stage_changed_at: spring }),
+      ],
+      tasks: [
+        { due_date: "2026-10-08T16:00:00Z" },
+        { due_date: spring },
+      ] as Task[],
+    });
+
+    // Assert
+    expect(items.map((i) => [i.kind, i.count, i.older])).toEqual([
+      ["new-requests", 1, 1],
+      ["quotes-waiting", 1, 1],
+      ["overdue-tasks", 1, 1],
+    ]);
+  });
+
+  it("leaves a group out when everything in it is past the window", () => {
+    const items = needsAttention({
+      now: NOW,
+      checkouts: [],
+      appointments: [],
+      deals: [],
+      tasks: [{ due_date: "2026-04-01T16:00:00Z" }] as Task[],
+    });
+    expect(items).toEqual([]);
   });
 
   it("flags vehicles ready for pickup 2+ days and waiting on parts 5+ days, newest not yet", () => {

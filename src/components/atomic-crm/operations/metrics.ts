@@ -1,7 +1,6 @@
 // Numbers for the home dashboard, computed from plain records so they can be
 // tested without a database.
-import type { Appointment, Deal, Order, ShopifyCheckout, Task } from "../types";
-import { PARTS_NUDGE_DAYS, PICKUP_NUDGE_DAYS } from "../shopfloor/workStatus";
+import type { Appointment, Deal, Order, ShopifyCheckout } from "../types";
 import {
   type DateRange,
   formatShopDay,
@@ -41,14 +40,31 @@ export const bayLoad = (booked: number): BayLoad => {
 
 const DAY_MS = 86_400_000;
 
+/**
+ * A sale: not cancelled and not a booking deposit. Deposits are credited
+ * against the final bill, so counting them as well would count the job twice;
+ * Home, Goals and Numbers all use this one definition.
+ */
+export const isSale = (
+  o: Pick<Order, "cancelled_at" | "is_deposit">,
+): boolean => !o.cancelled_at && !o.is_deposit;
+
 const countedOrders = (orders: Order[], range: DateRange): Order[] =>
-  orders.filter((o) => !o.cancelled_at && inRange(o.ordered_at, range));
+  orders.filter((o) => isSale(o) && inRange(o.ordered_at, range));
 
 const netTotal = (o: Order): number =>
   Math.max(0, Number(o.total) - Number(o.refunded_amount ?? 0));
 
 export const orderRevenue = (orders: Order[], range: DateRange): number =>
   countedOrders(orders, range).reduce((sum, o) => sum + netTotal(o), 0);
+
+/** Booking deposits taken in the range: money held, not yet a sale. */
+export const depositsHeld = (orders: Order[], range: DateRange): number =>
+  orders
+    .filter(
+      (o) => !o.cancelled_at && o.is_deposit && inRange(o.ordered_at, range),
+    )
+    .reduce((sum, o) => sum + netTotal(o), 0);
 
 export interface RevenueLinePoint {
   key: string;
@@ -86,7 +102,7 @@ export const cumulativeRevenue = (
 ): RevenueLinePoint[] => {
   const step = size === "hour" ? HOUR_MS : DAY_MS;
   const to = Math.min(range.end.getTime(), now.getTime());
-  const sales = orders.filter((o) => !o.cancelled_at);
+  const sales = orders.filter(isSale);
   const between = (from: number, until: number): number =>
     sales.reduce((sum, o) => {
       const t = new Date(o.ordered_at).getTime();
@@ -197,139 +213,6 @@ export const dayLoads = (
       eric: day.filter((a) => a.resource === "eric").length,
     };
   });
-
-export type AttentionKind =
-  | "abandoned-cart"
-  | "quotes-waiting"
-  | "new-requests"
-  | "no-deposit"
-  | "pickups-waiting"
-  | "parts-waiting"
-  | "overdue-tasks";
-
-export interface AttentionItem {
-  kind: AttentionKind;
-  count: number;
-  amount?: number;
-  oldest?: string;
-  detail?: string;
-}
-
-export interface AttentionInput {
-  deals: Deal[];
-  appointments: Appointment[];
-  checkouts: ShopifyCheckout[];
-  tasks: Task[];
-  now?: Date;
-}
-
-/** What needs someone today, most urgent first. Empty groups are left out. */
-export const needsAttention = ({
-  deals,
-  appointments,
-  checkouts,
-  tasks,
-  now = new Date(),
-}: AttentionInput): AttentionItem[] => {
-  const t = now.getTime();
-  const items: AttentionItem[] = [];
-
-  const carts = checkouts.filter(
-    (c) =>
-      !c.completed_at &&
-      Number(c.total) >= BIG_CART_THRESHOLD &&
-      t - new Date(c.checkout_updated_at).getTime() > 3_600_000 &&
-      t - new Date(c.checkout_updated_at).getTime() < 14 * DAY_MS,
-  );
-  if (carts.length) {
-    items.push({
-      kind: "abandoned-cart",
-      count: carts.length,
-      amount: carts.reduce((s, c) => s + Number(c.total), 0),
-      oldest: carts.map((c) => c.checkout_updated_at).sort()[0],
-    });
-  }
-
-  const unpaid = activeAppointments(appointments).filter(
-    (a) =>
-      a.status === "booked" &&
-      !a.deposit_paid &&
-      new Date(a.start_at).getTime() > t,
-  );
-  if (unpaid.length) {
-    const next = [...unpaid].sort((a, b) =>
-      a.start_at.localeCompare(b.start_at),
-    )[0];
-    items.push({
-      kind: "no-deposit",
-      count: unpaid.length,
-      oldest: next.start_at,
-      detail: next.title,
-    });
-  }
-
-  const waitingFor = (status: "ready" | "waiting_parts", days: number) =>
-    deals.filter(
-      (d) =>
-        d.work_status === status &&
-        !d.archived_at &&
-        d.work_status_changed_at &&
-        t - new Date(d.work_status_changed_at).getTime() >= days * DAY_MS,
-    );
-  const pickups = waitingFor("ready", PICKUP_NUDGE_DAYS);
-  if (pickups.length) {
-    items.push({
-      kind: "pickups-waiting",
-      count: pickups.length,
-      oldest: pickups.map((d) => d.work_status_changed_at!).sort()[0],
-    });
-  }
-  const parts = waitingFor("waiting_parts", PARTS_NUDGE_DAYS);
-  if (parts.length) {
-    items.push({
-      kind: "parts-waiting",
-      count: parts.length,
-      oldest: parts.map((d) => d.work_status_changed_at!).sort()[0],
-    });
-  }
-
-  const intake = deals.filter((d) => d.stage === "intake" && !d.archived_at);
-  if (intake.length) {
-    items.push({
-      kind: "new-requests",
-      count: intake.length,
-      oldest: intake.map((d) => d.created_at).sort()[0],
-    });
-  }
-
-  const waiting = deals.filter(
-    (d) =>
-      d.stage === "quoted" &&
-      !d.archived_at &&
-      t - new Date(d.stage_changed_at ?? d.updated_at).getTime() >= 3 * DAY_MS,
-  );
-  if (waiting.length) {
-    items.push({
-      kind: "quotes-waiting",
-      count: waiting.length,
-      amount: waiting.reduce((s, d) => s + (Number(d.amount) || 0), 0),
-      oldest: waiting.map((d) => d.stage_changed_at ?? d.updated_at).sort()[0],
-    });
-  }
-
-  const overdue = tasks.filter(
-    (task) => !task.done_date && new Date(task.due_date).getTime() < t,
-  );
-  if (overdue.length) {
-    items.push({
-      kind: "overdue-tasks",
-      count: overdue.length,
-      oldest: overdue.map((task) => task.due_date).sort()[0],
-    });
-  }
-
-  return items;
-};
 
 export interface CartStats {
   started: number;
