@@ -566,11 +566,23 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/operations/useTrendsData.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/operations/useOperationsData.ts",
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/operations/trendsModel.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/operations/shopTime.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/operations/serviceKinds.ts",
           "type": "registry:component"
         },
         {
@@ -582,7 +594,27 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/operations/chartTheme.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/operations/TrendTiles.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/operations/Sparkline.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/operations/ShopifyMetrics.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/operations/RevenueMixCard.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/operations/RevenueChart.tsx",
           "type": "registry:component"
         },
         {
@@ -595,6 +627,10 @@
         },
         {
           "path": "src/components/atomic-crm/operations/OperationsWidgets.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/operations/MoversCard.tsx",
           "type": "registry:component"
         },
         {
@@ -894,6 +930,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/layout/navigation.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/layout/TopToolbar.tsx",
           "type": "registry:component"
         },
@@ -943,6 +983,10 @@
         },
         {
           "path": "src/components/atomic-crm/layout/FormToolbar.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/layout/DesktopNavigation.tsx",
           "type": "registry:component"
         },
         {
@@ -1098,10 +1142,6 @@
           "type": "registry:component"
         },
         {
-          "path": "src/components/atomic-crm/dashboard/DealsChart.tsx",
-          "type": "registry:component"
-        },
-        {
           "path": "src/components/atomic-crm/dashboard/DashboardStepper.tsx",
           "type": "registry:component"
         },
@@ -1114,7 +1154,15 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/contacts/useCustomerHistory.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/contacts/useContactImport.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/contacts/nextSaleModel.ts",
           "type": "registry:component"
         },
         {
@@ -1147,6 +1195,10 @@
         },
         {
           "path": "src/components/atomic-crm/contacts/ExportVCardButton.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/contacts/CustomerOverview.tsx",
           "type": "registry:component"
         },
         {
@@ -1207,6 +1259,10 @@
         },
         {
           "path": "src/components/atomic-crm/contacts/ContactAside.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/contacts/ContactAppointments.tsx",
           "type": "registry:component"
         },
         {

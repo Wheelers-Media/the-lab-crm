@@ -26,6 +26,16 @@ const LEDGER_COLUMNS = [
   "cancelled_at",
 ];
 
+/**
+ * Every order ever, but only the few columns customer history needs. Shared
+ * by Numbers and the home screen's trends, so the two share one download.
+ */
+export const useLedgerOrders = () =>
+  useAllRecords<LedgerOrder>("orders", {
+    columns: LEDGER_COLUMNS,
+    sort: { field: "ordered_at", order: "ASC" },
+  });
+
 /** Everything the Numbers screen reads, fetched once per period. */
 export const useNumbersData = (period: NumbersPeriod) => {
   const now = useMemo(() => new Date(), []);
@@ -37,11 +47,7 @@ export const useNumbersData = (period: NumbersPeriod) => {
     filter: { "ordered_at@gte": since },
     sort: { field: "ordered_at", order: "ASC" },
   });
-  // Every order ever, but only the few columns customer history needs
-  const ledgerOrders = useAllRecords<LedgerOrder>("orders", {
-    columns: LEDGER_COLUMNS,
-    sort: { field: "ordered_at", order: "ASC" },
-  });
+  const ledgerOrders = useLedgerOrders();
   const catalog = useAllRecords<Package>("packages", {
     filter: { "status@neq": "deleted" },
   });

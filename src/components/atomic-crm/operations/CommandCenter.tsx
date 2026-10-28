@@ -8,19 +8,21 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   activeAppointments,
   dayLoads,
-  leadStats,
   needsAttention,
   openPipeline,
   orderRevenue,
-  percentChange,
 } from "./metrics";
+import { MoversCard } from "./MoversCard";
 import {
   AppointmentRow,
   AttentionRow,
-  KpiTile,
   SectionTitle,
   WeekStrip,
 } from "./OperationsWidgets";
+import { RevenueMixCard } from "./RevenueMixCard";
+import { TrendTiles } from "./TrendTiles";
+import { movers, trends, weeklyMix } from "./trendsModel";
+import { useTrendsData } from "./useTrendsData";
 import {
   addDays,
   formatShopDay,
@@ -28,7 +30,7 @@ import {
   type Period,
   shopDayKey,
 } from "./shopTime";
-import { listLink, money } from "./format";
+
 import { ShopFloorSummary } from "../shopfloor/ShopFloorSummary";
 import { PipelineSnapshot } from "./PipelineSnapshot";
 import { RevenueCard } from "./RevenueCard";
@@ -42,6 +44,8 @@ const PERIODS: Array<{
   /** "last month" — the phrase inside a sentence */
   comparedWith: string;
   vs: string;
+  /** Plural of one step on the sparklines: "days", "weeks", "months". */
+  unit: string;
 }> = [
   {
     value: "today",
@@ -49,6 +53,7 @@ const PERIODS: Array<{
     thisPeriod: "today",
     comparedWith: "yesterday",
     vs: "vs yesterday",
+    unit: "days",
   },
   {
     value: "week",
@@ -56,6 +61,7 @@ const PERIODS: Array<{
     thisPeriod: "this week",
     comparedWith: "last week",
     vs: "vs last week",
+    unit: "weeks",
   },
   {
     value: "month",
@@ -63,6 +69,7 @@ const PERIODS: Array<{
     thisPeriod: "this month",
     comparedWith: "last month",
     vs: "vs last month",
+    unit: "months",
   },
 ];
 
@@ -98,11 +105,41 @@ export const CommandCenter = ({
   const kpis = useMemo(() => {
     const revenue = orderRevenue(data.orders, range);
     const revenueBefore = orderRevenue(data.orders, previous);
-    const leads = leadStats(data.deals, range);
-    const leadsBefore = leadStats(data.deals, previous);
     const pipeline = openPipeline(data.deals);
-    return { revenue, revenueBefore, leads, leadsBefore, pipeline };
+    return { revenue, revenueBefore, pipeline };
   }, [data.orders, data.deals, range, previous]);
+
+  // Longer history for the trend lines, the revenue mix and the movers
+  const history = useTrendsData(period, now);
+  const trend = useMemo(
+    () =>
+      trends(
+        {
+          orders: history.orders,
+          ledgerOrders: history.ledgerOrders,
+          deals: data.deals,
+          appointments: history.appointments,
+        },
+        period,
+        now,
+      ),
+    [
+      history.orders,
+      history.ledgerOrders,
+      history.appointments,
+      data.deals,
+      period,
+      now,
+    ],
+  );
+  const mix = useMemo(
+    () => weeklyMix(history.orders, now),
+    [history.orders, now],
+  );
+  const moving = useMemo(
+    () => movers(history.orders, range, previous),
+    [history.orders, range, previous],
+  );
 
   const today = useMemo(
     () =>
@@ -168,10 +205,6 @@ export const CommandCenter = ({
       </div>
     </>
   );
-  const inPeriod = (field: string) => ({
-    [`${field}@gte`]: range.start.toISOString(),
-    [`${field}@lt`]: range.end.toISOString(),
-  });
   const revenueCard = (
     <RevenueCard
       orders={data.orders}
@@ -186,32 +219,23 @@ export const CommandCenter = ({
       size={period === "today" ? "hour" : "day"}
     />
   );
-  const kpiBlock = (
-    <>
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-        <KpiTile
-          label="New leads"
-          to={listLink("deals", inPeriod("created_at"))}
-          value={String(kpis.leads.total)}
-          trend={percentChange(kpis.leads.total, kpis.leadsBefore.total)}
-          detail={`${kpis.leads.website} from the website`}
-        />
-        <KpiTile
-          label="Lead to booked"
-          to={listLink("deals", inPeriod("created_at"))}
-          value={
-            kpis.leads.conversion == null ? "-" : `${kpis.leads.conversion}%`
-          }
-          detail={`${kpis.leads.booked} of ${kpis.leads.total}`}
-        />
-        <KpiTile
-          label="Open pipeline"
-          to="/deals"
-          value={money(kpis.pipeline.amount)}
-          detail={`${kpis.pipeline.count} open jobs`}
-        />
-      </div>
-    </>
+  const trendBlock = (
+    <TrendTiles
+      trends={trend}
+      isPending={history.isPending || data.isPending}
+      vs={periodLabel.vs}
+      unit={periodLabel.unit}
+      pipeline={kpis.pipeline}
+    />
+  );
+  const mixCard = <RevenueMixCard weeks={mix} isPending={history.isPending} />;
+  const moversCard = (
+    <MoversCard
+      movers={moving}
+      isPending={history.isPending}
+      thisPeriod={periodLabel.thisPeriod}
+      comparedWith={periodLabel.comparedWith}
+    />
   );
   const todayCard = (
     <>
@@ -283,9 +307,11 @@ export const CommandCenter = ({
       <div className="flex flex-col gap-4 mt-1">
         {headerBlock}
         {revenueCard}
-        {kpiBlock}
+        {trendBlock}
         {attentionCard}
         {todayCard}
+        {mixCard}
+        {moversCard}
         {floorCard}
         <PipelineSnapshot deals={data.deals} />
         {weekBlock}
@@ -297,7 +323,11 @@ export const CommandCenter = ({
     <div className="flex flex-col gap-4 mt-1">
       {headerBlock}
       {revenueCard}
-      {kpiBlock}
+      {trendBlock}
+      <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-4">
+        {mixCard}
+        {moversCard}
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {todayCard}
         {attentionCard}
