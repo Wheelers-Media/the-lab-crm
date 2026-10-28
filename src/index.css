@@ -758,3 +758,18 @@ html {
     transition: none;
   }
 }
+
+/* Phone legibility floor: chart labels and captions written at 10-12px for a
+   desk are bumped a step on a phone, held at arm's length in a bright shop. */
+@media (max-width: 767px) {
+  .text-\[10px\] {
+    font-size: 11px;
+  }
+  .text-\[11px\] {
+    font-size: 12px;
+  }
+  .text-xs {
+    font-size: 0.8125rem;
+    line-height: 1.15rem;
+  }
+}

@@ -42,7 +42,12 @@ export const SectionTitle = ({
     <Icon className="w-5 h-5 text-muted-foreground shrink-0" />
     <div className="flex-1 min-w-0">
       <h2 className="text-lg font-semibold text-foreground">{children}</h2>
-      {hint ? <p className="text-xs text-muted-foreground/80">{hint}</p> : null}
+      {/* Hints help on a desk; on a phone they push the numbers down */}
+      {hint ? (
+        <p className="hidden text-xs text-muted-foreground/80 sm:block">
+          {hint}
+        </p>
+      ) : null}
     </div>
     {action ? (
       // Links like "Calendar" get a full 44pt tap target

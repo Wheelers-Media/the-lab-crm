@@ -21,7 +21,6 @@ import { type Drill, OrderDrillSheet } from "./OrderDrillSheet";
 import { type NumbersPeriod, NUMBERS_PERIODS } from "./periods";
 import { PipelineSection } from "./PipelineSection";
 import { ProductsSection } from "./ProductsSection";
-import { Reveal } from "../operations/Reveal";
 import { SalesSection } from "./SalesSection";
 import { type NumbersSection, SectionNav } from "./SectionNav";
 import { ShopSection } from "./ShopSection";
@@ -39,18 +38,8 @@ const SECTIONS: NumbersSection[] = [
   { id: "products", label: "Products" },
   { id: "customers", label: "Customers" },
   { id: "leads", label: "Leads" },
-  { id: "stock", label: "Stock and capacity" },
+  { id: "stock", label: "Stock" },
 ];
-
-/** A part of the screen: a clear heading the jump bar scrolls to. */
-const Heading = ({ id, children }: { id: string; children: string }) => (
-  <h2
-    id={id}
-    className="mt-8 scroll-mt-28 border-t border-border pt-5 text-2xl tracking-wide text-foreground first-of-type:mt-2"
-  >
-    {children}
-  </h2>
-);
 
 /**
  * The shop's numbers: sales, products, customers, leads, stock and capacity.
@@ -77,6 +66,11 @@ export const NumbersPage = () => {
     () => ({ source: sourceParam || null, device: deviceParam || null }),
     [sourceParam, deviceParam],
   );
+
+  const requestedSection = params.get("section");
+  const section = SECTIONS.some((x) => x.id === requestedSection)
+    ? requestedSection!
+    : "sales";
 
   const data = useNumbersData(period);
   const label = NUMBERS_PERIODS.find((p) => p.value === period)!;
@@ -109,8 +103,12 @@ export const NumbersPage = () => {
             Numbers
           </h1>
           <p className="text-sm text-muted-foreground">
-            {label.label}, {label.vs}. From Shopify orders, Shopify's traffic
-            reports and the CRM. Tap a figure, bar or row to dig in.
+            {label.label}, {label.vs}.
+            <span className="hidden sm:inline">
+              {" "}
+              From Shopify orders, Shopify's traffic reports and the CRM. Tap a
+              figure, bar or row to dig in.
+            </span>
           </p>
         </div>
         <ToggleGroup
@@ -166,86 +164,104 @@ export const NumbersPage = () => {
         </div>
       ) : (
         <>
-          <SectionNav sections={SECTIONS} />
-          <Heading id="sales">Sales</Heading>
-          <Reveal className="flex flex-col gap-4">
-            <SalesSection
-              orders={filtered}
-              breakdownOrders={data.orders}
-              ranges={data.ranges}
-              vs={label.vs}
-              metric={metric}
-              onMetric={(m) => setParam("metric", m === "netSales" ? null : m)}
-              segment={segment}
-              onSegment={pickSegment}
-              onDrill={setDrill}
-            />
-          </Reveal>
-          <Heading id="traffic">Traffic</Heading>
-          <Reveal className="flex flex-col gap-4">
-            <TrafficSection
-              traffic={data.traffic}
-              ranges={data.ranges}
-              vs={label.vs}
-              metric={trafficMetric}
-              onMetric={(m) => setParam("traffic", m === "sessions" ? null : m)}
-              filter={trafficFilter}
-              onSource={(key) =>
-                pickTraffic("source", trafficFilter.source, key)
-              }
-              onDevice={(key) =>
-                pickTraffic("device", trafficFilter.device, key)
-              }
-            />
-          </Reveal>
-          <Heading id="patterns">Patterns</Heading>
-          <Reveal className="flex flex-col gap-4">
-            <InsightsSection
-              orders={filtered}
-              ledgerOrders={data.ledgerOrders}
-              ranges={data.ranges}
-              period={period}
-              now={data.now}
-              segmentActive={segment != null}
-              onDrill={setDrill}
-            />
-          </Reveal>
-          <Heading id="products">Products</Heading>
-          <Reveal className="flex flex-col gap-4">
-            <ProductsSection
-              orders={filtered}
-              catalog={data.catalog}
-              ranges={data.ranges}
-            />
-          </Reveal>
-          <Heading id="customers">Customers</Heading>
-          <Reveal className="flex flex-col gap-4">
-            <CustomersSection
-              orders={data.ledgerOrders}
-              ranges={data.ranges}
-              now={data.now}
-            />
-          </Reveal>
-          <Heading id="leads">Leads and carts</Heading>
-          <Reveal className="flex flex-col gap-4">
-            <PipelineSection
-              deals={data.deals}
-              changes={data.changes}
-              checkouts={data.checkouts}
-              ranges={data.ranges}
-              now={data.now}
-            />
-          </Reveal>
-          <Heading id="stock">Stock and shop capacity</Heading>
-          <Reveal className="flex flex-col gap-4">
-            <ShopSection
-              catalog={data.catalog}
-              orders={data.orders}
-              appointments={data.appointments}
-              ranges={data.ranges}
-              now={data.now}
-            />
-          </Reveal>
+          <SectionNav
+            sections={SECTIONS}
+            current={section}
+            onPick={(id) => setParam("section", id === "sales" ? null : id)}
+          />
+          <h2 className="sr-only">
+            {SECTIONS.find((x) => x.id === section)!.label}
+          </h2>
+          {section === "sales" ? (
+            <div className="flex flex-col gap-4" role="tabpanel">
+              <SalesSection
+                orders={filtered}
+                breakdownOrders={data.orders}
+                ranges={data.ranges}
+                vs={label.vs}
+                metric={metric}
+                onMetric={(m) =>
+                  setParam("metric", m === "netSales" ? null : m)
+                }
+                segment={segment}
+                onSegment={pickSegment}
+                onDrill={setDrill}
+              />
+            </div>
+          ) : null}
+          {section === "traffic" ? (
+            <div className="flex flex-col gap-4" role="tabpanel">
+              <TrafficSection
+                traffic={data.traffic}
+                ranges={data.ranges}
+                vs={label.vs}
+                metric={trafficMetric}
+                onMetric={(m) =>
+                  setParam("traffic", m === "sessions" ? null : m)
+                }
+                filter={trafficFilter}
+                onSource={(key) =>
+                  pickTraffic("source", trafficFilter.source, key)
+                }
+                onDevice={(key) =>
+                  pickTraffic("device", trafficFilter.device, key)
+                }
+              />
+            </div>
+          ) : null}
+          {section === "patterns" ? (
+            <div className="flex flex-col gap-4" role="tabpanel">
+              <InsightsSection
+                orders={filtered}
+                ledgerOrders={data.ledgerOrders}
+                ranges={data.ranges}
+                period={period}
+                now={data.now}
+                segmentActive={segment != null}
+                onDrill={setDrill}
+              />
+            </div>
+          ) : null}
+          {section === "products" ? (
+            <div className="flex flex-col gap-4" role="tabpanel">
+              <ProductsSection
+                orders={filtered}
+                catalog={data.catalog}
+                ranges={data.ranges}
+              />
+            </div>
+          ) : null}
+          {section === "customers" ? (
+            <div className="flex flex-col gap-4" role="tabpanel">
+              <CustomersSection
+                orders={data.ledgerOrders}
+                ranges={data.ranges}
+                now={data.now}
+              />
+            </div>
+          ) : null}
+          {section === "leads" ? (
+            <div className="flex flex-col gap-4" role="tabpanel">
+              <PipelineSection
+                deals={data.deals}
+                changes={data.changes}
+                checkouts={data.checkouts}
+                ranges={data.ranges}
+                now={data.now}
+              />
+            </div>
+          ) : null}
+          {section === "stock" ? (
+            <div className="flex flex-col gap-4" role="tabpanel">
+              <ShopSection
+                catalog={data.catalog}
+                orders={data.orders}
+                appointments={data.appointments}
+                ranges={data.ranges}
+                now={data.now}
+              />
+            </div>
+          ) : null}
         </>
       )}
       <OrderDrillSheet drill={drill} onClose={() => setDrill(null)} />

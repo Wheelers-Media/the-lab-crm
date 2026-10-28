@@ -102,19 +102,27 @@ export const RevenueChart = ({
         </span>
       </div>
 
+      {/* The figures for the point under the finger; quiet until touched,
+          since the legend above already gives the totals */}
       <p
         className="mb-1 min-h-5 text-[11px] tabular-nums text-muted-foreground"
         aria-live="polite"
       >
-        <span className="text-foreground">{shown.label}</span>
-        {" · "}
-        {money(shown.value)}
-        <span className="text-muted-foreground"> this period, </span>
-        {money(shown.previous)}
-        <span className="text-muted-foreground">
-          {" "}
-          {lastPeriod.toLowerCase()}
-        </span>
+        {focused ? (
+          <>
+            <span className="text-foreground">{shown.label}</span>
+            {" · "}
+            {money(shown.value)}
+            <span className="text-muted-foreground"> this period, </span>
+            {money(shown.previous)}
+            <span className="text-muted-foreground">
+              {" "}
+              {lastPeriod.toLowerCase()}
+            </span>
+          </>
+        ) : (
+          <span className="sm:hidden">Touch the chart to read a day.</span>
+        )}
       </p>
 
       <div
@@ -219,7 +227,12 @@ export const RevenueChart = ({
       <div className="mt-1 flex text-[10px] text-muted-foreground">
         {points.map((p, i) => (
           <span key={p.key} className="flex-1 text-center">
-            {i % labelStep === 0 || i === points.length - 1 ? p.label : ""}
+            {(i % labelStep === 0 &&
+              // keep clear of the last label so the two never collide
+              points.length - 1 - i >= labelStep / 2) ||
+            i === points.length - 1
+              ? p.label
+              : ""}
           </span>
         ))}
       </div>

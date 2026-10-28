@@ -21,6 +21,9 @@ import {
 } from "./OperationsWidgets";
 import { Reveal } from "./Reveal";
 import { RevenueMixCard } from "./RevenueMixCard";
+import { GoalsCard } from "./GoalsCard";
+import { elapsedShare, goalProgress, monthlyTargets } from "./goalsModel";
+import { useConfigurationContext } from "../root/ConfigurationContext";
 import { TrendTiles } from "./TrendTiles";
 import { movers, trends, weeklyMix } from "./trendsModel";
 import { useTrendsData } from "./useTrendsData";
@@ -128,6 +131,73 @@ export const CommandCenter = ({
       now,
     ],
   );
+  // Last month's figures, for goals nobody has set yet
+  const config = useConfigurationContext();
+  const goals = useMemo(() => {
+    const lastMonth = trends(
+      {
+        orders: history.orders,
+        ledgerOrders: history.ledgerOrders,
+        deals: data.deals,
+        appointments: history.appointments,
+      },
+      "month",
+      now,
+      2,
+    ).series[0];
+    const monthly = monthlyTargets(config.targets, {
+      revenue: lastMonth.revenue,
+      orders: lastMonth.salesOrders,
+      newCustomers: lastMonth.newCustomers,
+    });
+    const elapsed = elapsedShare(range, now);
+    const current = trend.current;
+    return {
+      elapsed,
+      monthly: {
+        revenue: monthly.revenue.value,
+        orders: monthly.orders.value,
+        newCustomers: monthly.newCustomers.value,
+      },
+      list: [
+        goalProgress(
+          "revenue",
+          current.revenue,
+          monthly.revenue.value,
+          period,
+          elapsed,
+          monthly.revenue.suggested,
+        ),
+        goalProgress(
+          "orders",
+          current.salesOrders,
+          monthly.orders.value,
+          period,
+          elapsed,
+          monthly.orders.suggested,
+        ),
+        goalProgress(
+          "newCustomers",
+          current.newCustomers,
+          monthly.newCustomers.value,
+          period,
+          elapsed,
+          monthly.newCustomers.suggested,
+        ),
+      ],
+    };
+  }, [
+    history.orders,
+    history.ledgerOrders,
+    history.appointments,
+    data.deals,
+    config.targets,
+    range,
+    now,
+    period,
+    trend,
+  ]);
+
   const mix = useMemo(
     () => weeklyMix(history.orders, now),
     [history.orders, now],
@@ -170,7 +240,7 @@ export const CommandCenter = ({
 
   const headerBlock = (
     <>
-      <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
         <div>
           <p className="text-sm text-muted-foreground">
             {formatShopDay(todayKey, {
@@ -191,6 +261,7 @@ export const CommandCenter = ({
           value={period}
           onValueChange={(v) => v && setPeriod(v as Period)}
           aria-label="Period"
+          className="grid w-full grid-cols-3 sm:flex sm:w-auto"
         >
           {PERIODS.map((p) => (
             <ToggleGroupItem key={p.value} value={p.value} className="px-3">
@@ -221,6 +292,15 @@ export const CommandCenter = ({
       isPending={history.isPending || data.isPending}
       vs={periodLabel.vs}
       pipeline={kpis.pipeline}
+    />
+  );
+  const goalsCard = (
+    <GoalsCard
+      goals={goals.list}
+      monthly={goals.monthly}
+      elapsed={goals.elapsed}
+      periodLabel={periodLabel.thisPeriod}
+      isPending={history.isPending || data.isPending}
     />
   );
   const mixCard = <RevenueMixCard weeks={mix} isPending={history.isPending} />;
@@ -303,9 +383,10 @@ export const CommandCenter = ({
       <div className="flex flex-col gap-4 mt-1">
         {headerBlock}
         {revenueCard}
-        <Reveal>{trendBlock}</Reveal>
+        {goalsCard}
         <Reveal>{attentionCard}</Reveal>
         <Reveal>{todayCard}</Reveal>
+        <Reveal>{trendBlock}</Reveal>
         <Reveal>{mixCard}</Reveal>
         <Reveal>{moversCard}</Reveal>
         <Reveal>{floorCard}</Reveal>
@@ -320,7 +401,10 @@ export const CommandCenter = ({
   return (
     <div className="flex flex-col gap-4 mt-1">
       {headerBlock}
-      {revenueCard}
+      <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-4">
+        {revenueCard}
+        {goalsCard}
+      </div>
       <Reveal>{trendBlock}</Reveal>
       <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-4">
         <Reveal>{mixCard}</Reveal>

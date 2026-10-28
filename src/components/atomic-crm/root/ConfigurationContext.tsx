@@ -17,6 +17,14 @@ export interface ConfigurationContextValue {
   title: string;
   darkModeLogo: string;
   lightModeLogo: string;
+  /** Monthly goals for the home screen's rings; unset means "suggest one". */
+  targets?: MonthlyTargets;
+}
+
+export interface MonthlyTargets {
+  revenue?: number;
+  orders?: number;
+  newCustomers?: number;
 }
 
 export const useConfigurationContext = () => {

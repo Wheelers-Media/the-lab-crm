@@ -130,6 +130,8 @@ const transformFormValues = (data: Record<string, any>) => ({
     dealStages: ensureValues(data.dealStages),
     dealPipelineStatuses: data.dealPipelineStatuses,
     noteStatuses: ensureValues(data.noteStatuses),
+    // Goals are set from the home screen, not this form: carry them over
+    targets: data.targets,
   } as ConfigurationContextValue,
 });
 
@@ -172,6 +174,7 @@ const SettingsForm = () => {
       lightModeLogo: { src: config.lightModeLogo },
       darkModeLogo: { src: config.darkModeLogo },
       currency: config.currency,
+      targets: config.targets,
       companySectors: config.companySectors,
       dealCategories: config.dealCategories,
       taskTypes: config.taskTypes,

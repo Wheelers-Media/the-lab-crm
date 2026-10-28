@@ -1,6 +1,7 @@
 import { ArrowDown, ArrowUp, Download } from "lucide-react";
 import { type ReactNode, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -57,7 +58,11 @@ export const SectionCard = ({
     <div className="flex items-start justify-between gap-3">
       <div className="min-w-0">
         <h2 className="text-lg font-semibold text-foreground">{title}</h2>
-        {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
+        {hint ? (
+          <p className="hidden text-xs text-muted-foreground sm:block">
+            {hint}
+          </p>
+        ) : null}
       </div>
       {actions}
     </div>
@@ -75,6 +80,87 @@ interface SortState {
  * download, headers that sort, and (when `onRowClick` is given) rows that act
  * as buttons, for filtering the rest of the screen by that row.
  */
+/**
+ * A table read on a phone is a list, as in a native app: the name on the
+ * left, the headline figure on the right, the other columns as one quiet
+ * caption line underneath. No sideways scrolling to find a number.
+ */
+const PhoneRows = <T,>({
+  rows,
+  columns,
+  rowKey,
+  onRowClick,
+  isSelected,
+}: {
+  rows: T[];
+  columns: Array<Column<T>>;
+  rowKey: (row: T) => string | number;
+  onRowClick?: (row: T) => void;
+  isSelected?: (row: T) => boolean;
+}) => {
+  const [title, ...rest] = columns;
+  // The money column leads when there is one: it is what people scan for
+  const lead =
+    rest.find(
+      (c) => c.numeric && /spend|sales|revenue|value|total|\$/i.test(c.header),
+    ) ?? rest.find((c) => c.numeric);
+  const others = rest.filter((c) => c !== lead);
+  const show = (c: Column<T>, row: T) =>
+    c.display ? c.display(row) : String(c.value(row) ?? "");
+  return (
+    <ul className="-mx-4 divide-y divide-border border-y border-border">
+      {rows.map((row) => {
+        const selected = isSelected?.(row) ?? false;
+        const inner = (
+          <>
+            <span className="flex min-w-0 flex-1 flex-col">
+              <span className="truncate text-[15px] font-medium text-foreground">
+                {show(title, row)}
+              </span>
+              {others.length ? (
+                <span className="truncate text-[13px] text-muted-foreground">
+                  {others.map((c, i) => (
+                    <span key={c.header}>
+                      {i ? " · " : ""}
+                      {c.header} <span className="lab-num">{show(c, row)}</span>
+                    </span>
+                  ))}
+                </span>
+              ) : null}
+            </span>
+            {lead ? (
+              <span className="lab-num shrink-0 text-right text-[15px] font-semibold">
+                {show(lead, row)}
+              </span>
+            ) : null}
+          </>
+        );
+        return (
+          <li key={rowKey(row)}>
+            {onRowClick ? (
+              <button
+                type="button"
+                aria-pressed={selected}
+                onClick={() => onRowClick(row)}
+                className={cn(
+                  "flex min-h-12 w-full items-center gap-3 px-4 py-2 text-left active:bg-muted",
+                  selected && "bg-muted",
+                )}
+              >
+                {inner}
+              </button>
+            ) : (
+              <div className="flex min-h-12 items-center gap-3 px-4 py-2">
+                {inner}
+              </div>
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
+};
+
 export const StatTable = <T,>({
   rows,
   columns,
@@ -94,6 +180,7 @@ export const StatTable = <T,>({
   onRowClick?: (row: T) => void;
   isSelected?: (row: T) => boolean;
 }) => {
+  const isMobile = useIsMobile();
   const [all, setAll] = useState(false);
   const [sort, setSort] = useState<SortState | null>(null);
 
@@ -131,107 +218,118 @@ export const StatTable = <T,>({
   const shown = all ? sorted : sorted.slice(0, limit);
   return (
     <div className="flex flex-col gap-2">
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-xs text-muted-foreground">
-              {columns.map((c) => {
-                const active = sort?.header === c.header;
-                return (
-                  <th
-                    key={c.header}
-                    aria-sort={
-                      active
-                        ? sort.dir === "asc"
-                          ? "ascending"
-                          : "descending"
-                        : undefined
-                    }
-                    className={cn(
-                      "py-1 pr-3 font-medium whitespace-nowrap",
-                      c.numeric ? "text-right" : "text-left",
-                      // The name column stays put while the numbers scroll
-                      columns.indexOf(c) === 0 && "sticky left-0 z-[1] bg-card",
-                    )}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => setSort(nextSort(c))}
+      {isMobile ? (
+        <PhoneRows
+          rows={shown}
+          columns={columns}
+          rowKey={rowKey}
+          onRowClick={onRowClick}
+          isSelected={isSelected}
+        />
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-xs text-muted-foreground">
+                {columns.map((c) => {
+                  const active = sort?.header === c.header;
+                  return (
+                    <th
+                      key={c.header}
+                      aria-sort={
+                        active
+                          ? sort.dir === "asc"
+                            ? "ascending"
+                            : "descending"
+                          : undefined
+                      }
                       className={cn(
-                        "inline-flex items-center gap-1 rounded-sm hover:text-foreground",
-                        active && "text-foreground",
+                        "py-1 pr-3 font-medium whitespace-nowrap",
+                        c.numeric ? "text-right" : "text-left",
+                        // The name column stays put while the numbers scroll
+                        columns.indexOf(c) === 0 &&
+                          "sticky left-0 z-[1] bg-card",
                       )}
                     >
-                      {c.header}
-                      {active ? (
-                        sort.dir === "asc" ? (
-                          <ArrowUp className="size-3" />
-                        ) : (
-                          <ArrowDown className="size-3" />
-                        )
-                      ) : null}
-                    </button>
-                  </th>
-                );
-              })}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {shown.map((row) => {
-              const selected = isSelected?.(row) ?? false;
-              return (
-                <tr
-                  key={rowKey(row)}
-                  onClick={onRowClick ? () => onRowClick(row) : undefined}
-                  className={cn(
-                    onRowClick && "cursor-pointer hover:bg-muted/60",
-                    selected && "bg-muted",
-                  )}
-                >
-                  {columns.map((c, i) => {
-                    const content = c.display
-                      ? c.display(row)
-                      : String(c.value(row) ?? "");
-                    return (
-                      <td
-                        key={c.header}
-                        title={
-                          c.numeric ? undefined : String(c.value(row) ?? "")
-                        }
+                      <button
+                        type="button"
+                        onClick={() => setSort(nextSort(c))}
                         className={cn(
-                          "py-1.5 pr-3",
-                          c.numeric
-                            ? "text-right lab-num whitespace-nowrap"
-                            : "max-w-[18rem] truncate",
-                          i === 0 &&
-                            "sticky left-0 z-[1] max-w-[11rem] bg-card sm:max-w-[18rem]",
-                          i === 0 && selected && "bg-muted",
+                          "inline-flex items-center gap-1 rounded-sm hover:text-foreground",
+                          active && "text-foreground",
                         )}
                       >
-                        {onRowClick && i === 0 ? (
-                          <button
-                            type="button"
-                            aria-pressed={selected}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onRowClick(row);
-                            }}
-                            className="max-w-full truncate rounded-sm text-left underline-offset-4 hover:underline"
-                          >
-                            {content}
-                          </button>
-                        ) : (
-                          content
-                        )}
-                      </td>
-                    );
-                  })}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+                        {c.header}
+                        {active ? (
+                          sort.dir === "asc" ? (
+                            <ArrowUp className="size-3" />
+                          ) : (
+                            <ArrowDown className="size-3" />
+                          )
+                        ) : null}
+                      </button>
+                    </th>
+                  );
+                })}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {shown.map((row) => {
+                const selected = isSelected?.(row) ?? false;
+                return (
+                  <tr
+                    key={rowKey(row)}
+                    onClick={onRowClick ? () => onRowClick(row) : undefined}
+                    className={cn(
+                      onRowClick && "cursor-pointer hover:bg-muted/60",
+                      selected && "bg-muted",
+                    )}
+                  >
+                    {columns.map((c, i) => {
+                      const content = c.display
+                        ? c.display(row)
+                        : String(c.value(row) ?? "");
+                      return (
+                        <td
+                          key={c.header}
+                          title={
+                            c.numeric ? undefined : String(c.value(row) ?? "")
+                          }
+                          className={cn(
+                            "py-1.5 pr-3",
+                            c.numeric
+                              ? "text-right lab-num whitespace-nowrap"
+                              : "max-w-[18rem] truncate",
+                            i === 0 &&
+                              "sticky left-0 z-[1] max-w-[11rem] bg-card sm:max-w-[18rem]",
+                            i === 0 && selected && "bg-muted",
+                          )}
+                        >
+                          {onRowClick && i === 0 ? (
+                            <button
+                              type="button"
+                              aria-pressed={selected}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onRowClick(row);
+                              }}
+                              className="max-w-full truncate rounded-sm text-left underline-offset-4 hover:underline"
+                            >
+                              {content}
+                            </button>
+                          ) : (
+                            content
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
       <div className="flex items-center justify-between">
         {rows.length > limit ? (
           <Button variant="ghost" size="sm" onClick={() => setAll(!all)}>
