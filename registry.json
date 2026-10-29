@@ -1422,6 +1422,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/calendar/bookingJob.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/calendar/appointmentSource.ts",
           "type": "registry:component"
         },
@@ -1431,6 +1435,10 @@
         },
         {
           "path": "src/components/atomic-crm/calendar/CalendarPage.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/calendar/BookingProducts.tsx",
           "type": "registry:component"
         },
         {
