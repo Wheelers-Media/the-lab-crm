@@ -10,6 +10,7 @@ import {
   phoneFrom,
   plainText,
   planSync,
+  productTitles,
   rowFromEvent,
   signedAssertion,
   type SyncAppointment,
@@ -395,5 +396,32 @@ describe("eventFromAppointment", () => {
       extendedProperties: { private: { crmAppointmentId: "5" } },
       start: { timeZone: "America/Dawson_Creek" },
     });
+  });
+});
+
+describe("productTitles", () => {
+  it("lists what is booked in, without labour, for the event description", () => {
+    const deal = {
+      packages: [
+        { title: "Ceramic tint, crew cab", quantity: 1, price: 450 },
+        { title: "Labour", quantity: 2, price: 125, kind: "labour" },
+        { title: "Light bar", quantity: 2, price: 200, kind: "part" },
+      ],
+    };
+
+    expect(productTitles(deal)).toEqual([
+      "Ceramic tint, crew cab",
+      "2 x Light bar",
+    ]);
+    expect(productTitles([deal])).toHaveLength(2);
+    expect(productTitles(null)).toEqual([]);
+  });
+
+  it("puts the products in the Google event under the vehicle", () => {
+    const body = eventFromAppointment(
+      appointment({ vehicle: "2019 F-150", products: ["Light bar"] }),
+    );
+
+    expect(body.description).toBe("2019 F-150\nProducts: Light bar");
   });
 });

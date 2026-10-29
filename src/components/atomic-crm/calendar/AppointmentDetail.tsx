@@ -7,7 +7,7 @@ import {
   Phone,
   UserX,
 } from "lucide-react";
-import { useNotify, useUpdate } from "ra-core";
+import { type Identifier, useGetOne, useNotify, useUpdate } from "ra-core";
 import type { ComponentType, ReactNode } from "react";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
@@ -34,7 +34,8 @@ import {
   formatShopTime,
   shopDayKey,
 } from "../operations/shopTime";
-import type { Appointment, Contact } from "../types";
+import { quoteTotals } from "../packages/quoteModel";
+import type { Appointment, Contact, Deal } from "../types";
 import { appointmentSource } from "./appointmentSource";
 
 const Row = ({
@@ -105,6 +106,55 @@ const CustomerBlock = ({ contact }: { contact?: Contact }) => {
         {contactName(contact)}
       </Link>
       {rows}
+    </div>
+  );
+};
+
+const money = (n: number) =>
+  n.toLocaleString("en-CA", { style: "currency", currency: "CAD" });
+
+/** What is booked in: the lines on the booking's job, with a way to its quote. */
+const BookedProducts = ({ dealId }: { dealId: Identifier }) => {
+  const { data: deal } = useGetOne<Deal>("deals", { id: dealId });
+  const lines = deal?.packages ?? [];
+  if (!deal) return null;
+  return (
+    <div>
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <p className="text-xs font-medium text-muted-foreground">Products</p>
+        <Link
+          to={`/quotes/${deal.id}`}
+          className="text-xs text-[var(--lab-blue-text)] hover:underline"
+        >
+          {lines.length ? "Open quote" : "Add products"}
+        </Link>
+      </div>
+      {lines.length ? (
+        <ul className="flex flex-col gap-1 rounded-md bg-muted/50 p-2 text-sm">
+          {lines.map((line, i) => (
+            <li
+              key={`${line.package_id ?? "custom"}-${i}`}
+              className="flex gap-2"
+            >
+              <span className="min-w-0 flex-1">
+                {line.quantity > 1 ? `${line.quantity} x ` : ""}
+                {line.title}
+              </span>
+              <span className="lab-num shrink-0">
+                {money(line.price * line.quantity)}
+              </span>
+            </li>
+          ))}
+          <li className="flex justify-between border-t border-border pt-1 font-medium">
+            <span>Total before tax</span>
+            <span className="lab-num">{money(quoteTotals(lines).total)}</span>
+          </li>
+        </ul>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          No products on the job yet.
+        </p>
+      )}
     </div>
   );
 };
@@ -214,6 +264,10 @@ export const AppointmentDetail = ({
             <Row icon={Car}>
               <span className="font-medium">{appointment.vehicle}</span>
             </Row>
+          ) : null}
+
+          {appointment.deal_id != null ? (
+            <BookedProducts dealId={appointment.deal_id} />
           ) : null}
 
           {appointment.notes ? (

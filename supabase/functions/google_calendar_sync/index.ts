@@ -42,6 +42,7 @@ import {
   parseServiceAccount,
   phoneFrom,
   planSync,
+  productTitles,
   type Resource,
   type ServiceAccount,
   signedAssertion,
@@ -217,13 +218,19 @@ const handle = async () => {
     const { data: rows, error: readError } = await supabaseAdmin
       .from("appointments")
       .select(
-        "id, contact_id, external_id, source, resource, title, start_at, end_at, status, vehicle, notes, updated_at",
+        "id, contact_id, external_id, source, resource, title, start_at, end_at, status, vehicle, notes, updated_at, deal:deals(packages)",
       )
       .gte("start_at", timeMin)
       .lt("start_at", timeMax)
       .limit(2000);
     if (readError) throw new Error(`read appointments: ${readError.message}`);
-    const appointments = (rows ?? []) as SyncAppointment[];
+    const appointments = (rows ?? []).map(
+      ({ deal, ...row }) =>
+        ({
+          ...row,
+          products: productTitles(deal),
+        }) as SyncAppointment,
+    );
 
     const plan = planSync(loaded, appointments, now);
     // Never send to a calendar that could not be read

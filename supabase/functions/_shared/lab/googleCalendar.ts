@@ -262,15 +262,41 @@ export type SyncAppointment = {
   vehicle: string | null;
   notes: string | null;
   updated_at: string;
+  /** What is booked in, from the job's quote, for the event description. */
+  products?: string[];
 };
 
 /** The Google event body for a CRM appointment. */
+/**
+ * The product names on a booking's job, from the embedded `deal:deals(packages)`
+ * read. Labour lines are left out: the event says what is being installed.
+ */
+export const productTitles = (deal: unknown): string[] => {
+  const one = Array.isArray(deal) ? deal[0] : deal;
+  const packages = (one as { packages?: unknown } | null)?.packages;
+  if (!Array.isArray(packages)) return [];
+  return packages
+    .filter(
+      (l): l is { title: string; kind?: string; quantity?: number } =>
+        typeof l?.title === "string" &&
+        l.title.trim() !== "" &&
+        l.kind !== "labour",
+    )
+    .map((l) =>
+      (l.quantity ?? 1) > 1
+        ? `${l.quantity} x ${l.title.trim()}`
+        : l.title.trim(),
+    )
+    .slice(0, 12);
+};
+
 export const eventFromAppointment = (
   a: SyncAppointment,
   crmUrl?: string,
 ): Record<string, unknown> => {
   const lines = [
     a.vehicle ? a.vehicle : null,
+    a.products?.length ? `Products: ${a.products.join(", ")}` : null,
     a.notes ? a.notes : null,
     crmUrl ? `CRM: ${crmUrl}` : null,
   ].filter(Boolean);

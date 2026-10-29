@@ -114,7 +114,10 @@ export const QuoteParts = ({
   reason,
   engines,
   onPickEngine,
+  heading = "Add parts",
 }: {
+  /** The section's title; a booking adds services as well as parts. */
+  heading?: string;
   catalog: Package[];
   suggestions: Package[];
   ctx: QuoteContext;
@@ -141,7 +144,7 @@ export const QuoteParts = ({
     <section className="flex flex-col gap-4" aria-labelledby="quote-parts">
       <div className="flex items-baseline justify-between gap-3">
         <h2 id="quote-parts" className="text-base font-semibold">
-          Add parts
+          {heading}
         </h2>
         <span className="text-right text-xs text-muted-foreground">
           {reason}

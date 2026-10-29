@@ -3,7 +3,10 @@ import {
   CreateBase,
   Form,
   type Identifier,
+  type RaRecord,
   required,
+  useDataProvider,
+  useGetIdentity,
   useNotify,
 } from "ra-core";
 import { useState } from "react";
@@ -25,6 +28,15 @@ import {
 } from "@/components/ui/dialog";
 
 import { contactOptionText } from "../misc/ContactOption";
+import type {
+  Appointment,
+  Contact,
+  Deal,
+  DealPackageLine,
+  Vehicle,
+} from "../types";
+import { jobPatchForBooking, newJobForBooking } from "./bookingJob";
+import { BookingProducts, NEW_JOB } from "./BookingProducts";
 import { type AppointmentForm, toAppointment } from "./toAppointment";
 
 // Times on the shop clock, 7:00 to 18:00 every half hour
@@ -49,6 +61,14 @@ const RESOURCE_CHOICES = [
   { id: "eric", name: "Eric (tint, lighting, tuning, installs)" },
 ];
 
+/** Products are saved on the customer's job, so they need a customer. */
+const validateBooking = (values: Record<string, unknown>) =>
+  Array.isArray(values.packages) &&
+  values.packages.length > 0 &&
+  values.contact_id == null
+    ? { contact_id: "Pick the customer: products are saved on their job" }
+    : {};
+
 export const AddAppointment = ({ defaultDay }: { defaultDay: string }) => {
   const [open, setOpen] = useState(false);
   return (
@@ -72,7 +92,14 @@ export interface AppointmentDefaults {
   title?: string;
   vehicle?: string | null;
   resource?: "detailing-bay" | "eric";
+  /** The job this booking is for, when opened from one. */
+  deal_id?: Identifier;
 }
+
+type BookingForm = AppointmentForm & {
+  packages?: DealPackageLine[];
+  job_id?: string;
+};
 
 /**
  * The booking form on its own, so a customer's profile can open it with the
@@ -89,6 +116,62 @@ export const AppointmentCreateDialog = ({
 }) => {
   const notify = useNotify();
   const setOpen = onOpenChange;
+  const dataProvider = useDataProvider();
+  const { identity } = useGetIdentity();
+
+  /**
+   * Products go on the customer's job before the booking is saved, so the
+   * booking can point at that job. Without products the booking saves as
+   * before and the pipeline links it to a job on its own.
+   */
+  const transform = async (values: BookingForm) => {
+    const appointment = toAppointment(values);
+    const lines = values.packages ?? [];
+    if (!lines.length || values.contact_id == null) {
+      return values.job_id && values.job_id !== NEW_JOB
+        ? { ...appointment, deal_id: values.job_id }
+        : appointment;
+    }
+    try {
+      if (values.job_id && values.job_id !== NEW_JOB) {
+        const { data: job } = await dataProvider.getOne<Deal>("deals", {
+          id: values.job_id,
+        });
+        await dataProvider.update<Deal>("deals", {
+          id: job.id,
+          data: jobPatchForBooking(job, lines),
+          previousData: job,
+        });
+        return { ...appointment, deal_id: job.id };
+      }
+      const [{ data: contact }, { data: vehicles }] = await Promise.all([
+        dataProvider.getOne<Contact>("contacts", { id: values.contact_id }),
+        dataProvider.getList<Vehicle>("vehicles", {
+          filter: { contact_id: values.contact_id },
+          sort: { field: "is_primary", order: "DESC" },
+          pagination: { page: 1, perPage: 1 },
+        }),
+      ]);
+      const { data: job } = await dataProvider.create<Deal>("deals", {
+        data: newJobForBooking({
+          title: values.title,
+          contactId: values.contact_id,
+          companyId: contact.company_id,
+          vehicleId: vehicles[0]?.id,
+          salesId: identity?.id,
+          day: values.day,
+          lines,
+        }),
+      });
+      return { ...appointment, deal_id: job.id };
+    } catch (error) {
+      notify("Could not save the products on the job. Try again.", {
+        type: "error",
+      });
+      throw error;
+    }
+  };
+
   return (
     <>
       <CreateBase
@@ -102,19 +185,26 @@ export const AppointmentCreateDialog = ({
           contact_id: defaults.contact_id,
           title: defaults.title,
           vehicle: defaults.vehicle ?? undefined,
+          packages: [],
+          job_id:
+            defaults.deal_id != null ? String(defaults.deal_id) : undefined,
         }}
-        transform={(values: AppointmentForm) => toAppointment(values)}
+        transform={transform}
         redirect={false}
         mutationOptions={{
-          onSuccess: () => {
+          onSuccess: (booking: RaRecord) => {
             setOpen(false);
-            notify("Appointment added");
+            notify(
+              (booking as Partial<Appointment>).deal_id != null
+                ? "Appointment added, products saved on the job"
+                : "Appointment added",
+            );
           },
         }}
       >
         <Dialog open={open} onOpenChange={setOpen}>
-          <DialogContent className="lg:max-w-xl overflow-y-auto max-h-9/10 top-1/20 translate-y-0">
-            <Form className="flex flex-col gap-4">
+          <DialogContent className="lg:max-w-2xl overflow-y-auto max-h-9/10 top-1/20 translate-y-0">
+            <Form className="flex flex-col gap-4" validate={validateBooking}>
               <DialogHeader>
                 <DialogTitle>Add appointment</DialogTitle>
                 <DialogDescription>
@@ -172,6 +262,7 @@ export const AppointmentCreateDialog = ({
                   helperText={false}
                 />
               </div>
+              <BookingProducts />
               <BooleanInput source="deposit_paid" label="$50 deposit paid" />
               <TextInput
                 source="notes"
