@@ -430,8 +430,18 @@ export const planSync = (
       plan.creates.push(row);
       continue;
     }
-    // An appointment that began in Google: Google is the source of truth
-    if (known.status === "cancelled") continue;
+    // An appointment that began in Google: Google is the source of truth,
+    // except for a cancel made in the CRM after the event's last edit, which
+    // takes the event off the calendar too
+    if (known.status === "cancelled") {
+      if (Date.parse(known.updated_at) > Date.parse(event.updated ?? ""))
+        plan.pushDeletes.push({
+          appointment: known,
+          eventId: event.id,
+          resource,
+        });
+      continue;
+    }
     if (
       known.title !== row.title ||
       !sameInstant(known.start_at, row.startAt) ||

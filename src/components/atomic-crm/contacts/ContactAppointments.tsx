@@ -5,6 +5,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 import { AppointmentDetail } from "../calendar/AppointmentDetail";
+import { useAppointmentActions } from "../calendar/useAppointmentActions";
+import { ActionRow } from "../misc/ActionRow";
 import { DepositChip, ResourceChip } from "../operations/OperationsWidgets";
 import {
   formatShopDay,
@@ -31,45 +33,59 @@ const Row = ({
   const [open, setOpen] = useState(false);
   const day = shopDayKey(appointment.start_at);
   const status = STATUS[appointment.status];
+  const { actions, swipeLeft, swipeRight } = useAppointmentActions({
+    appointment,
+    contact,
+    onOpen: () => setOpen(true),
+  });
   return (
     <li>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className={cn(
-          "flex w-full items-center gap-3 py-2.5 min-h-12 text-left transition-colors hover:bg-muted/50 rounded-md -mx-2 px-2",
-          (appointment.status === "cancelled" ||
-            appointment.status === "no_show") &&
-            "opacity-70",
-        )}
+      <ActionRow
+        title={appointment.title}
+        subtitle={`${formatShopDay(day, { weekday: "short", month: "short", day: "numeric" })}, ${formatShopTime(appointment.start_at)}`}
+        actions={actions}
+        swipeLeft={swipeLeft}
+        swipeRight={swipeRight}
+        className="rounded-md"
       >
-        <span className="grid w-11 shrink-0 place-items-center rounded-md bg-muted py-1 text-center leading-none">
-          <span className="text-[0.625rem] uppercase tracking-wider text-muted-foreground">
-            {formatShopDay(day, { month: "short" })}
-          </span>
-          <span className="mt-0.5 text-base font-semibold tabular-nums">
-            {formatShopDay(day, { day: "numeric" })}
-          </span>
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-medium">
-            {appointment.title}
-          </span>
-          <span className="block truncate text-xs text-muted-foreground">
-            {formatShopDay(day, { weekday: "short", year: "numeric" })}{" "}
-            {formatShopTime(appointment.start_at)}
-            {appointment.vehicle ? ` · ${appointment.vehicle}` : ""}
-          </span>
-        </span>
-        <span className="flex shrink-0 flex-col items-end gap-1">
-          <ResourceChip resource={appointment.resource} />
-          {status ? (
-            <span className={cn("lab-chip", status[1])}>{status[0]}</span>
-          ) : (
-            <DepositChip appointment={appointment} />
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className={cn(
+            "flex w-full items-center gap-3 py-2.5 min-h-12 text-left transition-colors hover:bg-muted/50 rounded-md px-2",
+            (appointment.status === "cancelled" ||
+              appointment.status === "no_show") &&
+              "opacity-70",
           )}
-        </span>
-      </button>
+        >
+          <span className="grid w-11 shrink-0 place-items-center rounded-md bg-muted py-1 text-center leading-none">
+            <span className="text-[0.625rem] uppercase tracking-wider text-muted-foreground">
+              {formatShopDay(day, { month: "short" })}
+            </span>
+            <span className="mt-0.5 text-base font-semibold tabular-nums">
+              {formatShopDay(day, { day: "numeric" })}
+            </span>
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-medium">
+              {appointment.title}
+            </span>
+            <span className="block truncate text-xs text-muted-foreground">
+              {formatShopDay(day, { weekday: "short", year: "numeric" })}{" "}
+              {formatShopTime(appointment.start_at)}
+              {appointment.vehicle ? ` · ${appointment.vehicle}` : ""}
+            </span>
+          </span>
+          <span className="flex shrink-0 flex-col items-end gap-1">
+            <ResourceChip resource={appointment.resource} />
+            {status ? (
+              <span className={cn("lab-chip", status[1])}>{status[0]}</span>
+            ) : (
+              <DepositChip appointment={appointment} />
+            )}
+          </span>
+        </button>
+      </ActionRow>
       {open ? (
         <AppointmentDetail
           appointment={appointment}

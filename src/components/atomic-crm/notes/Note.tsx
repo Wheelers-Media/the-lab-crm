@@ -1,9 +1,7 @@
 import { CircleX, Edit, Save, Trash2 } from "lucide-react";
 import {
   Form,
-  useDelete,
   useGetIdentity,
-  useNotify,
   useResourceContext,
   useTranslate,
   useUpdate,
@@ -27,6 +25,8 @@ import { Status } from "../misc/Status";
 import type { ContactNote, DealNote } from "../types";
 import { NoteAttachments } from "./NoteAttachments";
 import { NoteInputs } from "./NoteInputs";
+import { useNoteActions } from "./useNoteActions";
+import { ActionRow } from "../misc/ActionRow";
 import { useGetSalesName } from "../sales/useGetSalesName";
 
 export const Note = ({
@@ -43,7 +43,6 @@ export const Note = ({
   const [isTruncated, setTruncated] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const resource = useResourceContext();
-  const notify = useNotify();
   const translate = useTranslate();
   const { identity } = useGetIdentity();
   const isCurrentUser = note.sales_id === identity?.id;
@@ -61,26 +60,16 @@ export const Note = ({
 
   const [update, { isPending }] = useUpdate();
 
-  const [deleteNote] = useDelete(resource, undefined, {
-    mutationMode: "undoable",
-    onSuccess: () => {
-      notify("resources.notes.deleted", {
-        type: "info",
-        undoable: true,
-        messageArgs: {
-          _: "Note deleted",
-        },
-      });
-    },
-  });
-
-  const handleDelete = () => {
-    deleteNote(resource, { id: note.id, previousData: note });
-  };
-
   const handleEnterEditMode = () => {
     setEditing(!isEditing);
   };
+
+  const { actions, swipeLeft } = useNoteActions({
+    note,
+    resource: resource ?? "contact_notes",
+    onEdit: () => setEditing(true),
+  });
+  const handleDelete = swipeLeft.onTrigger;
 
   const handleCancelEdit = () => {
     setEditing(false);
@@ -218,5 +207,16 @@ export const Note = ({
     </div>
   );
 
-  return content;
+  // Editing is a form: no hold menu or swipe while typing in it
+  if (isEditing) return content;
+  return (
+    <ActionRow
+      title={note.text?.replace(/\s+/g, " ").trim().slice(0, 80) || "Note"}
+      actions={actions}
+      swipeLeft={swipeLeft}
+      className="rounded-md"
+    >
+      {content}
+    </ActionRow>
+  );
 };

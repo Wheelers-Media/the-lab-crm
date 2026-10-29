@@ -1,11 +1,21 @@
-import { Wrench } from "lucide-react";
+import {
+  ArrowRight,
+  CarFront,
+  CircleSlash,
+  KanbanSquare,
+  UserRound,
+  Wrench,
+} from "lucide-react";
 import { useGetList, useGetMany } from "ra-core";
 import { useMemo } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
+import { reachActions } from "../contacts/reach";
+import { ActionRow } from "../misc/ActionRow";
+import type { SheetAction } from "../misc/ActionSheet";
 import { contactName } from "../operations/format";
 import { ResourceChip } from "../operations/OperationsWidgets";
 import { formatShopTime, shopDayKey } from "../operations/shopTime";
@@ -98,53 +108,101 @@ const FloorCard = ({
   const days = daysInStatus(deal);
   const chase = needsChasing(deal);
   const label = vehicle ? vehicleLabel(vehicle) : "";
+  const navigate = useNavigate();
+  const nexts = NEXT_STATUSES[deal.work_status ?? "none"];
+  const first = nexts[0];
+  const actions: SheetAction[] = [
+    ...nexts.map((next) => ({
+      label: actionLabel(deal.work_status, next),
+      icon: next === "picked_up" ? CarFront : ArrowRight,
+      onSelect: () => setStatus(deal, next),
+    })),
+    {
+      label: "Open job",
+      icon: KanbanSquare,
+      onSelect: () => navigate(`/deals/${deal.id}/show`),
+    },
+    ...reachActions(contact),
+    {
+      label: "Open customer",
+      icon: UserRound,
+      hidden: !contact,
+      onSelect: () => contact && navigate(`/contacts/${contact.id}/show`),
+    },
+    {
+      label: "Take off the shop floor",
+      icon: CircleSlash,
+      destructive: true,
+      onSelect: () => setStatus(deal, null),
+    },
+  ];
   return (
-    <Card className="p-3 gap-2">
-      <div className="flex items-start justify-between gap-2">
-        <Link
-          to={`/deals/${deal.id}/show`}
-          className="lab-tap text-sm font-semibold leading-snug hover:underline"
-        >
-          {deal.name}
-        </Link>
-        {days != null ? (
-          <span
-            className={cn(
-              "lab-chip shrink-0",
-              chase ? "lab-chip-warn" : "lab-chip-muted",
-            )}
-          >
-            {days === 0 ? "Today" : `${days} d`}
-          </span>
-        ) : null}
-      </div>
-      {contact ? (
-        <Link
-          to={`/contacts/${contact.id}/show`}
-          className="lab-tap self-start text-xs text-muted-foreground hover:underline"
-        >
-          {contactName(contact)}
-        </Link>
-      ) : null}
-      {label ? <p className="text-xs text-muted-foreground">{label}</p> : null}
-      <div className="flex flex-wrap items-center gap-2 pt-1">
-        {NEXT_STATUSES[deal.work_status ?? "none"].map((next) => (
-          <Button
-            key={next}
-            size="sm"
-            variant={
-              next === "picked_up" || next === "ready" ? "default" : "outline"
+    <ActionRow
+      title={deal.name}
+      subtitle={
+        deal.work_status ? WORK_STATUS_LABEL[deal.work_status] : undefined
+      }
+      actions={actions}
+      swipeRight={
+        first
+          ? {
+              label: actionLabel(deal.work_status, first),
+              icon: ArrowRight,
+              tone: "primary",
+              onTrigger: () => setStatus(deal, first),
             }
-            disabled={isPending}
-            className="min-h-9"
-            onClick={() => setStatus(deal, next)}
+          : undefined
+      }
+    >
+      <Card className="p-3 gap-2">
+        <div className="flex items-start justify-between gap-2">
+          <Link
+            to={`/deals/${deal.id}/show`}
+            className="lab-tap text-sm font-semibold leading-snug hover:underline"
           >
-            {actionLabel(deal.work_status, next)}
-          </Button>
-        ))}
-        <TextCustomerMenu deal={deal} contact={contact} vehicle={label} />
-      </div>
-    </Card>
+            {deal.name}
+          </Link>
+          {days != null ? (
+            <span
+              className={cn(
+                "lab-chip shrink-0",
+                chase ? "lab-chip-warn" : "lab-chip-muted",
+              )}
+            >
+              {days === 0 ? "Today" : `${days} d`}
+            </span>
+          ) : null}
+        </div>
+        {contact ? (
+          <Link
+            to={`/contacts/${contact.id}/show`}
+            className="lab-tap self-start text-xs text-muted-foreground hover:underline"
+          >
+            {contactName(contact)}
+          </Link>
+        ) : null}
+        {label ? (
+          <p className="text-xs text-muted-foreground">{label}</p>
+        ) : null}
+        <div className="flex flex-wrap items-center gap-2 pt-1">
+          {NEXT_STATUSES[deal.work_status ?? "none"].map((next) => (
+            <Button
+              key={next}
+              size="sm"
+              variant={
+                next === "picked_up" || next === "ready" ? "default" : "outline"
+              }
+              disabled={isPending}
+              className="min-h-9"
+              onClick={() => setStatus(deal, next)}
+            >
+              {actionLabel(deal.work_status, next)}
+            </Button>
+          ))}
+          <TextCustomerMenu deal={deal} contact={contact} vehicle={label} />
+        </div>
+      </Card>
+    </ActionRow>
   );
 };
 

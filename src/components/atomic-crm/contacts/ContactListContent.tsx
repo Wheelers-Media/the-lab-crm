@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useLongPress } from "@/hooks/use-long-press";
 import { ActionSheet } from "../misc/ActionSheet";
 import { SwipeRow } from "../misc/SwipeRow";
-import { Phone } from "lucide-react";
+import { MessageSquare, Phone } from "lucide-react";
 import { useContactActions } from "./contactActions";
 import {
   type Identifier,
@@ -257,15 +257,23 @@ const ContactItemContentMobile = ({ contact }: { contact: Contact }) => {
   const [sheetOpen, setSheetOpen] = useState(false);
   const longPress = useLongPress(() => setSheetOpen(true));
   const { sheet, quick } = useContactActions(contact);
-  const call = quick[0];
-  // Swipe left to call, like the phone's own lists
+  const [call, text] = quick;
+  // Swipe left to call and right to text, like the phone's own lists
   const callAction = call.disabled
     ? undefined
     : {
         label: "Call",
         icon: Phone,
-        tone: "primary" as const,
+        tone: "good" as const,
         onTrigger: () => call.onSelect({} as React.MouseEvent),
+      };
+  const textAction = text.disabled
+    ? undefined
+    : {
+        label: "Text",
+        icon: MessageSquare,
+        tone: "primary" as const,
+        onTrigger: () => text.onSelect({} as React.MouseEvent),
       };
   return (
     <>
@@ -278,7 +286,7 @@ const ContactItemContentMobile = ({ contact }: { contact: Contact }) => {
         subtitle={contact.vehicle_label ?? undefined}
         actions={sheet.filter((a) => !a.disabled)}
       />
-      <SwipeRow action={callAction}>
+      <SwipeRow action={callAction} leading={textAction}>
         <Link
           to={`/contacts/${contact.id}/show`}
           {...longPress}

@@ -22,8 +22,10 @@ import {
 import { useAppointments } from "../operations/useOperationsData";
 import type { Appointment, Contact, Task } from "../types";
 import { AddAppointment } from "./AddAppointment";
+import { ActionRow } from "../misc/ActionRow";
 import { AppointmentDetail } from "./AppointmentDetail";
 import { GoogleCalendarSync } from "./GoogleCalendarSync";
+import { useAppointmentActions } from "./useAppointmentActions";
 
 type View = "week" | "day";
 
@@ -60,57 +62,74 @@ const AppointmentCard = ({
   detailed?: boolean;
 }) => {
   const [open, setOpen] = useState(false);
+  const { actions, swipeLeft, swipeRight } = useAppointmentActions({
+    appointment,
+    contact,
+    onOpen: () => setOpen(true),
+  });
   return (
     <>
-      <Card
-        role="button"
-        tabIndex={0}
-        aria-label={`${appointment.title}, ${formatShopTime(appointment.start_at)}`}
-        onClick={() => setOpen(true)}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault();
-            setOpen(true);
-          }
-        }}
-        className={cn(
-          "p-3 gap-1 cursor-pointer transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary outline-none",
-          // Finished bookings sit back on a quieter background; fading the
-          // whole card took the grey text under readable contrast
-          appointment.status !== "booked" && "bg-muted/40",
-        )}
+      <ActionRow
+        title={appointment.title}
+        subtitle={`${formatShopDay(shopDayKey(appointment.start_at), { weekday: "short", day: "numeric", month: "short" })}, ${formatShopTime(appointment.start_at)}`}
+        actions={actions}
+        swipeLeft={swipeLeft}
+        swipeRight={swipeRight}
       >
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-sm font-semibold lab-num">
-            {formatShopTime(appointment.start_at)}
-            {detailed ? ` to ${formatShopTime(appointment.end_at)}` : ""}
-          </span>
-          <ResourceChip resource={appointment.resource} />
-        </div>
-        <p className="text-sm font-medium leading-snug">{appointment.title}</p>
-        {contact ? (
-          <p className="text-xs text-muted-foreground">
-            {contactName(contact)}
-          </p>
-        ) : null}
-        {appointment.vehicle ? (
-          <p className="text-xs text-muted-foreground">{appointment.vehicle}</p>
-        ) : null}
-        <div className="flex flex-wrap gap-1 mt-1">
-          {appointment.status === "completed" ? (
-            <span className="lab-chip lab-chip-muted">Done</span>
-          ) : appointment.status === "no_show" ? (
-            <span className="lab-chip lab-chip-danger">No-show</span>
-          ) : (
-            <DepositChip appointment={appointment} />
+        <Card
+          role="button"
+          tabIndex={0}
+          aria-label={`${appointment.title}, ${formatShopTime(appointment.start_at)}`}
+          onClick={() => setOpen(true)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              setOpen(true);
+            }
+          }}
+          className={cn(
+            "p-3 gap-1 cursor-pointer transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-primary outline-none",
+            // Finished bookings sit back on a quieter background; fading the
+            // whole card took the grey text under readable contrast
+            appointment.status !== "booked" && "bg-muted/40",
           )}
-        </div>
-        {detailed && appointment.notes ? (
-          <p className="text-xs text-muted-foreground whitespace-pre-line mt-1 line-clamp-3">
-            {appointment.notes}
+        >
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-sm font-semibold lab-num">
+              {formatShopTime(appointment.start_at)}
+              {detailed ? ` to ${formatShopTime(appointment.end_at)}` : ""}
+            </span>
+            <ResourceChip resource={appointment.resource} />
+          </div>
+          <p className="text-sm font-medium leading-snug">
+            {appointment.title}
           </p>
-        ) : null}
-      </Card>
+          {contact ? (
+            <p className="text-xs text-muted-foreground">
+              {contactName(contact)}
+            </p>
+          ) : null}
+          {appointment.vehicle ? (
+            <p className="text-xs text-muted-foreground">
+              {appointment.vehicle}
+            </p>
+          ) : null}
+          <div className="flex flex-wrap gap-1 mt-1">
+            {appointment.status === "completed" ? (
+              <span className="lab-chip lab-chip-muted">Done</span>
+            ) : appointment.status === "no_show" ? (
+              <span className="lab-chip lab-chip-danger">No-show</span>
+            ) : (
+              <DepositChip appointment={appointment} />
+            )}
+          </div>
+          {detailed && appointment.notes ? (
+            <p className="text-xs text-muted-foreground whitespace-pre-line mt-1 line-clamp-3">
+              {appointment.notes}
+            </p>
+          ) : null}
+        </Card>
+      </ActionRow>
       {open ? (
         <AppointmentDetail
           appointment={appointment}

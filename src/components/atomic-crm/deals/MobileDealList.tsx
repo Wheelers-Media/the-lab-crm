@@ -1,19 +1,12 @@
-import { ArrowRight, CircleSlash, FileText, Search } from "lucide-react";
-import {
-  ListBase,
-  useListContext,
-  useNotify,
-  useStore,
-  useUpdate,
-} from "ra-core";
+import { Search } from "lucide-react";
+import { ListBase, useListContext, useStore } from "ra-core";
 import { useMemo, useState } from "react";
-import { matchPath, useLocation, useNavigate } from "react-router";
-import { useLongPress } from "@/hooks/use-long-press";
+import { matchPath, useLocation } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import MobileHeader from "../layout/MobileHeader";
-import { ActionSheet, type SheetAction } from "../misc/ActionSheet";
+import { ActionRow } from "../misc/ActionRow";
 import { MobileContent } from "../layout/MobileContent";
 import { useConfigurationContext } from "../root/ConfigurationContext";
 import type { Deal } from "../types";
@@ -21,6 +14,7 @@ import { DealCardContent } from "./DealCardContent";
 import { DealCreate } from "./DealCreate";
 import { DealEdit } from "./DealEdit";
 import { DealShow } from "./DealShow";
+import { useDealActions } from "./useDealActions";
 import { columnView, stageTotal } from "./pipelineView";
 import { getDealsByStage } from "./stages";
 
@@ -35,69 +29,22 @@ const money = (amount: number) =>
 const matchesSearch = (deal: Deal, q: string) =>
   !q || deal.name.toLowerCase().includes(q.toLowerCase());
 
-/** A job card; tap opens it, tap and hold offers the quote and stage moves. */
+/**
+ * A job card: tap opens it, hold for the quote, the customer and stage moves,
+ * swipe right for the next stage and left for Not now.
+ */
 const MobileDealCard = ({ deal }: { deal: Deal }) => {
-  const { dealStages } = useConfigurationContext();
-  const navigate = useNavigate();
-  const notify = useNotify();
-  const [update] = useUpdate<Deal>();
-  const [sheetOpen, setSheetOpen] = useState(false);
-  const longPress = useLongPress(() => setSheetOpen(true));
-  const at = dealStages.findIndex((s) => s.value === deal.stage);
-  const next = dealStages[at + 1];
-  const move = (stage: string, label: string) =>
-    update(
-      "deals",
-      {
-        id: deal.id,
-        data: { stage, stage_changed_at: new Date().toISOString() },
-        previousData: deal,
-      },
-      {
-        mutationMode: "pessimistic",
-        onSuccess: () => notify(`Moved to ${label}`, { type: "success" }),
-      },
-    );
-  const actions: SheetAction[] = [
-    {
-      label: deal.packages?.length ? "Open quote" : "Build quote",
-      icon: FileText,
-      onSelect: () => navigate(`/quotes/${deal.id}`),
-    },
-    ...(next
-      ? [
-          {
-            label: `Move to ${next.label}`,
-            icon: ArrowRight,
-            onSelect: () => move(next.value, next.label),
-          },
-        ]
-      : []),
-    ...(deal.stage !== "lost"
-      ? [
-          {
-            label: "Not now",
-            icon: CircleSlash,
-            destructive: true,
-            onSelect: () => move("lost", "Not now"),
-          },
-        ]
-      : []),
-  ];
+  const { actions, swipeLeft, swipeRight, stageLabel } = useDealActions(deal);
   return (
-    <>
-      <div {...longPress} data-long-press="">
-        <DealCardContent deal={deal} />
-      </div>
-      {/* Outside the card so taps in the sheet never reach the card's hold */}
-      <ActionSheet
-        open={sheetOpen}
-        onOpenChange={setSheetOpen}
-        title={deal.name}
-        subtitle={dealStages[at]?.label}
-        actions={actions}
-      />
-    </>
+    <ActionRow
+      title={deal.name}
+      subtitle={stageLabel}
+      actions={actions}
+      swipeLeft={swipeLeft}
+      swipeRight={swipeRight}
+    >
+      <DealCardContent deal={deal} />
+    </ActionRow>
   );
 };
 

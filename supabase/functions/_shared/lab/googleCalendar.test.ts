@@ -350,6 +350,35 @@ describe("planSync", () => {
 
     expect(plan.pushDeletes.map((d) => d.eventId)).toEqual(["evt9"]);
   });
+
+  it("takes a booking typed into Google off the calendar when the CRM cancels it after", () => {
+    const typed = event({ updated: "2026-10-06T22:08:52Z" });
+    const cancelledHere = appointment({
+      external_id: GOOGLE_PREFIX + "evt1",
+      source: "google",
+      status: "cancelled",
+      updated_at: "2026-10-14T12:00:00Z",
+    });
+
+    const plan = planSync([typed], [cancelledHere], NOW);
+
+    expect(plan.pushDeletes.map((d) => d.eventId)).toEqual(["evt1"]);
+    expect(plan.creates).toEqual([]);
+  });
+
+  it("leaves a Google booking alone when it was edited there after the CRM cancel", () => {
+    const editedLater = event({ updated: "2026-10-14T13:00:00Z" });
+    const cancelledHere = appointment({
+      external_id: GOOGLE_PREFIX + "evt1",
+      source: "google",
+      status: "cancelled",
+      updated_at: "2026-10-14T12:00:00Z",
+    });
+
+    const plan = planSync([editedLater], [cancelledHere], NOW);
+
+    expect(plan.pushDeletes).toEqual([]);
+  });
 });
 
 describe("eventFromAppointment", () => {

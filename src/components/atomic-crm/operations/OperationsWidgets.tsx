@@ -1,9 +1,12 @@
 import { ArrowDown, ArrowRight, ArrowUp, CalendarDays } from "lucide-react";
-import type { ComponentType } from "react";
+import { type ComponentType, useState } from "react";
 import { Link } from "react-router";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
+import { AppointmentDetail } from "../calendar/AppointmentDetail";
+import { useAppointmentActions } from "../calendar/useAppointmentActions";
+import { ActionRow } from "../misc/ActionRow";
 import type { Appointment, Contact } from "../types";
 import { contactName } from "./format";
 import { bayLoad, type DayLoad } from "./metrics";
@@ -140,6 +143,12 @@ export const AppointmentRow = ({
   appointment: Appointment;
   contact?: Contact;
 }) => {
+  const [open, setOpen] = useState(false);
+  const { actions, swipeLeft, swipeRight } = useAppointmentActions({
+    appointment,
+    contact,
+    onOpen: () => setOpen(true),
+  });
   const body = (
     <div className="flex items-start gap-3 py-2">
       <span className="text-sm text-muted-foreground w-16 shrink-0 lab-num">
@@ -163,15 +172,34 @@ export const AppointmentRow = ({
       </div>
     </div>
   );
-  return contact ? (
-    <Link
-      to={`/contacts/${contact.id}/show`}
-      className="block rounded-md px-2 -mx-2 hover:bg-muted"
-    >
-      {body}
-    </Link>
-  ) : (
-    body
+  // A tap opens the booking, as on the Calendar; hold for the rest
+  return (
+    <>
+      <ActionRow
+        title={appointment.title}
+        subtitle={formatShopTime(appointment.start_at)}
+        actions={actions}
+        swipeLeft={swipeLeft}
+        swipeRight={swipeRight}
+        className="rounded-md"
+      >
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="block w-full rounded-md px-2 text-left hover:bg-muted"
+        >
+          {body}
+        </button>
+      </ActionRow>
+      {open ? (
+        <AppointmentDetail
+          appointment={appointment}
+          contact={contact}
+          open={open}
+          onOpenChange={setOpen}
+        />
+      ) : null}
+    </>
   );
 };
 

@@ -2,6 +2,7 @@ import { RecordContextProvider } from "ra-core";
 import { Card } from "@/components/ui/card";
 
 import { MobileFilterChip, MobileListPage } from "../layout/MobileListPage";
+import { ActionRow } from "../misc/ActionRow";
 import type { Order, ShopifyCheckout } from "../types";
 import { BIG_CART_THRESHOLD, CartFollowUp } from "./CheckoutList";
 import { ContactLink } from "./ContactLink";
@@ -11,6 +12,7 @@ import {
   orderStatusLabel,
   summarizeLines,
 } from "./shopFormat";
+import { useCartActions, useOrderActions } from "./useShopActions";
 
 const shortDate = (iso: string) =>
   new Date(iso).toLocaleDateString("en-CA", {
@@ -21,37 +23,44 @@ const shortDate = (iso: string) =>
 
 const OrderCard = ({ order }: { order: Order }) => {
   const status = orderStatusLabel(order);
+  const actions = useOrderActions(order);
   return (
     <RecordContextProvider value={order}>
-      <Card className="p-3 gap-1">
-        <div className="flex items-baseline justify-between gap-2">
-          <span className="font-display uppercase tracking-wide">
-            #{order.order_number.replace(/^#/, "")}
-          </span>
-          <span className="lab-num font-semibold">
-            {formatMoney(orderNet(order), order.currency)}
-          </span>
-        </div>
-        <div className="text-sm truncate">
-          <ContactLink />
-        </div>
-        <p className="text-xs text-muted-foreground line-clamp-2">
-          {summarizeLines(order.line_items, 2)}
-        </p>
-        <div className="flex flex-wrap items-center gap-1 pt-1">
-          <span className="text-xs text-muted-foreground">
-            {shortDate(order.ordered_at)}
-          </span>
-          <span
-            className={`lab-chip ${status === "Paid" ? "lab-chip-bay" : "lab-chip-warn"}`}
-          >
-            {status}
-          </span>
-          {order.is_deposit ? (
-            <span className="lab-chip lab-chip-eric">Deposit</span>
-          ) : null}
-        </div>
-      </Card>
+      <ActionRow
+        title={`Order #${order.order_number.replace(/^#/, "")}`}
+        subtitle={formatMoney(orderNet(order), order.currency)}
+        actions={actions}
+      >
+        <Card className="p-3 gap-1">
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="font-display uppercase tracking-wide">
+              #{order.order_number.replace(/^#/, "")}
+            </span>
+            <span className="lab-num font-semibold">
+              {formatMoney(orderNet(order), order.currency)}
+            </span>
+          </div>
+          <div className="text-sm truncate">
+            <ContactLink />
+          </div>
+          <p className="text-xs text-muted-foreground line-clamp-2">
+            {summarizeLines(order.line_items, 2)}
+          </p>
+          <div className="flex flex-wrap items-center gap-1 pt-1">
+            <span className="text-xs text-muted-foreground">
+              {shortDate(order.ordered_at)}
+            </span>
+            <span
+              className={`lab-chip ${status === "Paid" ? "lab-chip-bay" : "lab-chip-warn"}`}
+            >
+              {status}
+            </span>
+            {order.is_deposit ? (
+              <span className="lab-chip lab-chip-eric">Deposit</span>
+            ) : null}
+          </div>
+        </Card>
+      </ActionRow>
     </RecordContextProvider>
   );
 };
@@ -77,39 +86,48 @@ export const MobileOrderList = () => (
 
 const CheckoutCard = ({ checkout }: { checkout: ShopifyCheckout }) => {
   const big = checkout.total >= BIG_CART_THRESHOLD;
+  const { actions, swipeLeft, swipeRight } = useCartActions(checkout);
   return (
     <RecordContextProvider value={checkout}>
-      <Card className={`p-3 gap-1 ${big ? "lab-bay-parts" : ""}`}>
-        <div className="flex items-baseline justify-between gap-2">
-          <span className="text-sm truncate">
-            <ContactLink
-              fallback={
-                checkout.customer_name || checkout.email || checkout.phone
-              }
-            />
-          </span>
-          <span className={`lab-num ${big ? "font-semibold" : ""}`}>
-            {formatMoney(checkout.total)}
-          </span>
-        </div>
-        <p className="text-xs text-muted-foreground line-clamp-2">
-          {summarizeLines(checkout.line_items, 3)}
-        </p>
-        <div className="flex flex-wrap items-center gap-2 pt-1">
-          <span className="text-xs text-muted-foreground">
-            {shortDate(checkout.checkout_updated_at)}
-          </span>
-          {big ? (
-            <span className="lab-chip lab-chip-warn">Call personally</span>
-          ) : null}
-          {checkout.task_id != null ? (
-            <span className="lab-chip lab-chip-muted">Call task added</span>
-          ) : null}
-        </div>
-        <div className="pt-2">
-          <CartFollowUp checkout={checkout} />
-        </div>
-      </Card>
+      <ActionRow
+        title={checkout.customer_name || checkout.email || "Abandoned cart"}
+        subtitle={formatMoney(checkout.total)}
+        actions={actions}
+        swipeLeft={swipeLeft}
+        swipeRight={swipeRight}
+      >
+        <Card className={`p-3 gap-1 ${big ? "lab-bay-parts" : ""}`}>
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="text-sm truncate">
+              <ContactLink
+                fallback={
+                  checkout.customer_name || checkout.email || checkout.phone
+                }
+              />
+            </span>
+            <span className={`lab-num ${big ? "font-semibold" : ""}`}>
+              {formatMoney(checkout.total)}
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground line-clamp-2">
+            {summarizeLines(checkout.line_items, 3)}
+          </p>
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            <span className="text-xs text-muted-foreground">
+              {shortDate(checkout.checkout_updated_at)}
+            </span>
+            {big ? (
+              <span className="lab-chip lab-chip-warn">Call personally</span>
+            ) : null}
+            {checkout.task_id != null ? (
+              <span className="lab-chip lab-chip-muted">Call task added</span>
+            ) : null}
+          </div>
+          <div className="pt-2">
+            <CartFollowUp checkout={checkout} />
+          </div>
+        </Card>
+      </ActionRow>
     </RecordContextProvider>
   );
 };

@@ -22,10 +22,13 @@ export const DealCardContent = ({
   provided,
   snapshot,
   deal,
+  onContextMenu,
 }: {
   provided?: DraggableProvided;
   snapshot?: DraggableStateSnapshot;
   deal: Deal;
+  /** Right-click on the desk board opens the job's menu. */
+  onContextMenu?: (event: React.MouseEvent) => void;
 }) => {
   const { dealCategories, currency } = useConfigurationContext();
   const redirect = useRedirect();
@@ -42,6 +45,7 @@ export const DealCardContent = ({
       {...provided?.dragHandleProps}
       ref={provided?.innerRef}
       onClick={handleClick}
+      onContextMenu={onContextMenu}
     >
       <RecordContextProvider value={deal}>
         <Card

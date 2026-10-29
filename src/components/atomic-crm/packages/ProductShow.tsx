@@ -15,8 +15,7 @@ import { marginOf, splitTags, websiteUrl } from "./productModel";
 import { ProductGallery } from "./ProductGallery";
 import { KindChip, StockChip, stockLabel } from "./ProductParts";
 import { ProductSales } from "./ProductSales";
-
-const SHOPIFY_ADMIN = "https://admin.shopify.com/store/xr6pmx-y0";
+import { SHOPIFY_ADMIN } from "../shop/shopFormat";
 
 const shortDate = (iso: string) =>
   new Date(iso).toLocaleDateString("en-CA", {

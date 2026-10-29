@@ -11,6 +11,8 @@ export type SheetAction = {
   icon?: LucideIcon;
   onSelect: (event: React.MouseEvent) => void;
   destructive?: boolean;
+  /** Left out of the menu, for an action that does not apply to this row. */
+  hidden?: boolean;
   /** Shown but not tappable, e.g. "Call" for a customer with no phone. */
   disabled?: boolean;
 };

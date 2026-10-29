@@ -10,26 +10,36 @@ export type SwipeAction = {
   label: string;
   icon: LucideIcon;
   /** Background behind the row while swiping. */
-  tone: "good" | "primary";
+  tone: "good" | "primary" | "danger" | "warn";
   onTrigger: () => void;
 };
 
-const TONES = {
+const TONES: Record<SwipeAction["tone"], string> = {
   good: "bg-emerald-600 text-white",
   primary: "bg-primary text-primary-foreground",
+  danger: "bg-red-600 text-white",
+  warn: "bg-amber-500 text-black",
 };
 
 /**
- * A list row you can swipe left to act on, like Mail and Reminders: the
- * action shows behind the row and runs on release past the threshold, with a
- * light haptic tick. The same action is always in the row's hold menu too.
+ * A list row you can swipe, like Mail and Reminders: swipe left for the
+ * trailing action (remove, cancel, call), swipe right for the leading one
+ * (done, next step). The action shows behind the row and runs on release past
+ * the threshold, with a light haptic tick. Every swipe action is in the row's
+ * hold menu too, so nothing depends on knowing the gesture.
  */
 export const SwipeRow = ({
   action,
+  leading,
   children,
+  className = "rounded-lg",
 }: {
+  /** Swipe left. */
   action?: SwipeAction;
+  /** Swipe right. */
+  leading?: SwipeAction;
   children: ReactNode;
+  className?: string;
 }) => {
   const [offset, setOffset] = useState(0);
   const [dragging, setDragging] = useState(false);
@@ -38,21 +48,26 @@ export const SwipeRow = ({
   const swiped = useRef(false);
   const armed = useRef(false);
 
-  if (!action) return <>{children}</>;
-  const Icon = action.icon;
-  const past = -offset >= TRIGGER_PX;
+  if (!action && !leading) return <>{children}</>;
+  const shown = offset < 0 ? action : offset > 0 ? leading : undefined;
+  const past = Math.abs(offset) >= TRIGGER_PX;
+  const Icon = shown?.icon;
 
   return (
-    <div className="relative overflow-hidden rounded-lg">
-      <div
-        aria-hidden
-        className={`absolute inset-0 flex items-center justify-end gap-2 px-5 text-sm font-semibold transition-opacity ${TONES[action.tone]} ${offset < 0 ? "opacity-100" : "opacity-0"}`}
-      >
-        <Icon
-          className={`size-5 transition-transform ${past ? "scale-110" : "scale-90"}`}
-        />
-        {action.label}
-      </div>
+    <div className={`relative overflow-hidden ${className}`}>
+      {shown && Icon ? (
+        <div
+          aria-hidden
+          className={`absolute inset-0 flex items-center gap-2 px-5 text-sm font-semibold ${
+            offset < 0 ? "justify-end" : "justify-start"
+          } ${TONES[shown.tone]}`}
+        >
+          <Icon
+            className={`size-5 transition-transform ${past ? "scale-110" : "scale-90"}`}
+          />
+          {shown.label}
+        </div>
+      ) : null}
       <div
         className="relative bg-background touch-pan-y"
         style={{
@@ -79,17 +94,21 @@ export const SwipeRow = ({
             swiped.current = true;
             setDragging(true);
           }
-          const next = Math.min(0, dx);
+          // Only the directions that have an action move the row
+          const next = Math.max(
+            action ? -Infinity : 0,
+            Math.min(leading ? Infinity : 0, dx),
+          );
           // Tick once when crossing the threshold
-          if (-next >= TRIGGER_PX && !armed.current) {
+          if (Math.abs(next) >= TRIGGER_PX && !armed.current) {
             armed.current = true;
             navigator.vibrate?.(10);
-          } else if (-next < TRIGGER_PX) armed.current = false;
+          } else if (Math.abs(next) < TRIGGER_PX) armed.current = false;
           setOffset(next);
         }}
         onTouchEnd={() => {
           setDragging(false);
-          if (horizontal.current && past) action.onTrigger();
+          if (horizontal.current && past) shown?.onTrigger();
           setOffset(0);
           start.current = null;
         }}

@@ -118,3 +118,6 @@ export const contactDisplayName = (c: Contact): string =>
   c.email_jsonb?.[0]?.email ||
   c.phone_jsonb?.[0]?.number ||
   "Contact";
+
+/** The shop's Shopify admin, for links to an order or product there. */
+export const SHOPIFY_ADMIN = "https://admin.shopify.com/store/xr6pmx-y0";

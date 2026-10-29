@@ -15,20 +15,16 @@ import { shopDayKey } from "../operations/shopTime";
 import { useStartQuote } from "../packages/useStartQuote";
 import type { Contact } from "../types";
 import { firstPhone } from "./firstPhone";
+import { dial, go } from "./reach";
 
 const firstEmail = (c: Contact) =>
   c.email_jsonb?.find((e) => e.email?.trim())?.email?.trim() ?? null;
-const dial = (n: string) => n.replace(/[^\d+]/g, "");
-
 /** Call, text, email and quote a customer: the same actions everywhere. */
 export const useContactActions = (contact: Contact) => {
   const navigate = useNavigate();
   const { startQuote, isStarting } = useStartQuote();
   const phone = firstPhone(contact);
   const email = firstEmail(contact);
-  const go = (href: string) => {
-    window.location.href = href;
-  };
 
   const quick: Array<SheetAction & { short: string }> = [
     {

@@ -4,7 +4,8 @@ import { Link, useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 
 import { isClosedStage } from "../deals/pipelineView";
-import { useConfigurationContext } from "../root/ConfigurationContext";
+import { useDealActions } from "../deals/useDealActions";
+import { ActionRow } from "../misc/ActionRow";
 import type { Contact, Deal } from "../types";
 import { quoteTotals } from "./quoteModel";
 import { useStartQuote } from "./useStartQuote";
@@ -28,6 +29,44 @@ const quoteStatus = (deal: Deal) => {
   return "No quote yet";
 };
 
+/** One open job: tap for its quote, hold or swipe for the rest. */
+const QuoteRow = ({ deal }: { deal: Deal }) => {
+  const { actions, swipeLeft, swipeRight, stageLabel } = useDealActions(deal);
+  return (
+    <li>
+      <ActionRow
+        title={deal.name}
+        subtitle={stageLabel}
+        actions={actions}
+        swipeLeft={swipeLeft}
+        swipeRight={swipeRight}
+      >
+        <Link
+          to={`/quotes/${deal.id}`}
+          className="group flex items-center gap-3 rounded-lg border border-border p-3 transition-colors hover:border-foreground/40"
+        >
+          <FileText
+            className="size-4 shrink-0 text-muted-foreground"
+            aria-hidden
+          />
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-medium">
+              {deal.name}
+            </span>
+            <span className="block truncate text-xs text-muted-foreground">
+              {stageLabel ?? deal.stage} · {quoteStatus(deal)}
+            </span>
+          </span>
+          <span className="shrink-0 text-xs uppercase tracking-wider text-[var(--lab-blue-text)]">
+            {deal.packages?.length ? "Open quote" : "Build quote"}
+          </span>
+          <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+        </Link>
+      </ActionRow>
+    </li>
+  );
+};
+
 /** The new-job form, with this customer (and their business) filled in. */
 const newJobLink = (contact: Contact): string =>
   `/deals/create?source=${encodeURIComponent(
@@ -43,7 +82,6 @@ const newJobLink = (contact: Contact): string =>
  * wherever Eric is looking at the customer.
  */
 export const ContactQuotes = ({ contact }: { contact: Contact }) => {
-  const { dealStages } = useConfigurationContext();
   const { startQuote, isStarting } = useStartQuote();
   const navigate = useNavigate();
   const { data: deals = [], isPending } = useGetList<Deal>("deals", {
@@ -89,31 +127,7 @@ export const ContactQuotes = ({ contact }: { contact: Contact }) => {
       {open.length ? (
         <ul className="flex flex-col gap-2">
           {open.map((deal) => (
-            <li key={deal.id}>
-              <Link
-                to={`/quotes/${deal.id}`}
-                className="group flex items-center gap-3 rounded-lg border border-border p-3 transition-colors hover:border-foreground/40"
-              >
-                <FileText
-                  className="size-4 shrink-0 text-muted-foreground"
-                  aria-hidden
-                />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium">
-                    {deal.name}
-                  </span>
-                  <span className="block truncate text-xs text-muted-foreground">
-                    {dealStages.find((s) => s.value === deal.stage)?.label ??
-                      deal.stage}{" "}
-                    · {quoteStatus(deal)}
-                  </span>
-                </span>
-                <span className="shrink-0 text-xs uppercase tracking-wider text-[var(--lab-blue-text)]">
-                  {deal.packages?.length ? "Open quote" : "Build quote"}
-                </span>
-                <ChevronRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
-              </Link>
-            </li>
+            <QuoteRow key={deal.id} deal={deal} />
           ))}
         </ul>
       ) : (

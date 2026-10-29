@@ -5,17 +5,19 @@ import {
   useTimeout,
   useTranslate,
 } from "ra-core";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RotateCcw } from "lucide-react";
 
+import { ActionRow } from "../misc/ActionRow";
 import { RelativeDate } from "../misc/RelativeDate";
 import { Status } from "../misc/Status";
 import { useGetSalesName } from "../sales/useGetSalesName";
 import type { ContactNote } from "../types";
 import { InfinitePagination } from "../misc/InfinitePagination";
+import { useNoteActions } from "./useNoteActions";
 
 export const NotesIteratorMobile = ({
   contactId,
@@ -105,28 +107,42 @@ export const NoteMobile = ({
     enabled: !isCurrentUser,
   });
 
+  const navigate = useNavigate();
+  const { actions, swipeLeft } = useNoteActions({
+    note,
+    resource: "contact_notes",
+    onEdit: () => navigate(`/contacts/${contactId}/notes/${note.id}`),
+  });
+
   return (
-    <Link
-      to={`/contacts/${contactId}/notes/${note.id}`}
-      className="block active:bg-accent/50 -mx-2 px-2 py-2 rounded-md"
+    <ActionRow
+      title={note.text?.replace(/\s+/g, " ").trim().slice(0, 80) || "Note"}
+      actions={actions}
+      swipeLeft={swipeLeft}
+      className="rounded-md"
     >
-      <div className="flex items-center space-x-2 w-full">
-        <div className="inline-flex h-full items-center text-sm text-muted-foreground">
-          {isCurrentUser ? translate("resources.notes.me") : salesName}{" "}
-          {showStatus && note.status && (
-            <Status className="ml-2" status={note.status} />
-          )}
+      <Link
+        to={`/contacts/${contactId}/notes/${note.id}`}
+        className="block active:bg-accent/50 px-2 py-2 rounded-md"
+      >
+        <div className="flex items-center space-x-2 w-full">
+          <div className="inline-flex h-full items-center text-sm text-muted-foreground">
+            {isCurrentUser ? translate("resources.notes.me") : salesName}{" "}
+            {showStatus && note.status && (
+              <Status className="ml-2" status={note.status} />
+            )}
+          </div>
+          <div className="flex-1" />
+          <span className="text-sm text-muted-foreground">
+            <RelativeDate date={note.date} />
+          </span>
         </div>
-        <div className="flex-1" />
-        <span className="text-sm text-muted-foreground">
-          <RelativeDate date={note.date} />
-        </span>
-      </div>
-      {note.text && (
-        <p className="pt-2 text-sm line-clamp-3">
-          {note.text.replace(/\s+/g, " ").trim()}
-        </p>
-      )}
-    </Link>
+        {note.text && (
+          <p className="pt-2 text-sm line-clamp-3">
+            {note.text.replace(/\s+/g, " ").trim()}
+          </p>
+        )}
+      </Link>
+    </ActionRow>
   );
 };

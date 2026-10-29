@@ -26,6 +26,7 @@ import {
   membershipName,
   preferredContactName,
 } from "../contacts/customerProfile";
+import { dial } from "../contacts/reach";
 import { contactName } from "../operations/format";
 import { DepositChip, ResourceChip } from "../operations/OperationsWidgets";
 import {
@@ -49,10 +50,6 @@ const Row = ({
   </div>
 );
 
-/** Dialable form of a stored number: "307.520.9799 x4478" -> "3075209799". */
-const dialable = (phone: string): string =>
-  phone.split(/\s*[xX]\s*/)[0].replace(/[^\d+]/g, "");
-
 const CustomerBlock = ({ contact }: { contact?: Contact }) => {
   if (!contact)
     return (
@@ -68,7 +65,7 @@ const CustomerBlock = ({ contact }: { contact?: Contact }) => {
   const rows = [
     phone ? (
       <Row icon={Phone} key="phone">
-        <a href={`tel:${dialable(phone)}`} className="hover:underline">
+        <a href={`tel:${dial(phone)}`} className="hover:underline">
           {phone}
         </a>
       </Row>

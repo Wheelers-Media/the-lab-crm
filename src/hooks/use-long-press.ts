@@ -7,7 +7,7 @@ const MOVE_TOLERANCE_PX = 10;
 /**
  * Tap and hold, like iOS: after a short hold `onLongPress` runs with a light
  * haptic tick, and the tap that ends the hold is swallowed so the row does
- * not also open. Spread the returned handlers on the row.
+ * not also open. With a mouse, right-click opens the same thing. Spread the returned handlers on the row.
  */
 export const useLongPress = (onLongPress: () => void) => {
   const timer = useRef<number | undefined>(undefined);
@@ -27,8 +27,11 @@ export const useLongPress = (onLongPress: () => void) => {
 
   return {
     onPointerDown: (e: React.PointerEvent) => {
-      if (e.pointerType === "mouse" && e.button !== 0) return;
+      // A new press: whatever opened the sheet before is not this tap
       fired.current = false;
+      // A mouse uses right-click instead: holding the button is how text is
+      // selected on a desk
+      if (e.pointerType === "mouse") return;
       start.current = { x: e.clientX, y: e.clientY };
       window.clearTimeout(timer.current);
       timer.current = window.setTimeout(fire, HOLD_MS);
