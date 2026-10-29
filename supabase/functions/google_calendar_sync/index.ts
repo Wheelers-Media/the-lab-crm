@@ -3,9 +3,12 @@
 //  - Events typed into "THE LAB | Detailing Bay" or "THE LAB | Vehicle
 //    Customization" become CRM appointments (title, time, the vehicle line and
 //    the notes). The customer's name is usually the title, so the booking is
-//    linked to that customer, or to the phone number in the notes; bookings
-//    already on the calendar whose customer was added later are linked on the
-//    next sync.
+//    linked to that customer, or to the phone number in the notes. When nobody
+//    matches, the customer is created from the name in the title (and the
+//    phone in the notes), so every booking reaches a profile and the pipeline.
+//  - The first sync after this was added reaches back a year, a batch per run,
+//    so past bookings show on customer profiles; after that it reaches back a
+//    week.
 //  - A time moved or an event cancelled in Google follows into the CRM.
 //  - Appointments made in the CRM are added to the right calendar, and a time
 //    edit or cancellation there follows to Google (the later edit wins).
@@ -21,13 +24,13 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { AuthMiddleware, UserMiddleware } from "../_shared/authentication.ts";
 import { corsHeaders, OptionsMiddleware } from "../_shared/cors.ts";
+import { customerForBooking } from "../_shared/lab/bookingCustomer.ts";
 import {
   countRecentEvents,
   defaultSalesId,
   finishEvent,
   linkBooking,
   recordEvent,
-  resolveCustomerForBooking,
 } from "../_shared/lab/crm.ts";
 import {
   type CalendarEvent,
@@ -53,6 +56,11 @@ const DAY_MS = 86_400_000;
 // How far back and forward the sync looks
 const PAST_DAYS = 7;
 const FUTURE_DAYS = 120;
+// The one-time look back for past bookings, done in batches of MAX_CREATES
+const HISTORY_DAYS = 365;
+const HISTORY_DONE = "history-365";
+// Bookings brought in from Google in one run; the rest come on the next one
+const MAX_CREATES = 150;
 // Events sent to Google in one run; the rest go on the next one
 const MAX_PUSHES = 40;
 // Bookings looked up by customer name in one run, so a sync stays quick
@@ -169,7 +177,14 @@ const handle = async () => {
   try {
     const token = await accessToken(account);
     const now = new Date();
-    const timeMin = new Date(now.getTime() - PAST_DAYS * DAY_MS).toISOString();
+    // Until the year of past bookings is in, every sync reaches back a year
+    const { count: historyDone } = await supabaseAdmin
+      .from("integration_events")
+      .select("id", { count: "exact", head: true })
+      .eq("source", SOURCE)
+      .eq("external_id", HISTORY_DONE);
+    const pastDays = historyDone ? PAST_DAYS : HISTORY_DAYS;
+    const timeMin = new Date(now.getTime() - pastDays * DAY_MS).toISOString();
     const timeMax = new Date(
       now.getTime() + FUTURE_DAYS * DAY_MS,
     ).toISOString();
@@ -222,18 +237,34 @@ const handle = async () => {
       pulled: { created: 0, updated: 0, cancelled: 0 },
       pushed: { created: 0, updated: 0, deleted: 0 },
       linked: 0,
+      customersCreated: 0,
       skipped: plan.skipped,
       syncedAt: now.toISOString(),
     };
 
     // ── Google -> CRM ─────────────────────────────────────────────────────
-    if (plan.creates.length) {
+    // Nearest today first, so this week's bookings never wait behind history
+    const nowMs = now.getTime();
+    const creates = [...plan.creates]
+      .sort(
+        (a, b) =>
+          Math.abs(Date.parse(a.startAt) - nowMs) -
+          Math.abs(Date.parse(b.startAt) - nowMs),
+      )
+      .slice(0, MAX_CREATES);
+    if (creates.length) {
       const salesId = await defaultSalesId();
-      for (const row of plan.creates) {
-        const contact = await resolveCustomerForBooking({
+      for (const row of creates) {
+        const customer = await customerForBooking({
           title: row.title,
           phone: row.phone,
+          startAt: row.startAt,
         });
+        const contact =
+          customer.kind === "found" || customer.kind === "created"
+            ? { id: customer.id }
+            : null;
+        if (customer.kind === "created") result.customersCreated += 1;
         const { error } = await supabaseAdmin.from("appointments").insert({
           external_id: row.externalId,
           source: "google",
@@ -288,8 +319,8 @@ const handle = async () => {
     // ── Bookings without a customer ───────────────────────────────────────
     // The customer may have been added after the booking was typed in (or paid
     // for it since), so every unlinked booking in the window is looked up by
-    // the name in its title, then by the phone in its notes.
-    const nowMs = now.getTime();
+    // the name in its title, then by the phone in its notes, and the customer
+    // is created when nobody matches.
     const unlinked = appointments
       .filter((a) => a.contact_id == null && a.status !== "cancelled")
       // Nearest today first: this week's bookings are the ones being looked at
@@ -300,13 +331,28 @@ const handle = async () => {
       )
       .slice(0, MAX_LINKS);
     for (const appointment of unlinked) {
-      const contact = await resolveCustomerForBooking({
+      const customer = await customerForBooking({
         title: appointment.title,
         phone: phoneFrom(appointment.notes ?? ""),
+        startAt: appointment.start_at,
       });
-      if (!contact) continue;
-      if (await linkBooking(appointment.id, contact.id)) result.linked += 1;
+      if (customer.kind !== "found" && customer.kind !== "created") continue;
+      if (customer.kind === "created") result.customersCreated += 1;
+      if (await linkBooking(appointment.id, customer.id)) result.linked += 1;
     }
+
+    // The year of past bookings is in once a history run had nothing left over
+    if (!historyDone && plan.creates.length <= MAX_CREATES) {
+      await recordEvent({
+        source: SOURCE,
+        eventType: "history",
+        externalId: HISTORY_DONE,
+      });
+    }
+
+    // Move the new bookings through the pipeline now rather than on the next
+    // 15-minute run (see lab_sync_pipeline)
+    await supabaseAdmin.rpc("run_automations");
 
     // ── CRM -> Google ─────────────────────────────────────────────────────
     const crmUrl = Deno.env.get("CRM_URL")

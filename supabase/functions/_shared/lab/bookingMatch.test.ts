@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   nameTokens,
   type NamedBooking,
+  personFromTitle,
   pickBookingForCustomer,
   titleNames,
 } from "./bookingMatch";
@@ -113,5 +114,37 @@ describe("pickBookingForCustomer", () => {
     expect(pickBookingForCustomer([], { name: "Cory Langdon" }).kind).toBe(
       "none",
     );
+  });
+});
+
+describe("personFromTitle", () => {
+  it.each([
+    ["Kristie Mayer", "Kristie", "Mayer"],
+    ["John Hartman delete", "John", "Hartman"],
+    ["Noah bumstead maintaince x2", "Noah", "Bumstead"],
+    ["Chris Burke PPF", "Chris", "Burke"],
+    ["Clayton Carlson tint", "Clayton", "Carlson"],
+    ["Tristen Yanota - Detailing Bay Drop-off | THE LAB", "Tristen", "Yanota"],
+    ["Aron artech painting", "Aron", "Artech"],
+    ["Prashant nair", "Prashant", "Nair"],
+  ])("reads %s as a person", (title, firstName, lastName) => {
+    expect(personFromTitle(title)).toEqual({ firstName, lastName });
+  });
+
+  it("gives a first name only when the title has one word before the job", () => {
+    expect(personFromTitle("Dolly maintenance")).toEqual({
+      firstName: "Dolly",
+      lastName: "",
+    });
+    expect(personFromTitle("Josh with ts solutions")).toEqual({
+      firstName: "Josh",
+      lastName: "",
+    });
+  });
+
+  it("finds no person when the title starts with the vehicle or the job", () => {
+    expect(personFromTitle("Dodge detail")).toBeNull();
+    expect(personFromTitle("Tint 2019 F-150")).toBeNull();
+    expect(personFromTitle("2023 ram 2500")).toBeNull();
   });
 });

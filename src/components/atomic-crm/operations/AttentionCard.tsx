@@ -7,9 +7,10 @@ import {
   Inbox,
   PackageCheck,
   ShoppingCart,
+  UserCheck,
   Wrench,
 } from "lucide-react";
-import { useDataProvider, useNotify } from "ra-core";
+import { type Identifier, useDataProvider, useNotify } from "ra-core";
 import { type ComponentType, useState } from "react";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ import {
   useConfigurationContext,
   useConfigurationUpdater,
 } from "../root/ConfigurationContext";
+import type { Appointment, Contact } from "../types";
 import type { AttentionItem, AttentionKind } from "./attentionModel";
 import {
   type AttentionSnoozes,
@@ -30,6 +32,7 @@ import {
 import { money } from "./format";
 import { SectionTitle } from "./OperationsWidgets";
 import { formatShopDay, formatShopTime, shopDayKey } from "./shopTime";
+import { ShowCheckSheet } from "./ShowCheckSheet";
 
 const ATTENTION: Record<
   AttentionKind,
@@ -50,6 +53,16 @@ const ATTENTION: Record<
       i.count === 1
         ? `Abandoned cart, ${money(i.amount ?? 0)}`
         : `${i.count} abandoned carts, ${money(i.amount ?? 0)}`,
+  },
+  "show-check": {
+    icon: UserCheck,
+    chip: "lab-chip-eric",
+    action: "Check",
+    to: "/calendar",
+    title: (i) =>
+      i.count === 1
+        ? "1 booking: did they show?"
+        : `${i.count} bookings: did they show?`,
   },
   "no-deposit": {
     icon: CircleDollarSign,
@@ -121,6 +134,9 @@ const attentionDetail = (item: AttentionItem, now: Date): string => {
   if (item.kind === "no-deposit" && item.oldest) {
     return `Next: ${formatShopDay(shopDayKey(item.oldest))} ${formatShopTime(item.oldest)}${item.detail ? ` · ${item.detail}` : ""}`;
   }
+  if (item.kind === "show-check" && item.oldest) {
+    return `Since ${formatShopDay(shopDayKey(item.oldest), { weekday: "long", month: "short", day: "numeric" })}, nothing paid`;
+  }
   if (item.kind === "quotes-waiting" && item.amount) {
     return `${money(item.amount)} in quotes · oldest ${item.oldest ? ago(item.oldest, now) : ""}`;
   }
@@ -134,37 +150,50 @@ const detailLine = (item: AttentionItem, now: Date): string =>
     .join(" · ");
 
 /**
- * One row: the whole row opens the page that deals with it, and the bell
- * beside it hides the row for a week.
+ * One row: the whole row opens the page that deals with it (or, with
+ * `onOpen`, a sheet that settles it right here), and the bell beside it hides
+ * the row for a week.
  */
 const AttentionRow = ({
   item,
   now,
   onSnooze,
+  onOpen,
   isSaving,
 }: {
   item: AttentionItem;
   now: Date;
   onSnooze: (item: AttentionItem) => void;
+  onOpen?: () => void;
   isSaving: boolean;
 }) => {
   const config = ATTENTION[item.kind];
   const Icon = config.icon;
+  const className =
+    "-ml-2 flex min-h-12 min-w-0 flex-1 items-start gap-3 rounded-md px-2 py-2 text-left hover:bg-muted";
+  const body = (
+    <>
+      <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium">{config.title(item)}</p>
+        <p className="truncate text-xs text-muted-foreground">
+          {detailLine(item, now)}
+        </p>
+      </div>
+      <span className={cn("lab-chip", config.chip)}>{config.action}</span>
+    </>
+  );
   return (
     <div className="flex items-center gap-1">
-      <Link
-        to={config.to}
-        className="-ml-2 flex min-h-12 min-w-0 flex-1 items-start gap-3 rounded-md px-2 py-2 hover:bg-muted"
-      >
-        <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium">{config.title(item)}</p>
-          <p className="truncate text-xs text-muted-foreground">
-            {detailLine(item, now)}
-          </p>
-        </div>
-        <span className={cn("lab-chip", config.chip)}>{config.action}</span>
-      </Link>
+      {onOpen ? (
+        <button type="button" onClick={onOpen} className={className}>
+          {body}
+        </button>
+      ) : (
+        <Link to={config.to} className={className}>
+          {body}
+        </Link>
+      )}
       <Button
         type="button"
         variant="ghost"
@@ -189,10 +218,16 @@ const AttentionRow = ({
 export const AttentionCard = ({
   items,
   now,
+  toCheck = [],
+  contactsById = new Map(),
 }: {
   items: AttentionItem[];
   now: Date;
+  /** Last week's unsettled bookings, for the "did they show?" sheet. */
+  toCheck?: Appointment[];
+  contactsById?: Map<Identifier, Contact>;
 }) => {
+  const [checking, setChecking] = useState(false);
   const config = useConfigurationContext();
   const setConfig = useConfigurationUpdater();
   const dataProvider = useDataProvider<CrmDataProvider>();
@@ -229,6 +264,9 @@ export const AttentionCard = ({
               item={item}
               now={now}
               isSaving={isSaving}
+              onOpen={
+                item.kind === "show-check" ? () => setChecking(true) : undefined
+              }
               onSnooze={(row) =>
                 save(
                   snoozeItem(config.attentionSnoozed, row, now),
@@ -262,6 +300,14 @@ export const AttentionCard = ({
             Show
           </Button>
         </div>
+      ) : null}
+      {checking ? (
+        <ShowCheckSheet
+          open={checking}
+          onOpenChange={setChecking}
+          bookings={toCheck}
+          contactsById={contactsById}
+        />
       ) : null}
     </Card>
   );

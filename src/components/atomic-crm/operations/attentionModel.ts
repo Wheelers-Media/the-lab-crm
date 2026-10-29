@@ -3,6 +3,7 @@
 import type { Appointment, Deal, ShopifyCheckout, Task } from "../types";
 import { PARTS_NUDGE_DAYS, PICKUP_NUDGE_DAYS } from "../shopfloor/workStatus";
 import { activeAppointments, BIG_CART_THRESHOLD } from "./metrics";
+import { shopDayKey, startOfShopDay } from "./shopTime";
 
 const DAY_MS = 86_400_000;
 
@@ -11,6 +12,7 @@ export const ATTENTION_WINDOW_DAYS = 60;
 
 export type AttentionKind =
   | "abandoned-cart"
+  | "show-check"
   | "quotes-waiting"
   | "new-requests"
   | "no-deposit"
@@ -27,6 +29,28 @@ export interface AttentionItem {
   /** Items past the attention window, left out of `count` but still on their own page. */
   older?: number;
 }
+
+/** How far back Home asks "did they show?" about bookings nobody settled. */
+export const SHOW_CHECK_DAYS = 7;
+
+/**
+ * Bookings from the last week, before today, still marked booked: nobody
+ * paid around the booking day (that marks them done automatically) and
+ * nobody said whether they came. Oldest first.
+ */
+export const bookingsToCheck = (
+  appointments: Appointment[],
+  now: Date,
+): Appointment[] => {
+  const today = startOfShopDay(shopDayKey(now)).getTime();
+  const since = today - SHOW_CHECK_DAYS * DAY_MS;
+  return appointments
+    .filter((a) => {
+      const start = new Date(a.start_at).getTime();
+      return a.status === "booked" && start < today && start >= since;
+    })
+    .sort((a, b) => a.start_at.localeCompare(b.start_at));
+};
 
 export interface AttentionInput {
   deals: Deal[];
@@ -87,6 +111,15 @@ export const needsAttention = ({
       count: unpaid.length,
       oldest: next.start_at,
       detail: next.title,
+    });
+  }
+
+  const toCheck = bookingsToCheck(appointments, now);
+  if (toCheck.length) {
+    items.push({
+      kind: "show-check",
+      count: toCheck.length,
+      oldest: toCheck[0].start_at,
     });
   }
 

@@ -1,3 +1,4 @@
+import { SHOW_CHECK_DAYS } from "./attentionModel";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useDataProvider, useGetList, useGetMany } from "ra-core";
 import { useEffect, useMemo } from "react";
@@ -122,10 +123,13 @@ export const useOperationsData = (period: Period) => {
     filter: { "done_date@is": null },
   });
 
-  // This week plus the next 60 days, for the week strip and unpaid deposits
+  // From a week back (Home asks whether last week's bookings showed up)
+  // through the next 60 days (the week strip and unpaid deposits)
+  const todayKey = shopDayKey(now);
+  const weekBack = addDays(todayKey, -SHOW_CHECK_DAYS);
   const appointmentsQuery = useAppointments(
-    weekStartKey,
-    addDays(shopDayKey(now), 60),
+    weekBack < weekStartKey ? weekBack : weekStartKey,
+    addDays(todayKey, 60),
   );
 
   const queries = [

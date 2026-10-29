@@ -89,3 +89,52 @@ export const pickBookingForCustomer = (
   if (owners.size > 1) return { kind: "ambiguous", bookings: named };
   return { kind: "match", booking: oldestFirst(named)[0] };
 };
+
+// Words that end the name part of a title: the job, the vehicle or filler.
+// "John Hartman delete", "Chris Burke PPF", "Dodge detail".
+const NOT_A_NAME = new Set(
+  (
+    "detail detailing details maintenance maintaince maint tint tinting ppf " +
+    "wash washes delete deletes install installs installation ceramic coating " +
+    "correction paint painting polish clean cleaning interior exterior engine " +
+    "lights light lighting exhaust egr tune tuning tuner quote booking " +
+    "appointment drop dropoff off pickup pick bay the lab with and for x2 " +
+    "deluxx de luxx signature standard membership truck car suv " +
+    "dodge ram ford chevy chevrolet gmc toyota nissan jeep honda hyundai kia " +
+    "cummins duramax powerstroke dually"
+  ).split(" "),
+);
+
+/**
+ * The person a Google booking is for, from its title: the words before the
+ * first separator, job word or vehicle. "Noah bumstead maintaince x2" ->
+ * Noah Bumstead; "Tristen Yanota - Detailing Bay Drop-off" -> Tristen Yanota.
+ * Null when the title starts with something other than a name ("Dodge
+ * detail"). A single word comes back as a first name only; the caller only
+ * creates a customer from that when there is a phone number too.
+ */
+export const personFromTitle = (
+  title: string,
+): { firstName: string; lastName: string } | null => {
+  const head = title.split(/\s[-–—|]\s|[|:(,/]/)[0] ?? "";
+  const words: string[] = [];
+  for (const raw of head.trim().split(/\s+/)) {
+    const word = raw.replace(/[^\p{L}'’-]/gu, "");
+    if (!word || /\d/.test(raw)) break;
+    if (NOT_A_NAME.has(nameTokens(word)[0] ?? "")) break;
+    words.push(word);
+    if (words.length === 3) break;
+  }
+  if (!words.length) return null;
+  const cap = (w: string) =>
+    w
+      .toLowerCase()
+      .replace(
+        /(^|[-'’])(\p{L})/gu,
+        (_m, a: string, b: string) => a + b.toUpperCase(),
+      );
+  return {
+    firstName: cap(words[0]),
+    lastName: words.slice(1).map(cap).join(" "),
+  };
+};

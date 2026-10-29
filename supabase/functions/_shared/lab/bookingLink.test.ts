@@ -372,3 +372,102 @@ describe("a booking typed into Google finds its customer", () => {
     ).toBeUndefined();
   });
 });
+
+describe("a booking for someone the CRM has never seen", () => {
+  const START = "2026-10-29T16:00:00Z";
+
+  it("creates the customer from the title and the phone, with a note", async () => {
+    const { customerForBooking } = await import("./bookingCustomer.ts");
+
+    const result = await customerForBooking({
+      title: "Justin Beaudoin",
+      phone: "(250) 219-5445",
+      startAt: START,
+    });
+
+    expect(result.kind).toBe("created");
+    const [created] = state.db.table("contacts");
+    expect(created).toMatchObject({
+      first_name: "Justin",
+      last_name: "Beaudoin",
+      phone_jsonb: [{ number: "(250) 219-5445", type: "Mobile" }],
+    });
+    expect(state.db.table("contact_notes")[0].text).toContain(
+      "Google Calendar booking",
+    );
+  });
+
+  it("creates the customer from a full name with no phone", async () => {
+    const { customerForBooking } = await import("./bookingCustomer.ts");
+    const result = await customerForBooking({
+      title: "Chris Burke PPF",
+      phone: null,
+      startAt: START,
+    });
+    expect(result.kind).toBe("created");
+    expect(state.db.table("contacts")[0]).toMatchObject({
+      first_name: "Chris",
+      last_name: "Burke",
+    });
+  });
+
+  it("uses the existing customer instead of making a second one", async () => {
+    const { customerForBooking } = await import("./bookingCustomer.ts");
+    customer(state.db, { id: 7, first: "Chris", last: "Burke" });
+
+    const result = await customerForBooking({
+      title: "Chris Burke PPF",
+      phone: null,
+      startAt: START,
+    });
+
+    expect(result).toEqual({ kind: "found", id: 7 });
+    expect(state.db.table("contacts")).toHaveLength(1);
+  });
+
+  it("makes no one when two customers share the name and nothing picks one", async () => {
+    const { customerForBooking } = await import("./bookingCustomer.ts");
+    customer(state.db, { id: 1, first: "Cory", last: "Langdon" });
+    customer(state.db, { id: 2, first: "Cory", last: "Langdon" });
+
+    const result = await customerForBooking({
+      title: "Cory Langdon",
+      phone: null,
+      startAt: START,
+    });
+
+    expect(result.kind).toBe("ambiguous");
+    expect(state.db.table("contacts")).toHaveLength(2);
+  });
+
+  it("needs a phone before making a customer from a first name alone", async () => {
+    const { customerForBooking } = await import("./bookingCustomer.ts");
+
+    expect(
+      (await customerForBooking({ title: "Jude", phone: null, startAt: START }))
+        .kind,
+    ).toBe("none");
+    expect(
+      (
+        await customerForBooking({
+          title: "Jude",
+          phone: "(250) 608-6984",
+          startAt: START,
+        })
+      ).kind,
+    ).toBe("created");
+  });
+
+  it("makes no one from a title that names the vehicle or the job", async () => {
+    const { customerForBooking } = await import("./bookingCustomer.ts");
+    expect(
+      (
+        await customerForBooking({
+          title: "Dodge detail",
+          phone: null,
+          startAt: START,
+        })
+      ).kind,
+    ).toBe("none");
+  });
+});

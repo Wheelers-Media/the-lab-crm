@@ -207,8 +207,18 @@ export const generateAppointments = (db: Db): Appointment[] =>
     const start = day.toISOString();
     const end = new Date(day.getTime() + service.hours * 36e5).toISOString();
     const isPast = day.getTime() < Date.now();
+    // Most past bookings are settled; a few from the last days are not, as
+    // when nobody paid on the day, so Home can ask whether they showed
+    const isRecent = isPast && Date.now() - day.getTime() < 6 * 864e5;
     const status: AppointmentStatus = isPast
-      ? random.arrayElement(["completed", "completed", "completed", "no_show"])
+      ? isRecent && id % 4 === 0
+        ? "booked"
+        : random.arrayElement([
+            "completed",
+            "completed",
+            "completed",
+            "no_show",
+          ])
       : random.arrayElement(["booked", "booked", "booked", "rescheduled"]);
     return {
       id,

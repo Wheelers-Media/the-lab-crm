@@ -11,7 +11,7 @@ import {
   orderRevenue,
   percentChange,
 } from "./metrics";
-import { needsAttention } from "./attentionModel";
+import { bookingsToCheck, needsAttention } from "./attentionModel";
 import {
   addDays,
   mondayOf,
@@ -312,6 +312,37 @@ describe("needs attention", () => {
       ["quotes-waiting", 1, 1],
       ["overdue-tasks", 1, 1],
     ]);
+  });
+
+  it("asks whether last week's unsettled bookings showed up, not today's or settled ones", () => {
+    // Arrange: NOW is Fri Oct 9 2026, 9:00 shop time
+    const appointment = (start_at: string, status: Appointment["status"]) =>
+      ({ title: start_at, status, resource: "eric", start_at }) as Appointment;
+    const appointments = [
+      appointment("2026-10-08T16:00:00Z", "booked"), // yesterday
+      appointment("2026-10-05T16:00:00Z", "booked"), // Monday
+      appointment("2026-10-07T16:00:00Z", "completed"), // paid, done
+      appointment("2026-10-06T16:00:00Z", "no_show"),
+      appointment("2026-10-09T15:00:00Z", "booked"), // today, still to come
+      appointment("2026-09-20T16:00:00Z", "booked"), // weeks ago
+    ];
+
+    // Act
+    const toCheck = bookingsToCheck(appointments, NOW);
+    const items = needsAttention({
+      now: NOW,
+      checkouts: [],
+      deals: [],
+      tasks: [],
+      appointments,
+    });
+
+    // Assert
+    expect(toCheck.map((a) => a.start_at)).toEqual([
+      "2026-10-05T16:00:00Z",
+      "2026-10-08T16:00:00Z",
+    ]);
+    expect(items.find((i) => i.kind === "show-check")?.count).toBe(2);
   });
 
   it("leaves a group out when everything in it is past the window", () => {

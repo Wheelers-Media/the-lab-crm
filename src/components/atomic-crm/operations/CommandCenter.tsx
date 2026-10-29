@@ -13,7 +13,7 @@ import {
   orderRevenue,
 } from "./metrics";
 import { AttentionCard } from "./AttentionCard";
-import { needsAttention } from "./attentionModel";
+import { bookingsToCheck, needsAttention } from "./attentionModel";
 import { LoadError } from "./LoadError";
 import { MoversCard } from "./MoversCard";
 import { AppointmentRow, SectionTitle, WeekStrip } from "./OperationsWidgets";
@@ -214,6 +214,10 @@ export const CommandCenter = ({
     [data.appointments, todayKey],
   );
 
+  const toCheck = useMemo(
+    () => bookingsToCheck(data.appointments, now),
+    [data.appointments, now],
+  );
   const attention = useMemo(
     () =>
       needsAttention({
@@ -352,7 +356,14 @@ export const CommandCenter = ({
       </Card>
     </>
   );
-  const attentionCard = <AttentionCard items={attention} now={now} />;
+  const attentionCard = (
+    <AttentionCard
+      items={attention}
+      now={now}
+      toCheck={toCheck}
+      contactsById={data.contactsById}
+    />
+  );
   const weekBlock = <WeekStrip loads={weekKeys} todayKey={todayKey} />;
   const floorCard = <ShopFloorSummary deals={data.deals} now={now} />;
 
