@@ -37,6 +37,7 @@ import {
   TrafficSyncError,
   type TrafficSyncResult,
 } from "../commons/trafficSync";
+import type { SearchConsoleSyncResult } from "../commons/searchConsoleSync";
 import type { GoogleCalendarSyncResult } from "../commons/googleCalendarSync";
 import type { CrmDataProvider } from "../types";
 import {
@@ -338,6 +339,13 @@ export const createDataProvider = ({
         "not_connected",
       );
     },
+    // The demo's search figures are generated; there is nothing to copy
+    syncSearchConsole: async (): Promise<SearchConsoleSyncResult> => ({
+      site: "sc-domain:thelabfsj.ca",
+      days: 0,
+      queries: 0,
+      pages: 0,
+    }),
     syncGoogleCalendar: async (): Promise<GoogleCalendarSyncResult> => ({
       configured: false,
       message: "The demo is not connected to Google Calendar.",

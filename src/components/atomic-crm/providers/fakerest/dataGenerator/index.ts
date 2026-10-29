@@ -16,6 +16,7 @@ import { generateTraffic } from "./traffic";
 import type { Db } from "./types";
 import { generateVehicles, vehiclesFts } from "./vehicles";
 import { generatePackages } from "./packages";
+import { generateSearch } from "./search";
 
 export default (): Db => {
   const db = {} as Db;
@@ -47,6 +48,10 @@ export default (): Db => {
   db.packages = generatePackages();
   db.shopify_checkouts = generateCheckouts(db);
   db.shop_traffic_daily = generateTraffic();
+  const search = generateSearch();
+  db.search_console_daily = search.daily;
+  db.search_console_queries = search.queries;
+  db.search_console_pages = search.pages;
   db.appointments = generateAppointments(db);
   db.configuration = [
     {

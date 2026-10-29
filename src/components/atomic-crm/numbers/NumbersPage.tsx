@@ -24,6 +24,7 @@ import { ProductsSection } from "./ProductsSection";
 import { SalesSection } from "./SalesSection";
 import { type NumbersSection, SectionNav } from "./SectionNav";
 import { ShopSection } from "./ShopSection";
+import { SearchSection } from "./SearchSection";
 import { TrafficSection } from "./TrafficSection";
 import { isTrafficMetric, type TrafficMetric } from "./trafficModel";
 import { useNumbersData } from "./useNumbersData";
@@ -33,7 +34,7 @@ const isPeriod = (value: string | null): value is NumbersPeriod =>
 
 const SECTIONS: NumbersSection[] = [
   { id: "sales", label: "Sales" },
-  { id: "traffic", label: "Traffic" },
+  { id: "traffic", label: "Traffic & search" },
   { id: "patterns", label: "Patterns" },
   { id: "products", label: "Products" },
   { id: "customers", label: "Customers" },
@@ -106,8 +107,8 @@ export const NumbersPage = () => {
             {label.label}, {label.vs}.
             <span className="hidden sm:inline">
               {" "}
-              From Shopify orders, Shopify's traffic reports and the CRM. Tap a
-              figure, bar or row to dig in.
+              From Shopify orders and traffic, Google Search Console and the
+              CRM. Tap a figure, bar or row to dig in.
             </span>
           </p>
         </div>
@@ -191,6 +192,10 @@ export const NumbersPage = () => {
           ) : null}
           {section === "traffic" ? (
             <div className="flex flex-col gap-4" role="tabpanel">
+              <SearchSection ranges={data.ranges} vs={label.vs} />
+              <h2 className="mt-4 text-xl font-semibold">
+                Online store visits
+              </h2>
               <TrafficSection
                 traffic={data.traffic}
                 ranges={data.ranges}

@@ -20,6 +20,10 @@ import {
   type TrafficSyncResult,
 } from "../commons/trafficSync";
 import {
+  SearchConsoleSyncError,
+  type SearchConsoleSyncResult,
+} from "../commons/searchConsoleSync";
+import {
   GoogleCalendarSyncError,
   type GoogleCalendarSyncResult,
 } from "../commons/googleCalendarSync";
@@ -352,6 +356,24 @@ const getDataProviderWithCustomMethods = () => {
         );
       }
       return data as TrafficSyncResult;
+    },
+    // Copies the website's Google search figures from Search Console
+    async syncSearchConsole(): Promise<SearchConsoleSyncResult> {
+      const { data, error } = await getSupabaseClient().functions.invoke(
+        "search_console_sync",
+        { method: "POST", body: {} },
+      );
+      if (error) {
+        const body = await (error as { context?: Response }).context
+          ?.json()
+          .catch(() => null);
+        throw new SearchConsoleSyncError(
+          body?.message ?? "Could not update Google search.",
+          body?.code,
+          typeof body?.email === "string" ? body.email : undefined,
+        );
+      }
+      return data as SearchConsoleSyncResult;
     },
     // Brings events typed into the shop's Google calendars into the CRM and
     // sends CRM appointments to them (see google_calendar_sync)
