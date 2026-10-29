@@ -202,6 +202,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/shop/useShopActions.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/shop/shopFormat.ts",
           "type": "registry:component"
         },
@@ -790,6 +794,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/notes/useNoteActions.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/notes/noteModel.ts",
           "type": "registry:component"
         },
@@ -950,6 +958,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/misc/ActionRow.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/login/authConfig.ts",
           "type": "registry:component"
         },
@@ -1047,6 +1059,10 @@
         },
         {
           "path": "src/components/atomic-crm/filters/FilterCategory.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/deals/useDealActions.tsx",
           "type": "registry:component"
         },
         {
@@ -1215,6 +1231,10 @@
         },
         {
           "path": "src/components/atomic-crm/contacts/useContactImport.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/contacts/reach.ts",
           "type": "registry:component"
         },
         {
@@ -1391,6 +1411,10 @@
         },
         {
           "path": "src/components/atomic-crm/companies/AutocompleteCompanyInput.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/calendar/useAppointmentActions.tsx",
           "type": "registry:component"
         },
         {
