@@ -630,6 +630,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/operations/ShowCheckSheet.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/operations/RevenueMixCard.tsx",
           "type": "registry:component"
         },
