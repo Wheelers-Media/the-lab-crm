@@ -1,17 +1,20 @@
 import { X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+import {
+  isPhoneInDesktopMode,
+  phoneWidth,
+  readDisplay,
+} from "./phoneDesktopMode";
 
 const KEY = "labPhoneDesktopNoticeDismissed";
 
-const isPhone = () =>
-  window.matchMedia("(pointer: coarse)").matches &&
-  Math.min(window.screen.width, window.screen.height) < 600;
-
 /**
- * Shown only on the desktop layout when the device is a phone. That happens
- * when the browser's "Desktop site" setting is on (it asks for a 980px page,
- * so the phone layout never applies). Says so, and what to switch off, along
- * with the sizes measured so a wrong guess is easy to spot.
+ * Shown on the desktop layout when the device is a phone. That happens when the
+ * browser's "Desktop site" setting is on: it asks for a 980px page and shrinks
+ * it to fit, so the phone layout never applies. It first tries to ask the
+ * browser for the phone's real width; if the browser ignores that, this says
+ * what to switch off, with the readings so a wrong guess is easy to spot.
  */
 export const PhoneDesktopNotice = () => {
   const [dismissed, setDismissed] = useState(() => {
@@ -21,7 +24,22 @@ export const PhoneDesktopNotice = () => {
       return false;
     }
   });
-  if (dismissed || !isPhone()) return null;
+  const display = readDisplay();
+  const phone = isPhoneInDesktopMode(display);
+
+  useEffect(() => {
+    if (!phone) return;
+    // Some browsers honour a changed viewport tag even in desktop mode; if this
+    // one does, the page re-lays out at phone width and the phone layout takes over
+    const meta = document.querySelector('meta[name="viewport"]');
+    meta?.setAttribute(
+      "content",
+      `width=${phoneWidth(display)}, initial-scale=1, viewport-fit=cover`,
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phone]);
+
+  if (dismissed || !phone) return null;
   return (
     <div
       role="status"
@@ -32,12 +50,14 @@ export const PhoneDesktopNotice = () => {
           This phone is showing the desktop version
         </p>
         <p className="text-muted-foreground">
-          In Chrome, tap the three dots and turn off “Desktop site”, then open
-          the app again.
+          Tap the three dots, turn off “Desktop site”, and open the app again.
+          If this is the installed app, tap the three dots, choose “Open in
+          Chrome”, and turn it off there.
         </p>
         <p className="mt-1 text-xs text-muted-foreground lab-num">
-          Page {window.innerWidth}×{window.innerHeight} · screen{" "}
-          {window.screen.width}×{window.screen.height}
+          Page {display.innerWidth} · screen {display.screenWidth}×
+          {display.screenHeight} · zoom {display.scale.toFixed(2)} · touch{" "}
+          {display.maxTouchPoints}
         </p>
       </div>
       <button
