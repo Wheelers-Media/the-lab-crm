@@ -98,6 +98,10 @@ create table public.deals (
     -- waiting_parts, ready (for pickup) or picked_up. Empty until then.
     work_status text,
     work_status_changed_at timestamp with time zone,
+    -- The secret in the customer's status link (thelabfsj.ca/status/?t=...).
+    -- 128 random bits, so a link cannot be guessed; the job_status function
+    -- is the only thing that reads a job by it.
+    status_token text not null default replace(gen_random_uuid()::text, '-', '') unique,
     constraint deals_packages_is_array check (jsonb_typeof(packages) = 'array'),
     constraint deals_work_status_check check (work_status is null or work_status in ('in_shop', 'waiting_parts', 'ready', 'picked_up'))
 );

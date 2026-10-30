@@ -45,6 +45,20 @@ describe("templatesFor", () => {
     expect(ready.body).toContain("your vehicle is ready");
   });
 
+  it("sends the status link as its own text and adds it to the ready text, only when the job has a token", () => {
+    const none = templatesFor({ work_status: "ready" }, { firstName: "Sam" });
+    const tokened = templatesFor(
+      { work_status: "ready", status_token: "ab12" },
+      { firstName: "Sam", job: "Ceramic tint" },
+    );
+
+    expect(none.some((t) => t.id === "status")).toBe(false);
+    expect(none[0].body).not.toContain("thelabfsj.ca/status");
+    const status = tokened.find((t) => t.id === "status")!;
+    expect(status.body).toContain("https://thelabfsj.ca/status/?t=ab12");
+    expect(tokened[0].body).toContain("https://thelabfsj.ca/status/?t=ab12");
+  });
+
   it("offers the pay link only once a checkout link exists, and says what it covers", () => {
     const without = templatesFor({}, { firstName: "Sam" });
     const withLink = templatesFor(

@@ -5,7 +5,17 @@ import type { Deal, DealCheckout, WorkStatus } from "../types";
 
 export const SHOP_PHONE = "(250) 261-9502";
 
-export type TemplateId = "ready" | "parts" | "quote" | "deposit" | "review";
+export type TemplateId =
+  | "ready"
+  | "parts"
+  | "status"
+  | "quote"
+  | "deposit"
+  | "review";
+
+/** The customer's private status page; the token comes from the job. */
+export const statusLink = (token?: string | null): string | null =>
+  token ? `https://thelabfsj.ca/status/?t=${token}` : null;
 
 export interface TextContext {
   firstName?: string | null;
@@ -14,6 +24,8 @@ export interface TextContext {
   /** The job's name, "Ceramic tint, crew cab truck". */
   job?: string | null;
   checkout?: DealCheckout | null;
+  /** The customer's status page link, when the job has one. */
+  statusUrl?: string | null;
 }
 
 export interface TextTemplate {
@@ -27,6 +39,14 @@ const hello = (c: TextContext) => `Hi ${c.firstName?.trim() || "there"},`;
 const what = (c: TextContext) => c.vehicle?.trim() || "vehicle";
 const job = (c: TextContext) => c.job?.trim() || what(c);
 
+// Added to a text so the customer can follow the job themselves
+const follow = (c: TextContext) =>
+  c.statusUrl
+    ? `
+
+Follow your job any time: ${c.statusUrl}`
+    : "";
+
 const money = (n: number) =>
   n.toLocaleString("en-CA", { style: "currency", currency: "CAD" });
 
@@ -35,13 +55,23 @@ export const TEXT_TEMPLATES: TextTemplate[] = [
     id: "ready",
     label: "Ready for pickup",
     build: (c) =>
-      `${hello(c)} your ${what(c)} is ready for pickup at THE LAB. We're open Monday to Friday, 9 a.m. to 5 p.m. Text or call ${SHOP_PHONE} to let us know when you're coming.`,
+      `${hello(c)} your ${what(c)} is ready for pickup at THE LAB. We're open Monday to Friday, 9 a.m. to 5 p.m. Text or call ${SHOP_PHONE} to let us know when you're coming.${follow(c)}`,
   },
   {
     id: "parts",
     label: "Still waiting on parts",
     build: (c) =>
-      `${hello(c)} a quick update on your ${job(c)}: we're still waiting on parts. We'll text you as soon as they arrive.`,
+      `${hello(c)} a quick update on your ${job(c)}: we're still waiting on parts. We'll text you as soon as they arrive.${follow(c)}`,
+  },
+  {
+    id: "status",
+    label: "Send the job status link",
+    build: (c) =>
+      c.statusUrl
+        ? `${hello(c)} here is a private link to follow your ${job(c)}: ${c.statusUrl}
+
+It shows where it's at, your drop-off time and what's due. No login needed.`
+        : null,
   },
   {
     id: "quote",
@@ -78,14 +108,18 @@ const LEAD: Partial<Record<WorkStatus, TemplateId>> = {
 
 /** The texts that apply to this job, the most fitting first. */
 export const templatesFor = (
-  deal: Pick<Deal, "work_status" | "checkout">,
+  deal: Pick<Deal, "work_status" | "checkout" | "status_token">,
   ctx: TextContext,
 ): Array<{ id: TemplateId; label: string; body: string }> => {
   const lead = deal.work_status ? LEAD[deal.work_status] : undefined;
   return TEXT_TEMPLATES.map((t) => ({
     id: t.id,
     label: t.label,
-    body: t.build({ ...ctx, checkout: ctx.checkout ?? deal.checkout }),
+    body: t.build({
+      ...ctx,
+      checkout: ctx.checkout ?? deal.checkout,
+      statusUrl: ctx.statusUrl ?? statusLink(deal.status_token),
+    }),
   }))
     .filter((t): t is { id: TemplateId; label: string; body: string } =>
       Boolean(t.body),

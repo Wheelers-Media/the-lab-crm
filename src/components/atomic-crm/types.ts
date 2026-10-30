@@ -191,6 +191,8 @@ export type Deal = {
   /** Where the vehicle is once it has arrived; empty before that. */
   work_status?: WorkStatus | null;
   work_status_changed_at?: string | null;
+  /** The secret in the customer's status link (see shopfloor/messageTemplates.ts). */
+  status_token?: string | null;
 } & Pick<RaRecord, "id">;
 
 /** Where a vehicle is in the shop (see shopfloor/workStatus.ts). */
