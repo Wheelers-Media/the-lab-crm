@@ -151,6 +151,7 @@ export const TrendChart = ({
       >
         <ResponsiveBar
           data={data}
+          ariaLabel={`${label} for each period`}
           indexBy="label"
           keys={["value"]}
           // The scale must reach the period before's peak too, or its

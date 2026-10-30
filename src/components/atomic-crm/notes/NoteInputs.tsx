@@ -100,6 +100,7 @@ export const NoteInputs = ({
         multiline
         helperText={false}
         placeholder={translate("resources.notes.inputs.add_note")}
+        aria-label={translate("resources.notes.inputs.add_note")}
         rows={2}
         inputClassName={cn(
           "transition-[min-height] duration-300 ease-in-out",

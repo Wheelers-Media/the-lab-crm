@@ -42,6 +42,7 @@ export function ActivityLogContactNoteCreated({
             source="contact_id"
             reference="contacts"
             record={activity.contactNote}
+            link={false}
           >
             <ContactAvatar />
           </ReferenceField>

@@ -2,7 +2,6 @@ import { Layers } from "lucide-react";
 import { type KeyboardEvent, useMemo, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
 
 import { type Point, smoothBand, smoothPath } from "./chartGeometry";
 import { DonutChart } from "./DonutChart";
@@ -216,18 +215,30 @@ export const RevenueMixCard = ({
               />
             ) : null}
           </div>
-          <div className="flex justify-between text-xs text-muted-foreground">
-            {done.map((week, i) => (
-              <span
-                key={week.key}
-                className={cn(
-                  "whitespace-nowrap",
-                  i % 3 !== 0 && i !== done.length - 1 && "invisible",
-                )}
-              >
-                {week.label}
-              </span>
-            ))}
+          <div className="relative h-4 text-xs text-muted-foreground">
+            {done.map((week, i) =>
+              // Every third week, and the last; one within three weeks of the
+              // last is left out so the two never run into each other
+              i === done.length - 1 ||
+              (i % 3 === 0 && done.length - 1 - i >= 3) ? (
+                <span
+                  key={week.key}
+                  className="absolute whitespace-nowrap"
+                  style={{
+                    left: `${(x(i) / W) * 100}%`,
+                    // First label starts at the edge, last ends at it
+                    transform:
+                      i === 0
+                        ? undefined
+                        : i === done.length - 1
+                          ? "translateX(-100%)"
+                          : "translateX(-50%)",
+                  }}
+                >
+                  {week.label}
+                </span>
+              ) : null,
+            )}
           </div>
 
           <DonutChart

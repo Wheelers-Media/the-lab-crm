@@ -230,7 +230,11 @@ export const SalesSection = ({
             ))}
           </ToggleGroup>
           <Select value="" onValueChange={openBucket}>
-            <SelectTrigger size="sm" className="w-auto min-w-40">
+            <SelectTrigger
+              size="sm"
+              className="w-auto min-w-40"
+              aria-label="See the orders for a period"
+            >
               <SelectValue placeholder="See orders for…" />
             </SelectTrigger>
             <SelectContent>

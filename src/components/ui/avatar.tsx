@@ -26,6 +26,8 @@ function AvatarImage({
   return (
     <AvatarPrimitive.Image
       data-slot="avatar-image"
+      // Decorative: the person's name sits next to the picture
+      alt=""
       className={cn("aspect-square size-full", className)}
       {...props}
     />

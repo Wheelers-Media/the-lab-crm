@@ -356,7 +356,11 @@ export const TrafficSection = ({
                 ))}
               </ToggleGroup>
               <Select value="" onValueChange={openBucket}>
-                <SelectTrigger size="sm" className="w-auto min-w-40">
+                <SelectTrigger
+                  size="sm"
+                  className="w-auto min-w-40"
+                  aria-label="See the orders for a period"
+                >
                   <SelectValue placeholder="See sources for…" />
                 </SelectTrigger>
                 <SelectContent>

@@ -58,6 +58,7 @@ export const SearchInput = (inProps: SearchInputProps) => {
         label={false}
         helperText={false}
         placeholder={translate("ra.action.search")}
+        aria-label={translate("ra.action.search")}
         className={cn("flex-grow", className)}
         inputClassName={cn("pr-8", showClearButton ? "pr-16" : "pr-8")}
         {...rest}

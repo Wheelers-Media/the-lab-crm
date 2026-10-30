@@ -355,11 +355,7 @@ const MobileAdmin = (
           <Route path={PAGE_PATHS.changelog} element={<ChangelogPage />} />
           <Route
             path={PAGE_PATHS.quoteBuilder}
-            element={
-              <MobilePage>
-                <QuoteBuilderPage />
-              </MobilePage>
-            }
+            element={<QuoteBuilderPage />}
           />
           <Route
             path={PAGE_PATHS.calendar}

@@ -112,7 +112,9 @@ const MobileDealBoard = () => {
             >
               <span className="block font-display uppercase tracking-wide text-sm">
                 {s.label}{" "}
-                <span className="lab-num opacity-70">{deals.length}</span>
+                <span className="lab-num text-muted-foreground">
+                  {deals.length}
+                </span>
               </span>
               <span className="block text-xs lab-num">
                 {money(stageTotal(deals))}
