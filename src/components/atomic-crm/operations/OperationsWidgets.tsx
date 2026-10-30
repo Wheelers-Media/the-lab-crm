@@ -24,13 +24,15 @@ export const SectionTitle = ({
   hint?: string;
   action?: React.ReactNode;
 }) => (
-  <div className="flex items-center gap-2 mb-2">
-    <Icon className="w-5 h-5 text-muted-foreground shrink-0" />
+  <div className="mb-3 flex items-center gap-2.5">
+    <Icon className="size-4 text-muted-foreground shrink-0" />
     <div className="flex-1 min-w-0">
-      <h2 className="text-lg font-semibold text-foreground">{children}</h2>
+      <h2 className="text-base tracking-[0.06em] text-foreground">{children}</h2>
       {/* Hints help on a desk; on a phone they push the numbers down */}
       {hint ? (
-        <p className="hidden text-xs text-muted-foreground sm:block">{hint}</p>
+        <p className="mt-1 hidden truncate text-xs text-muted-foreground sm:block">
+          {hint}
+        </p>
       ) : null}
     </div>
     {action ? (
@@ -66,18 +68,21 @@ export const KpiTile = ({
   const tile = (
     <Card
       className={cn(
-        "p-4 gap-1 h-full",
-        (to || onSelect) && "transition-colors group-hover:bg-muted",
+        "min-w-0 gap-0 p-4 sm:p-5 h-full justify-between",
+        (to || onSelect) &&
+          "transition-colors group-hover:border-[var(--lab-ice)]/40 group-hover:bg-muted",
         selected && "border-primary ring-1 ring-primary",
       )}
     >
-      <p className="text-sm text-muted-foreground">{label}</p>
-      <p className="text-2xl font-semibold lab-num">{value}</p>
-      <p className="text-xs text-muted-foreground lab-num">
+      <p className="lab-eyebrow truncate">{label}</p>
+      <p className="mt-3 truncate text-[1.75rem] leading-none font-semibold tracking-tight lab-num">
+        {value}
+      </p>
+      <div className="mt-3 flex min-h-8 flex-col gap-0.5 text-xs leading-4 text-muted-foreground lab-num">
         {trend != null ? (
           <span
             className={cn(
-              "mr-1",
+              "inline-flex items-center gap-0.5 font-medium",
               trend === 0
                 ? "text-muted-foreground"
                 : trend > 0
@@ -87,15 +92,15 @@ export const KpiTile = ({
           >
             {/* The arrow carries the direction for anyone who cannot see the hue */}
             {trend > 0 ? (
-              <ArrowUp className="inline size-3" aria-hidden="true" />
+              <ArrowUp className="size-3" aria-hidden="true" />
             ) : trend < 0 ? (
-              <ArrowDown className="inline size-3" aria-hidden="true" />
+              <ArrowDown className="size-3" aria-hidden="true" />
             ) : null}
             {Math.abs(trend)}%
           </span>
         ) : null}
-        {detail}
-      </p>
+        {detail ? <span className="line-clamp-2">{detail}</span> : null}
+      </div>
     </Card>
   );
   if (onSelect)

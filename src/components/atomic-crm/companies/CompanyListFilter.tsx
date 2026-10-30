@@ -43,7 +43,7 @@ export const CompanyListFilter = () => {
       >
         {companySectors.map((sector) => (
           <ToggleFilterButton
-            className="w-full justify-between"
+            className="h-auto min-h-8 w-full justify-between whitespace-normal py-1.5 text-left"
             label={sector.label}
             key={sector.value}
             value={{ sector: sector.value }}

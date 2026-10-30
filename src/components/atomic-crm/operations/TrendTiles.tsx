@@ -128,7 +128,7 @@ export const TrendTiles = ({
       >
         <span id="trend-tiles">Trending</span>
       </SectionTitle>
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {TILES.map((tile) => {
           const current = tile.value(trends.current);
           const previous = tile.value(trends.previous);
