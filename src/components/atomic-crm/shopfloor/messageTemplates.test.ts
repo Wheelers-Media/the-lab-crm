@@ -59,6 +59,20 @@ describe("templatesFor", () => {
     expect(tokened[0].body).toContain("https://thelabfsj.ca/status/?t=ab12");
   });
 
+  it("puts the check-in text first for a quote nobody has answered", () => {
+    const quoted = templatesFor(
+      { stage: "quoted" },
+      { firstName: "Sam", job: "Ceramic tint" },
+    );
+    const other = templatesFor({ stage: "booked" }, { firstName: "Sam" });
+
+    expect(quoted[0].id).toBe("followup");
+    expect(quoted[0].body).toContain(
+      "checking in on the quote for your Ceramic tint",
+    );
+    expect(other[0].id).not.toBe("followup");
+  });
+
   it("offers the pay link only once a checkout link exists, and says what it covers", () => {
     const without = templatesFor({}, { firstName: "Sam" });
     const withLink = templatesFor(

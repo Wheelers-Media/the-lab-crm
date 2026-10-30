@@ -9,6 +9,7 @@ export type TemplateId =
   | "ready"
   | "parts"
   | "status"
+  | "followup"
   | "quote"
   | "deposit"
   | "review";
@@ -74,6 +75,12 @@ It shows where it's at, your drop-off time and what's due. No login needed.`
         : null,
   },
   {
+    id: "followup",
+    label: "Check in on the quote",
+    build: (c) =>
+      `${hello(c)} just checking in on the quote for your ${job(c)}. Any questions, or would you like to get a time booked? Text or call ${SHOP_PHONE} any time.`,
+  },
+  {
     id: "quote",
     label: "Send the pay link",
     build: (c) => {
@@ -108,10 +115,16 @@ const LEAD: Partial<Record<WorkStatus, TemplateId>> = {
 
 /** The texts that apply to this job, the most fitting first. */
 export const templatesFor = (
-  deal: Pick<Deal, "work_status" | "checkout" | "status_token">,
+  deal: Pick<Deal, "work_status" | "checkout" | "status_token"> &
+    Partial<Pick<Deal, "stage">>,
   ctx: TextContext,
 ): Array<{ id: TemplateId; label: string; body: string }> => {
-  const lead = deal.work_status ? LEAD[deal.work_status] : undefined;
+  // A quote nobody has answered is what the follow-up text is for
+  const lead: TemplateId | undefined = deal.work_status
+    ? LEAD[deal.work_status]
+    : deal.stage === "quoted"
+      ? "followup"
+      : undefined;
   return TEXT_TEMPLATES.map((t) => ({
     id: t.id,
     label: t.label,
