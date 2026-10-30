@@ -18,7 +18,8 @@ export const Layout = ({ children }: { children: ReactNode }) => {
       <Header />
       <ScrollMemory />
       <main
-        className="max-w-screen-xl mx-auto p-4"
+        // Fluid: a wide monitor shows more columns, not wider margins
+        className="mx-auto w-full max-w-[120rem] px-4 py-4 md:px-6 2xl:px-10"
         id="main-content"
         tabIndex={-1}
       >

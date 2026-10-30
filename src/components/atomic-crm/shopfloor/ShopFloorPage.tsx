@@ -257,7 +257,7 @@ export const ShopFloorPage = () => {
   const total = columns.reduce((sum, c) => sum + c.deals.length, 0);
 
   return (
-    <div className="flex flex-col gap-4 mt-2 max-w-screen-xl mx-auto">
+    <div className="flex flex-col gap-4 mt-2">
       <div className="flex items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-display uppercase tracking-wide">

@@ -45,7 +45,7 @@ export const DealShow = ({ open, id }: { open: boolean; id?: string }) => {
     <Dialog open={open} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent
         aria-labelledby="deal-dialog-title"
-        className="lg:max-w-4xl p-4 overflow-y-auto max-h-9/10 top-1/20 translate-y-0"
+        className="lg:max-w-4xl xl:max-w-7xl p-4 overflow-y-auto max-h-9/10 top-1/20 translate-y-0"
       >
         {id ? (
           <ShowBase id={id}>
@@ -107,116 +107,122 @@ const DealShowContent = () => {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-x-8 gap-y-4 my-4 sm:m-4">
-            <div className="flex flex-col">
-              <span className="text-xs text-muted-foreground tracking-wide">
-                {translate("resources.deals.fields.expected_closing_date")}
-              </span>
-              <div className="flex items-center gap-2">
-                <span className="text-sm">
-                  {isValid(new Date(record.expected_closing_date))
-                    ? formatISODateString(record.expected_closing_date)
-                    : translate("resources.deals.invalid_date")}
-                </span>
-                {new Date(record.expected_closing_date) < new Date() ? (
-                  <Badge variant="destructive">
-                    {translate("crm.common.past")}
-                  </Badge>
-                ) : null}
+          {/* Details on the left, notes on the right when there is room */}
+          <div className="xl:grid xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] xl:gap-8">
+            <div className="min-w-0">
+              <div className="flex flex-wrap gap-x-8 gap-y-4 my-4 sm:m-4">
+                <div className="flex flex-col">
+                  <span className="text-xs text-muted-foreground tracking-wide">
+                    {translate("resources.deals.fields.expected_closing_date")}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">
+                      {isValid(new Date(record.expected_closing_date))
+                        ? formatISODateString(record.expected_closing_date)
+                        : translate("resources.deals.invalid_date")}
+                    </span>
+                    {new Date(record.expected_closing_date) < new Date() ? (
+                      <Badge variant="destructive">
+                        {translate("crm.common.past")}
+                      </Badge>
+                    ) : null}
+                  </div>
+                </div>
+
+                <div className="flex flex-col">
+                  <span className="text-xs text-muted-foreground tracking-wide">
+                    {translate("resources.deals.fields.amount")}
+                  </span>
+                  <span className="text-sm">
+                    {record.amount.toLocaleString("en-CA", {
+                      style: "currency",
+                      currency,
+                      currencyDisplay: "narrowSymbol",
+                      maximumFractionDigits: 0,
+                    })}
+                  </span>
+                </div>
+
+                {record.category && (
+                  <div className="flex flex-col">
+                    <span className="text-xs text-muted-foreground tracking-wide">
+                      {translate("resources.deals.fields.category")}
+                    </span>
+                    <span className="text-sm">
+                      {dealCategories.find((c) => c.value === record.category)
+                        ?.label ?? record.category}
+                    </span>
+                  </div>
+                )}
+
+                <div className="flex flex-col">
+                  <span className="text-xs text-muted-foreground tracking-wide">
+                    {translate("resources.deals.fields.stage")}
+                  </span>
+                  {record.archived_at ? (
+                    <span className="text-sm">
+                      {findDealLabel(dealStages, record.stage)}
+                    </span>
+                  ) : (
+                    <DealStageSelect deal={record} />
+                  )}
+                </div>
               </div>
-            </div>
 
-            <div className="flex flex-col">
-              <span className="text-xs text-muted-foreground tracking-wide">
-                {translate("resources.deals.fields.amount")}
-              </span>
-              <span className="text-sm">
-                {record.amount.toLocaleString("en-CA", {
-                  style: "currency",
-                  currency,
-                  currencyDisplay: "narrowSymbol",
-                  maximumFractionDigits: 0,
-                })}
-              </span>
-            </div>
+              {record.archived_at ? null : <WorkStatusPanel deal={record} />}
 
-            {record.category && (
-              <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground tracking-wide">
-                  {translate("resources.deals.fields.category")}
-                </span>
-                <span className="text-sm">
-                  {dealCategories.find((c) => c.value === record.category)
-                    ?.label ?? record.category}
-                </span>
-              </div>
-            )}
+              {!!record.contact_ids?.length && (
+                <div className="my-4 sm:m-4">
+                  <div className="flex flex-col min-h-12">
+                    <span className="text-xs text-muted-foreground tracking-wide">
+                      {translate("resources.deals.fields.contact_ids")}
+                    </span>
+                    <ReferenceArrayField
+                      source="contact_ids"
+                      reference="contacts_summary"
+                    >
+                      <ContactList />
+                    </ReferenceArrayField>
+                  </div>
+                </div>
+              )}
 
-            <div className="flex flex-col">
-              <span className="text-xs text-muted-foreground tracking-wide">
-                {translate("resources.deals.fields.stage")}
-              </span>
-              {record.archived_at ? (
-                <span className="text-sm">
-                  {findDealLabel(dealStages, record.stage)}
-                </span>
-              ) : (
-                <DealStageSelect deal={record} />
+              <DealPackagesShow deal={record} />
+
+              {record.vehicle_id ? (
+                <div className="my-4 sm:m-4">
+                  <span className="text-xs text-muted-foreground tracking-wide">
+                    Vehicle
+                  </span>
+                  <VehicleDetailField />
+                </div>
+              ) : null}
+
+              {record.description && (
+                <div className="my-4 sm:m-4 whitespace-pre-line">
+                  <span className="text-xs text-muted-foreground tracking-wide">
+                    {translate("resources.deals.fields.description")}
+                  </span>
+                  <p className="text-sm leading-6">{record.description}</p>
+                </div>
               )}
             </div>
-          </div>
-
-          {record.archived_at ? null : <WorkStatusPanel deal={record} />}
-
-          {!!record.contact_ids?.length && (
-            <div className="my-4 sm:m-4">
-              <div className="flex flex-col min-h-12">
-                <span className="text-xs text-muted-foreground tracking-wide">
-                  {translate("resources.deals.fields.contact_ids")}
-                </span>
-                <ReferenceArrayField
-                  source="contact_ids"
-                  reference="contacts_summary"
+            <div className="min-w-0">
+              <div className="my-4 sm:m-4">
+                <Separator className="mb-4 xl:hidden" />
+                <InfiniteListBase
+                  resource="deal_notes"
+                  filter={{ deal_id: record.id }}
+                  sort={{ field: "date", order: "DESC" }}
+                  perPage={25}
+                  disableSyncWithLocation
+                  storeKey={false}
+                  empty={<NoteCreate reference={"deals"} />}
                 >
-                  <ContactList />
-                </ReferenceArrayField>
+                  <NotesIterator reference="deals" />
+                </InfiniteListBase>
               </div>
             </div>
-          )}
-
-          <DealPackagesShow deal={record} />
-
-          {record.vehicle_id ? (
-            <div className="my-4 sm:m-4">
-              <span className="text-xs text-muted-foreground tracking-wide">
-                Vehicle
-              </span>
-              <VehicleDetailField />
-            </div>
-          ) : null}
-
-          {record.description && (
-            <div className="my-4 sm:m-4 whitespace-pre-line">
-              <span className="text-xs text-muted-foreground tracking-wide">
-                {translate("resources.deals.fields.description")}
-              </span>
-              <p className="text-sm leading-6">{record.description}</p>
-            </div>
-          )}
-
-          <div className="my-4 sm:m-4">
-            <Separator className="mb-4" />
-            <InfiniteListBase
-              resource="deal_notes"
-              filter={{ deal_id: record.id }}
-              sort={{ field: "date", order: "DESC" }}
-              perPage={25}
-              disableSyncWithLocation
-              storeKey={false}
-              empty={<NoteCreate reference={"deals"} />}
-            >
-              <NotesIterator reference="deals" />
-            </InfiniteListBase>
           </div>
         </div>
       </div>

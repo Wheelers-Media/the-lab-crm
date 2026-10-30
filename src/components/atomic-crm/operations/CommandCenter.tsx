@@ -407,25 +407,36 @@ export const CommandCenter = ({
   return (
     <div className="flex flex-col gap-4 mt-1">
       {headerBlock}
-      <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-4">
-        {revenueCard}
-        {goalsCard}
-      </div>
-      <Reveal>{trendBlock}</Reveal>
-      <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-4">
-        <Reveal>{mixCard}</Reveal>
-        <Reveal delay={120}>{moversCard}</Reveal>
-      </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-        <Reveal>{todayCard}</Reveal>
-        <Reveal delay={120}>{attentionCard}</Reveal>
-      </div>
-      <Reveal>{floorCard}</Reveal>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Reveal>{weekBlock}</Reveal>
-        <Reveal delay={120}>
-          <PipelineSnapshot deals={data.deals} />
-        </Reveal>
+      {/* What needs doing sits in a rail beside the numbers on a wide screen and
+          above them on a narrow one, so the order follows the window. */}
+      <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_24rem] 2xl:grid-cols-[minmax(0,1fr)_28rem]">
+        <aside
+          aria-label="Today and what needs attention"
+          className="order-1 grid min-w-0 grid-cols-1 items-start gap-4 lg:grid-cols-2 xl:order-2 xl:flex xl:flex-col xl:items-stretch"
+        >
+          <Reveal>{attentionCard}</Reveal>
+          <Reveal delay={120}>{todayCard}</Reveal>
+          <div className="lg:col-span-2 xl:col-span-1">
+            <Reveal>{floorCard}</Reveal>
+          </div>
+        </aside>
+        <div className="order-2 flex min-w-0 flex-col gap-4 xl:order-1">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.6fr_1fr]">
+            {revenueCard}
+            {goalsCard}
+          </div>
+          <Reveal>{trendBlock}</Reveal>
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.6fr_1fr]">
+            <Reveal>{mixCard}</Reveal>
+            <Reveal delay={120}>{moversCard}</Reveal>
+          </div>
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <Reveal>{weekBlock}</Reveal>
+            <Reveal delay={120}>
+              <PipelineSnapshot deals={data.deals} />
+            </Reveal>
+          </div>
+        </div>
       </div>
     </div>
   );
