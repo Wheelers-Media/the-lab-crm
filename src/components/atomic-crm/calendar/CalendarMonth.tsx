@@ -7,7 +7,10 @@ import type { Appointment, Contact, Task } from "../types";
 import { AppointmentDetail } from "./AppointmentDetail";
 
 export interface MonthDay {
+  /** What the filters let through. */
   appts: Appointment[];
+  /** Every visible booking, so a day's load stays true while filtering. */
+  all: Appointment[];
   tasks: Task[];
 }
 
@@ -68,12 +71,15 @@ const MonthLine = ({
  */
 export const MonthGrid = ({
   days,
+  monthKey,
   byDay,
   todayKey,
   onOpenDay,
   contactOf,
 }: {
   days: string[];
+  /** "2026-10": days outside it are shown dimmed. */
+  monthKey: string;
   byDay: Map<string, MonthDay>;
   todayKey: string;
   onOpenDay: (key: string) => void;
@@ -89,8 +95,8 @@ export const MonthGrid = ({
     </div>
     <div className="grid grid-cols-7 gap-2">
       {days.map((key) => {
-        const day = byDay.get(key) ?? { appts: [], tasks: [] };
-        const bay = day.appts.filter(
+        const day = byDay.get(key) ?? { appts: [], all: [], tasks: [] };
+        const bay = day.all.filter(
           (a) => a.resource === "detailing-bay" && a.status !== "no_show",
         ).length;
         const isToday = key === todayKey;
@@ -103,6 +109,7 @@ export const MonthGrid = ({
               "flex min-h-32 min-w-0 flex-col gap-1 rounded-lg border bg-card p-2 xl:min-h-40",
               isToday && "border-primary ring-1 ring-primary",
               past && "bg-card/50",
+              key.slice(0, 7) !== monthKey && "opacity-50",
             )}
           >
             <button
@@ -118,7 +125,7 @@ export const MonthGrid = ({
                 )}
               >
                 {formatShopDay(key, { day: "numeric" })}
-                {key.endsWith("-01") || days[0] === key
+                {key.endsWith("-01")
                   ? ` ${formatShopDay(key, { month: "short" })}`
                   : ""}
               </span>
@@ -151,6 +158,81 @@ export const MonthGrid = ({
               </p>
             ) : null}
           </div>
+        );
+      })}
+    </div>
+  </div>
+);
+
+const LETTERS = ["M", "T", "W", "T", "F", "S", "S"];
+
+/**
+ * The phone's month: a number per day with a dot for each booking, like
+ * Google Calendar and iOS Calendar. Tapping a day selects it; the page shows
+ * that day's bookings under the grid.
+ */
+export const MonthCompact = ({
+  days,
+  monthKey,
+  byDay,
+  todayKey,
+  selected,
+  onSelect,
+}: {
+  days: string[];
+  monthKey: string;
+  byDay: Map<string, MonthDay>;
+  todayKey: string;
+  selected: string;
+  onSelect: (key: string) => void;
+}) => (
+  <div>
+    <div className="grid grid-cols-7 text-center" aria-hidden="true">
+      {LETTERS.map((letter, i) => (
+        <span key={i} className="lab-eyebrow py-1">
+          {letter}
+        </span>
+      ))}
+    </div>
+    <div className="grid grid-cols-7">
+      {days.map((key) => {
+        const appts = byDay.get(key)?.appts ?? [];
+        const isToday = key === todayKey;
+        const isSelected = key === selected;
+        return (
+          <button
+            key={key}
+            type="button"
+            onClick={() => onSelect(key)}
+            aria-pressed={isSelected}
+            aria-label={`${formatShopDay(key, { weekday: "long", month: "long", day: "numeric" })}, ${appts.length} ${appts.length === 1 ? "appointment" : "appointments"}`}
+            className="flex min-h-14 flex-col items-center gap-1 py-1"
+          >
+            <span
+              className={cn(
+                "grid size-8 place-items-center rounded-full text-sm lab-num",
+                key.slice(0, 7) !== monthKey && "text-muted-foreground/50",
+                isToday && "bg-primary font-semibold text-primary-foreground",
+                isSelected &&
+                  "ring-2 ring-primary ring-offset-2 ring-offset-background",
+              )}
+            >
+              {formatShopDay(key, { day: "numeric" })}
+            </span>
+            <span className="flex h-1.5 gap-0.5" aria-hidden="true">
+              {appts.slice(0, 3).map((a) => (
+                <span
+                  key={a.id}
+                  className={cn(
+                    "size-1.5 rounded-full",
+                    a.resource === "detailing-bay"
+                      ? "bg-[var(--lab-pos)]"
+                      : "bg-[var(--lab-blue)]",
+                  )}
+                />
+              ))}
+            </span>
+          </button>
         );
       })}
     </div>
