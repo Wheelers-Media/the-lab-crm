@@ -28,6 +28,8 @@ import {
   pickBookingForCustomer,
 } from "../_shared/lab/bookingMatch.ts";
 import { packageFromProduct } from "../_shared/lab/packages.ts";
+import { notify } from "../_shared/lab/push.ts";
+import { depositMessage, orderMessage } from "../_shared/lab/pushMessages.ts";
 import {
   addContactNote,
   addDealNote,
@@ -210,6 +212,20 @@ const handleOrder = async (
       .from("shopify_checkouts")
       .update({ completed_at: order.orderedAt })
       .eq("checkout_token", order.checkoutToken);
+  }
+
+  // A payment just made, not one copied in from the past
+  if (isNew && !history) {
+    const name = payerName(order);
+    await notify(
+      order.isDeposit
+        ? depositMessage({ name, orderNumber: order.orderNumber, dealId })
+        : orderMessage({
+            name,
+            orderNumber: order.orderNumber,
+            total: order.total,
+          }),
+    );
   }
 };
 

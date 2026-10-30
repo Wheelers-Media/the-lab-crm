@@ -16,12 +16,12 @@ const Wrapper = ({ children }: { children: React.ReactNode }) => {
       <MobileHeader>
         <div className="flex items-center gap-2 text-secondary-foreground no-underline py-3">
           <img
-            className="[.light_&]:hidden h-6"
+            className="[.light_&]:hidden h-8"
             src={darkModeLogo}
             alt={title}
           />
           <img
-            className="[.dark_&]:hidden h-6"
+            className="[.dark_&]:hidden h-8"
             src={lightModeLogo}
             alt={title}
           />

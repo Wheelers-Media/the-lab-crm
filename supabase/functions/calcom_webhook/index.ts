@@ -14,6 +14,11 @@ import {
 } from "../_shared/lab/parse.ts";
 import { verifyCalSignature } from "../_shared/lab/signatures.ts";
 import { pickByCustomer } from "../_shared/lab/depositMatch.ts";
+import { notify } from "../_shared/lab/push.ts";
+import {
+  type BookingTrigger,
+  bookingMessage,
+} from "../_shared/lab/pushMessages.ts";
 import {
   addDealNote,
   createDeal,
@@ -254,6 +259,17 @@ Deno.serve(async (req: Request) => {
       await finishEvent(eventId, "ignored", `unhandled trigger ${b.trigger}`);
       return ok();
     }
+    await notify(
+      bookingMessage({
+        trigger: b.trigger as BookingTrigger,
+        uid: b.uid,
+        title: b.title,
+        name: [b.contact.firstName, b.contact.lastName]
+          .filter(Boolean)
+          .join(" "),
+        when: shopTimeText(b.startAt),
+      }),
+    );
     await finishEvent(eventId, "processed");
     return ok();
   } catch (error) {

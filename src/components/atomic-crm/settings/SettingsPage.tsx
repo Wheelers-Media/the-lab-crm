@@ -21,6 +21,7 @@ import { SimpleFormIterator } from "@/components/admin/simple-form-iterator";
 import { TextInput } from "@/components/admin/text-input";
 
 import ImageEditorField from "../misc/ImageEditorField";
+import { NotificationsCard } from "../notifications/NotificationsCard";
 import {
   useConfigurationContext,
   useConfigurationUpdater,
@@ -278,6 +279,8 @@ const SettingsFormFields = () => {
 
       {/* Main content */}
       <div className="flex-1 min-w-0 max-w-2xl space-y-6">
+        <NotificationsCard />
+
         {/* Branding */}
         <Card id="branding">
           <CardContent className="space-y-4">

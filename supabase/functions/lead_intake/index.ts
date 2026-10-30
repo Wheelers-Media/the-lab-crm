@@ -8,6 +8,8 @@ import { supabaseAdmin } from "../_shared/supabaseAdmin.ts";
 import { createErrorResponse } from "../_shared/utils.ts";
 import { parseWebsiteLead, websiteDealName } from "../_shared/lab/parse.ts";
 import { hashClient } from "../_shared/lab/signatures.ts";
+import { notify } from "../_shared/lab/push.ts";
+import { leadMessage } from "../_shared/lab/pushMessages.ts";
 import {
   addDealNote,
   countRecentEvents,
@@ -23,6 +25,12 @@ import {
 
 const SOURCE = "website";
 const MAX_BODY_BYTES = 32_000;
+// Named in the alert when the visitor first came from there
+const CHANNEL_LABELS: Record<string, string> = {
+  facebook: "Facebook",
+  instagram: "Instagram",
+  google: "Google",
+};
 const MAX_REQUESTS_PER_10_MIN = 5;
 
 // The live site, any preview on Nathan's Vercel team, and local testing
@@ -170,6 +178,22 @@ Deno.serve(async (req: Request) => {
         `Send quote: ${websiteDealName(lead)}`,
       );
     }
+
+    await notify(
+      leadMessage({
+        dealId,
+        name:
+          [lead.contact.firstName, lead.contact.lastName]
+            .filter(Boolean)
+            .join(" ") ||
+          lead.contact.email ||
+          lead.contact.phone,
+        service: lead.service,
+        vehicle: lead.vehicle,
+        intent: lead.intent,
+        from: CHANNEL_LABELS[lead.channel],
+      }),
+    );
 
     if (eventId) await finishEvent(eventId, "processed");
     return json(200, { ok: true });
