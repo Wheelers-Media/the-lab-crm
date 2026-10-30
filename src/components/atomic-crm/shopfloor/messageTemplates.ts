@@ -5,6 +5,9 @@ import type { Deal, DealCheckout, WorkStatus } from "../types";
 
 export const SHOP_PHONE = "(250) 261-9502";
 
+/** Opens the Google review form for the shop. */
+export const REVIEW_LINK = "https://g.page/r/CdFTDo4OpyDzEAE/review";
+
 export type TemplateId =
   | "ready"
   | "parts"
@@ -102,7 +105,9 @@ It shows where it's at, your drop-off time and what's due. No login needed.`
     id: "review",
     label: "Ask for a review",
     build: (c) =>
-      `${hello(c)} thanks for choosing THE LAB! If you're happy with the work on your ${what(c)}, a quick Google review helps us a lot. Thank you!`,
+      `${hello(c)} thanks for choosing THE LAB! If you're happy with the work on your ${what(c)}, a quick Google review helps us a lot: ${REVIEW_LINK}
+
+Thank you!`,
   },
 ];
 

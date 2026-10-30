@@ -73,6 +73,16 @@ describe("templatesFor", () => {
     expect(other[0].id).not.toBe("followup");
   });
 
+  it("sends the shop's Google review link in the review text", () => {
+    const review = templatesFor(
+      { work_status: "picked_up" },
+      { firstName: "Sam" },
+    )[0];
+
+    expect(review.id).toBe("review");
+    expect(review.body).toContain("https://g.page/r/CdFTDo4OpyDzEAE/review");
+  });
+
   it("offers the pay link only once a checkout link exists, and says what it covers", () => {
     const without = templatesFor({}, { firstName: "Sam" });
     const withLink = templatesFor(
