@@ -300,6 +300,7 @@
             .then(function () {
               try {
                 sessionStorage.removeItem("chunk-reload");
+                localStorage.removeItem("REACT_QUERY_OFFLINE_CACHE");
               } catch (error) {}
               window.location.reload();
             });
@@ -367,7 +368,7 @@
           add(
             help,
             "p",
-            "Reset clears the saved copy of the app on this phone. You stay signed in.",
+            "Reset clears the app's saved copy and saved data on this phone. You stay signed in.",
             "loader-help-note",
           );
           loader.appendChild(help);

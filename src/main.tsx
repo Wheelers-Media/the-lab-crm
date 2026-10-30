@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
+import "./purgeOversizedQueryCache";
 import App from "./App.tsx";
 
 // Tells the boot watchdog in index.html that the app's code did start

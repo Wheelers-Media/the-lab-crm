@@ -33,6 +33,16 @@ function getLocalStorage(): Storage | null {
   return null;
 }
 
+// These values are only a shortcut: when the browser has no room left to keep
+// one, ask again next time instead of failing the whole sign-in.
+function remember(key: string, value: string) {
+  try {
+    getLocalStorage()?.setItem(key, value);
+  } catch {
+    // storage is full or blocked
+  }
+}
+
 export async function getIsInitialized() {
   const storage = getLocalStorage();
   const cachedValue = storage?.getItem(IS_INITIALIZED_CACHE_KEY);
@@ -46,7 +56,7 @@ export async function getIsInitialized() {
   const isInitialized = data?.at(0)?.is_initialized > 0;
 
   if (isInitialized) {
-    storage?.setItem(IS_INITIALIZED_CACHE_KEY, "true");
+    remember(IS_INITIALIZED_CACHE_KEY, "true");
   }
 
   return isInitialized;
@@ -78,7 +88,7 @@ const getSale = async () => {
     return undefined;
   }
 
-  storage?.setItem(CURRENT_SALE_CACHE_KEY, JSON.stringify(dataSale));
+  remember(CURRENT_SALE_CACHE_KEY, JSON.stringify(dataSale));
   return dataSale;
 };
 

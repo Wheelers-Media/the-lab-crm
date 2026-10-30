@@ -49,6 +49,10 @@ import {
   defaultTitle,
 } from "./defaultConfiguration";
 import { i18nProvider as defaulti18nProvider } from "../providers/commons/i18nProvider";
+import {
+  queryCacheStorage,
+  shouldPersistQuery,
+} from "../providers/commons/queryCachePersistence";
 import { StartPage } from "../login/StartPage.tsx";
 import { useIsMobile } from "@/hooks/use-mobile.ts";
 import { MobileTasksList } from "../tasks/MobileTasksList.tsx";
@@ -323,13 +327,16 @@ const MobileAdmin = (
     },
   });
   const asyncStoragePersister = createAsyncStoragePersister({
-    storage: localStorage,
+    storage: queryCacheStorage,
   });
 
   return (
     <PersistQueryClientProvider
       client={queryClient}
-      persistOptions={{ persister: asyncStoragePersister }}
+      persistOptions={{
+        persister: asyncStoragePersister,
+        dehydrateOptions: { shouldDehydrateQuery: shouldPersistQuery },
+      }}
     >
       <Admin
         queryClient={queryClient}
