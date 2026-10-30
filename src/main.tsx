@@ -3,16 +3,31 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.tsx";
 
+// Tells the boot watchdog in index.html that the app's code did start
+document.documentElement.setAttribute("data-boot", "started");
+
 // After a new deploy, the service worker may replace its pre-cache while
 // the page still holds old chunk references. A reload picks up the new
 // HTML + new SW cache. A sessionStorage guard prevents infinite loops.
 // See https://vite.dev/guide/build.html#load-error-handling
+const CHUNK_RELOAD_KEY = "chunk-reload";
 window.addEventListener("vite:preloadError", () => {
-  const key = "chunk-reload";
-  if (!sessionStorage.getItem(key)) {
-    sessionStorage.setItem(key, "1");
+  if (!sessionStorage.getItem(CHUNK_RELOAD_KEY)) {
+    sessionStorage.setItem(CHUNK_RELOAD_KEY, "1");
     window.location.reload();
   }
+});
+// A phone keeps the same tab session for days. Once the app has stayed up,
+// the reload has done its job: re-arm the guard so the next deploy can
+// recover the same way instead of being stuck behind this one.
+window.addEventListener("load", () => {
+  window.setTimeout(() => {
+    try {
+      sessionStorage.removeItem(CHUNK_RELOAD_KEY);
+    } catch {
+      // storage unavailable: nothing was stored either
+    }
+  }, 10_000);
 });
 
 // Supabase sends invite and password-reset links to the Site URL. When that

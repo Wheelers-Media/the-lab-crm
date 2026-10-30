@@ -126,6 +126,60 @@
         white-space: nowrap;
       }
 
+      /* Shown by the boot watchdog below when the app is slow to open */
+      .loader-help {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.75rem;
+        max-width: 20rem;
+        text-align: center;
+        font-family:
+          ui-sans-serif,
+          -apple-system,
+          "Helvetica Neue",
+          Arial,
+          sans-serif;
+        color: #f2f4f7;
+      }
+
+      .loader-help p {
+        margin: 0;
+        font-size: 0.9375rem;
+        line-height: 1.4;
+      }
+
+      .loader-help .loader-help-note {
+        font-size: 0.75rem;
+        color: #9aa0aa;
+        word-break: break-word;
+      }
+
+      .loader-help-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.75rem;
+      }
+
+      .loader-help button {
+        min-width: 44px;
+        min-height: 44px;
+        padding: 0 1.25rem;
+        border: 1px solid #2a2c31;
+        border-radius: 0.5rem;
+        background: #1b1c1f;
+        color: #f2f4f7;
+        font: inherit;
+        font-size: 0.9375rem;
+      }
+
+      .loader-help button.loader-help-primary {
+        border-color: #0066ff;
+        background: #0066ff;
+        color: #ffffff;
+      }
+
       @keyframes lab-boot-in {
         to {
           opacity: 1;
@@ -186,6 +240,138 @@
           attributes: true,
           attributeFilter: ["class"],
         });
+      })();
+    </script>
+    <script id="boot-watchdog" data-after="15000">
+      // If the boot screen is still up after a while, say so and offer a way
+      // out: reload, or reset the saved copy of the app on this phone (its
+      // service worker and caches; the sign-in stays). It lives in the page
+      // itself so it still works when the app's own code never starts, and it
+      // shows what went wrong so a stuck phone can be diagnosed.
+      (function () {
+        var after =
+          Number(
+            document.currentScript &&
+              document.currentScript.getAttribute("data-after"),
+          ) || 15000;
+        var notes = [];
+        function note(reason) {
+          var text = reason && reason.message ? reason.message : String(reason);
+          if (notes.length < 3 && notes.indexOf(text) < 0) {
+            notes.push(text.slice(0, 140));
+          }
+        }
+        window.addEventListener("error", function (event) {
+          note(event.message || "Script error");
+        });
+        window.addEventListener("unhandledrejection", function (event) {
+          note(event.reason);
+        });
+
+        function reset() {
+          var jobs = [];
+          if (
+            navigator.serviceWorker &&
+            navigator.serviceWorker.getRegistrations
+          ) {
+            jobs.push(
+              navigator.serviceWorker.getRegistrations().then(function (all) {
+                return Promise.all(
+                  all.map(function (registration) {
+                    return registration.unregister();
+                  }),
+                );
+              }),
+            );
+          }
+          if (window.caches && window.caches.keys) {
+            jobs.push(
+              window.caches.keys().then(function (keys) {
+                return Promise.all(
+                  keys.map(function (key) {
+                    return window.caches.delete(key);
+                  }),
+                );
+              }),
+            );
+          }
+          Promise.all(jobs)
+            .catch(function () {})
+            .then(function () {
+              try {
+                sessionStorage.removeItem("chunk-reload");
+              } catch (error) {}
+              window.location.reload();
+            });
+        }
+
+        function add(parent, tag, text, className) {
+          var element = document.createElement(tag);
+          element.textContent = text;
+          if (className) element.className = className;
+          parent.appendChild(element);
+          return element;
+        }
+
+        function isBlank(root) {
+          return !root || !root.textContent.trim();
+        }
+
+        setTimeout(function () {
+          var root = document.getElementById("root");
+          var loader = document.querySelector(".loader-container");
+          // Nothing on screen: the boot screen is still up, or the app took
+          // it down and has drawn nothing yet (a request that never answers)
+          if (!loader && !isBlank(root)) return;
+          var started =
+            document.documentElement.getAttribute("data-boot") === "started";
+          if (!loader) {
+            loader = document.createElement("div");
+            loader.className = "loader-container";
+            loader.setAttribute("role", "status");
+            document.body.appendChild(loader);
+            // The app draws into #root: once it has, this cover is not needed
+            new MutationObserver(function (changes, observer) {
+              if (isBlank(root)) return;
+              observer.disconnect();
+              loader.remove();
+            }).observe(root, {
+              childList: true,
+              subtree: true,
+              characterData: true,
+            });
+          }
+          var track = loader.querySelector(".loader-track");
+          if (track) track.hidden = true;
+
+          var help = document.createElement("div");
+          help.className = "loader-help";
+          add(
+            help,
+            "p",
+            started
+              ? "THE LAB is taking longer than usual to open."
+              : "THE LAB could not start on this phone.",
+          );
+          notes.forEach(function (text) {
+            add(help, "p", text, "loader-help-note");
+          });
+          var actions = document.createElement("div");
+          actions.className = "loader-help-actions";
+          add(actions, "button", "Reload", "loader-help-primary").onclick =
+            function () {
+              window.location.reload();
+            };
+          add(actions, "button", "Reset the app").onclick = reset;
+          help.appendChild(actions);
+          add(
+            help,
+            "p",
+            "Reset clears the saved copy of the app on this phone. You stay signed in.",
+            "loader-help-note",
+          );
+          loader.appendChild(help);
+        }, after);
       })();
     </script>
     <noscript>You need to enable JavaScript to run this app.</noscript>
