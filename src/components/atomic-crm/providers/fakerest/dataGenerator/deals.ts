@@ -74,7 +74,7 @@ export const generateDeals = (db: Db): Deal[] => {
       expected_closing_date,
       sales_id: company.sales_id!,
       index: 0,
-      status_token: random.alpha({ count: 32, casing: "lower" }),
+      status_token: random.uuid().replace(/-/g, ""),
       lead_source: random.arrayElement([
         "website",
         "website",
