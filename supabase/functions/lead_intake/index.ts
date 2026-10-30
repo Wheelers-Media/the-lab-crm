@@ -95,7 +95,7 @@ Deno.serve(async (req: Request) => {
 
     await noteContactProfile(contact.id, {
       smsConsent: lead.smsConsent,
-      leadSource: SOURCE,
+      leadSource: lead.channel,
     });
     const vehicleId = await findOrCreateVehicle(contact.id, {
       ...lead.vehicleParts,
@@ -115,7 +115,7 @@ Deno.serve(async (req: Request) => {
           stage,
           category: lead.category,
           amount: lead.estimateTotal,
-          leadSource: SOURCE,
+          leadSource: lead.channel,
           vehicleId,
           description: lead.vin ? `VIN ${lead.vin}` : undefined,
           // The priced lines the customer saw become the job's packages
@@ -155,6 +155,7 @@ Deno.serve(async (req: Request) => {
       lead.estimateText && `Starting price shown: ${lead.estimateText}`,
       lead.details,
       lead.page && `Sent from: ${lead.page}`,
+      lead.cameFrom && `Came from: ${lead.cameFrom}`,
       `SMS consent: ${lead.smsConsent ? "yes" : "no"}`,
       lead.offroadAgreed &&
         "Off-road disclaimer: agreed (off-road and sanctioned racing use only)",

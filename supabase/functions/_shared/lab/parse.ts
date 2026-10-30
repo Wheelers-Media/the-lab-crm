@@ -89,8 +89,15 @@ export type WebsiteLead = {
   smsConsent: boolean;
   offroadAgreed: boolean;
   page: string;
+  /** Where the visitor first came from; becomes the deal's lead source. */
+  channel: string;
+  /** Human line for the note, e.g. "Instagram (spring-tint), landed on /boutique/tinting/". */
+  cameFrom: string;
   quote: WebsiteQuote;
 };
+
+/** Lead sources the site can report; anything else is plain "website". */
+export const LEAD_CHANNELS = ["website", "facebook", "instagram", "google"];
 
 const MAX_QUOTE_ITEMS = 40;
 
@@ -188,6 +195,10 @@ export const parseWebsiteLead = (body: unknown): ParseResult<WebsiteLead> => {
   const source =
     b.source === "quote" || b.source === "walkthrough" ? b.source : "form";
   const form = b.form === "build" ? "build" : "boutique";
+  const touch = (b.attribution ?? {}) as Record<string, unknown>;
+  const channel = LEAD_CHANNELS.includes(String(touch.channel))
+    ? String(touch.channel)
+    : "website";
   // Parts and tuning requests are always priced to the vehicle, so they are quotes.
   const intent = form === "boutique" && b.intent === "book" ? "book" : "quote";
 
@@ -208,6 +219,19 @@ export const parseWebsiteLead = (body: unknown): ParseResult<WebsiteLead> => {
       smsConsent: b.sms_consent === true,
       offroadAgreed: b.offroad_ack === true,
       page: clip(b.page, MAX.short),
+      channel,
+      cameFrom: [
+        [
+          clip(touch.label, 40),
+          clip(touch.campaign, 60) && `(${clip(touch.campaign, 60)})`,
+        ]
+          .filter(Boolean)
+          .join(" "),
+        clip(touch.landing, MAX.short) &&
+          `landed on ${clip(touch.landing, MAX.short)}`,
+      ]
+        .filter(Boolean)
+        .join(", "),
       quote: {
         total: estimateText,
         lines: quoteLinesFrom(estimate.lines),

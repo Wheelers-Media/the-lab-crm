@@ -49,6 +49,29 @@ describe("parseWebsiteLead", () => {
     sms_consent: true,
   };
 
+  it("reads where the visitor first came from, and falls back to website", () => {
+    const ig = parseWebsiteLead({
+      ...base,
+      attribution: {
+        channel: "instagram",
+        label: "Instagram",
+        campaign: "spring-tint",
+        landing: "/boutique/tinting/",
+      },
+    });
+    const odd = parseWebsiteLead({
+      ...base,
+      attribution: { channel: "tiktok" },
+    });
+    const none = parseWebsiteLead(base);
+    expect(ig.ok && ig.value.channel).toBe("instagram");
+    expect(ig.ok && ig.value.cameFrom).toBe(
+      "Instagram (spring-tint), landed on /boutique/tinting/",
+    );
+    expect(odd.ok && odd.value.channel).toBe("website");
+    expect(none.ok && none.value.cameFrom).toBe("");
+  });
+
   it("records that the customer agreed to the off-road disclaimer, only when they did", () => {
     const agreed = parseWebsiteLead({
       ...base,

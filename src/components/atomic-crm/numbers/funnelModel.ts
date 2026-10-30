@@ -61,6 +61,7 @@ const SOURCE_NAMES: Record<string, string> = {
   "walk-in": "Walk-in",
   facebook: "Facebook",
   instagram: "Instagram",
+  google: "Google",
 };
 
 const sourceName = (source: string | null | undefined): string =>
