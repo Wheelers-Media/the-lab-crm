@@ -8,6 +8,7 @@ import { DataImportProvider } from "../dataImport/DataImportProvider";
 import { SkipLink } from "../misc/SkipLink";
 import { useConfigurationLoader } from "../root/useConfigurationLoader";
 import Header from "./Header";
+import { PhoneDesktopNotice } from "./PhoneDesktopNotice";
 import { ScrollMemory } from "./ScrollMemory";
 
 export const Layout = ({ children }: { children: ReactNode }) => {
@@ -23,6 +24,7 @@ export const Layout = ({ children }: { children: ReactNode }) => {
         id="main-content"
         tabIndex={-1}
       >
+        <PhoneDesktopNotice />
         <ErrorBoundary FallbackComponent={Error}>
           <Suspense fallback={<Skeleton className="h-12 w-12 rounded-full" />}>
             {children}
