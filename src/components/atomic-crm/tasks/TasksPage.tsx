@@ -12,7 +12,7 @@ import { TasksListContent } from "./TasksListContent";
 export const TasksPage = () => {
   const translate = useTranslate();
   return (
-    <div className="mx-auto mt-2 flex max-w-3xl flex-col gap-4">
+    <div className="mt-2 flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-display uppercase tracking-wide">
           {translate("resources.tasks.name", { smart_count: 2 })}
@@ -20,7 +20,7 @@ export const TasksPage = () => {
         <AddTask display="icon" selectContact />
       </div>
       <Card className="p-4">
-        <TasksListContent />
+        <TasksListContent columns />
       </Card>
     </div>
   );

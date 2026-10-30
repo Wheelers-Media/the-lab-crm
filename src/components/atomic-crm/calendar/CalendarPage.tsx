@@ -605,7 +605,7 @@ export const CalendarPage = () => {
                   type="button"
                   onClick={() => go({ date: key, view: "day" })}
                   className={cn(
-                    "flex items-center justify-between gap-1 rounded-md px-2 py-1 text-left hover:bg-muted",
+                    "flex min-w-0 flex-wrap items-center justify-between gap-1 rounded-md px-2 py-1 text-left hover:bg-muted",
                     key === todayKey && "ring-1 ring-primary",
                   )}
                 >

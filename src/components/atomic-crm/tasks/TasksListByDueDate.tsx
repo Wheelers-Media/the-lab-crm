@@ -24,10 +24,13 @@ export const TasksListByDueDate = ({
   filterByContact,
   emptyPlaceholder,
   pendingPlaceholder,
+  columns,
 }: {
   filterByContact?: Identifier;
   emptyPlaceholder?: React.ReactNode;
   pendingPlaceholder?: React.ReactNode;
+  /** On a wide screen, let the groups flow into two or three columns. */
+  columns?: boolean;
 }) => {
   const { identity } = useGetIdentity();
   const isMobile = useIsMobile();
@@ -100,7 +103,13 @@ export const TasksListByDueDate = ({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div
+      className={
+        columns
+          ? "flex flex-col gap-4 xl:block xl:columns-2 xl:gap-10 2xl:columns-3 [&>*]:break-inside-avoid xl:[&>*]:mb-6"
+          : "flex flex-col gap-4"
+      }
+    >
       <TaskListFilter
         tasks={overdueTasks}
         title={translate("resources.tasks.filters.overdue")}
