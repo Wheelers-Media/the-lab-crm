@@ -10,7 +10,11 @@ import { cn } from "@/lib/utils";
 
 import { bayLoad } from "../operations/metrics";
 import { contactName } from "../operations/format";
-import { DepositChip, ResourceChip } from "../operations/OperationsWidgets";
+import {
+  DepositChip,
+  KpiTile,
+  ResourceChip,
+} from "../operations/OperationsWidgets";
 import {
   addDays,
   formatShopDay,
@@ -24,10 +28,16 @@ import type { Appointment, Contact, Task } from "../types";
 import { AddAppointment } from "./AddAppointment";
 import { ActionRow } from "../misc/ActionRow";
 import { AppointmentDetail } from "./AppointmentDetail";
+import { MonthGrid } from "./CalendarMonth";
 import { GoogleCalendarSync } from "./GoogleCalendarSync";
 import { useAppointmentActions } from "./useAppointmentActions";
 
-type View = "week" | "day";
+type View = "month" | "week" | "day" | "list";
+
+/** The 30 days view is five whole weeks, so every row is Monday to Sunday. */
+const MONTH_DAYS = 35;
+/** The appointment list runs this many days from the chosen date. */
+const LIST_DAYS = 30;
 
 const VISIBLE = ["booked", "completed", "no_show"];
 
@@ -38,7 +48,9 @@ const useCalendarParams = () => {
     dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)
       ? dateParam
       : shopDayKey(new Date());
-  const view: View = params.get("view") === "day" ? "day" : "week";
+  const raw = params.get("view");
+  const view: View =
+    raw === "day" || raw === "month" || raw === "list" ? raw : "week";
   const go = (next: { date?: string; view?: View }) => {
     const p = new URLSearchParams(params);
     p.set("date", next.date ?? date);
@@ -176,13 +188,84 @@ const DayTasks = ({ tasks }: { tasks: Task[] }) =>
     </div>
   ) : null;
 
+/** Every booking in the stretch, day by day, with the empty days left out. */
+const AgendaList = ({
+  keys,
+  byDay,
+  todayKey,
+  contactOf,
+  onOpenDay,
+}: {
+  keys: string[];
+  byDay: Map<string, { appts: Appointment[]; tasks: Task[] }>;
+  todayKey: string;
+  contactOf: (a: Appointment) => Contact | undefined;
+  onOpenDay: (key: string) => void;
+}) => {
+  const days = keys.filter((key) => (byDay.get(key)?.appts.length ?? 0) > 0);
+  if (!days.length)
+    return (
+      <p className="text-sm text-muted-foreground">
+        No appointments in this stretch.
+      </p>
+    );
+  return (
+    <div className="flex flex-col gap-6">
+      {days.map((key) => {
+        const appts = byDay.get(key)!.appts;
+        return (
+          <section key={key} aria-label={key}>
+            <div className="mb-2 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => onOpenDay(key)}
+                className={cn(
+                  "lab-eyebrow hover:text-foreground",
+                  key === todayKey && "text-foreground",
+                )}
+              >
+                {key === todayKey ? "Today · " : ""}
+                {formatShopDay(key, {
+                  weekday: "long",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </button>
+              <span className="lab-chip lab-chip-muted lab-num">
+                {appts.length}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+              {appts.map((a) => (
+                <AppointmentCard
+                  key={a.id}
+                  appointment={a}
+                  contact={contactOf(a)}
+                  detailed
+                />
+              ))}
+            </div>
+          </section>
+        );
+      })}
+    </div>
+  );
+};
+
 export const CalendarPage = () => {
-  const { date, view, go } = useCalendarParams();
+  const { date, view: urlView, go } = useCalendarParams();
   const isMobile = useIsMobile();
+  // A seven-column grid does not fit a phone; the list is its iOS-style stand-in
+  const view: View = isMobile && urlView === "month" ? "list" : urlView;
   const todayKey = shopDayKey(new Date());
   const monday = mondayOf(date);
-  const startKey = view === "day" ? date : monday;
-  const endKey = view === "day" ? addDays(date, 1) : addDays(monday, 7);
+  const startKey = view === "day" || view === "list" ? date : monday;
+  const endKey =
+    view === "day"
+      ? addDays(date, 1)
+      : view === "list"
+        ? addDays(date, LIST_DAYS)
+        : addDays(monday, view === "month" ? MONTH_DAYS : 7);
 
   const { appointments, contactsById } = useAppointments(startKey, endKey);
   const { data: tasks = [] } = useGetList<Task>("tasks", {
@@ -200,10 +283,16 @@ export const CalendarPage = () => {
       appointments.map((a) => a.task_id).filter((id) => id != null),
     );
     const map = new Map<string, { appts: Appointment[]; tasks: Task[] }>();
-    const days =
+    const count =
       view === "day"
-        ? [date]
-        : [0, 1, 2, 3, 4, 5, 6].map((i) => addDays(monday, i));
+        ? 1
+        : view === "list"
+          ? LIST_DAYS
+          : view === "month"
+            ? MONTH_DAYS
+            : 7;
+    const first = view === "day" || view === "list" ? date : monday;
+    const days = Array.from({ length: count }, (_, i) => addDays(first, i));
     for (const key of days) map.set(key, { appts: [], tasks: [] });
     for (const a of appointments) {
       if (!VISIBLE.includes(a.status)) continue;
@@ -218,7 +307,7 @@ export const CalendarPage = () => {
 
   // Monday to Friday always; weekend days only when something is on them
   const dayKeys = [...byDay.keys()].filter((key, i) => {
-    if (view === "day" || i < 5) return true;
+    if (view !== "week" || i < 5) return true;
     const d = byDay.get(key)!;
     return d.appts.length + d.tasks.length > 0;
   });
@@ -233,12 +322,31 @@ export const CalendarPage = () => {
   const dayBay = kept(dayAppts.filter((a) => a.resource === "detailing-bay"));
   const dayEric = kept(dayAppts.filter((a) => a.resource === "eric"));
   const dayOver = bayLoad(dayBay).over;
+  // Today: what is still to come; another day: its first booking
+  const upNext = [...dayAppts]
+    .filter(
+      (a) =>
+        a.status === "booked" &&
+        (date !== todayKey || new Date(a.end_at).getTime() > Date.now()),
+    )
+    .sort((a, b) => a.start_at.localeCompare(b.start_at))[0];
 
-  const step = view === "day" ? 1 : 7;
+  const step =
+    view === "day"
+      ? 1
+      : view === "week"
+        ? 7
+        : view === "month"
+          ? 28
+          : LIST_DAYS;
+  const span = (from: string, days: number) =>
+    `${formatShopDay(from, { month: "short", day: "numeric" })} to ${formatShopDay(addDays(from, days - 1), { month: "short", day: "numeric" })}`;
   const rangeLabel =
     view === "day"
       ? formatShopDay(date, { weekday: "long", month: "long", day: "numeric" })
-      : `${formatShopDay(monday, { month: "short", day: "numeric" })} to ${formatShopDay(addDays(monday, 6), { month: "short", day: "numeric" })}`;
+      : view === "list"
+        ? span(date, LIST_DAYS)
+        : span(monday, view === "month" ? MONTH_DAYS : 7);
 
   return (
     <div className="flex flex-col gap-4 mt-1">
@@ -280,11 +388,19 @@ export const CalendarPage = () => {
             onValueChange={(v) => v && go({ view: v as View })}
             aria-label="View"
           >
+            <ToggleGroupItem value="day" className="px-3">
+              Day
+            </ToggleGroupItem>
             <ToggleGroupItem value="week" className="px-3">
               Week
             </ToggleGroupItem>
-            <ToggleGroupItem value="day" className="px-3">
-              Day
+            {isMobile ? null : (
+              <ToggleGroupItem value="month" className="px-3">
+                30 days
+              </ToggleGroupItem>
+            )}
+            <ToggleGroupItem value="list" className="px-3">
+              List
             </ToggleGroupItem>
           </ToggleGroup>
           <AddAppointment defaultDay={date} />
@@ -292,23 +408,63 @@ export const CalendarPage = () => {
       </div>
       <GoogleCalendarSync />
 
-      {view === "day" ? (
+      {view === "month" ? (
+        <MonthGrid
+          days={dayKeys}
+          byDay={byDay}
+          todayKey={todayKey}
+          onOpenDay={(key) => go({ date: key, view: "day" })}
+          contactOf={contactOf}
+        />
+      ) : view === "list" ? (
+        <AgendaList
+          keys={dayKeys}
+          byDay={byDay}
+          todayKey={todayKey}
+          contactOf={contactOf}
+          onOpenDay={(key) => go({ date: key, view: "day" })}
+        />
+      ) : view === "day" ? (
         <div className="flex flex-col gap-3">
-          <p
-            className="text-sm text-muted-foreground lab-num"
-            aria-live="polite"
-          >
+          <p className="sr-only" aria-live="polite">
             {dayAppts.length}{" "}
-            {dayAppts.length === 1 ? "appointment" : "appointments"} · {dayBay}{" "}
-            in the bay · {dayEric} with Eric
-            {dayOver ? (
-              <span className="text-destructive font-medium">
-                {" "}
-                — {dayOver} over the bay's 2 drop-offs
-              </span>
-            ) : null}
+            {dayAppts.length === 1 ? "appointment" : "appointments"}, {dayBay}{" "}
+            in the bay, {dayEric} with Eric
+            {dayOver ? `, ${dayOver} over the bay's 2 drop-offs` : ""}
           </p>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+            <KpiTile
+              label="Appointments"
+              value={String(dayAppts.length)}
+              detail={date === todayKey ? "Today" : "This day"}
+            />
+            <KpiTile
+              label="In the bay"
+              value={`${dayBay}/${bayLoad(dayBay).capacity}`}
+              detail={
+                dayOver
+                  ? `${dayOver} over the bay's drop-offs`
+                  : "Drop-off slots filled"
+              }
+            />
+            <KpiTile
+              label="With Eric"
+              value={String(dayEric)}
+              detail={dayEric === 1 ? "Job" : "Jobs"}
+            />
+            <KpiTile
+              label="Up next"
+              value={upNext ? formatShopTime(upNext.start_at) : "-"}
+              detail={
+                upNext
+                  ? upNext.title
+                  : date === todayKey
+                    ? "Nothing left today"
+                    : "Nothing booked"
+              }
+            />
+          </div>
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-[1fr_1fr_20rem]">
             {(["detailing-bay", "eric"] as const).map((resource) => {
               const appts = byDay
                 .get(date)!
@@ -351,7 +507,7 @@ export const CalendarPage = () => {
               );
             })}
             {byDay.get(date)!.tasks.length ? (
-              <Card className="p-4 lg:col-span-2 gap-1">
+              <Card className="p-4 lg:col-span-2 xl:col-span-1 gap-1">
                 <h2 className="text-sm font-semibold text-muted-foreground">
                   Tasks due
                 </h2>
