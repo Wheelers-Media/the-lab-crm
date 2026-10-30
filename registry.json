@@ -462,6 +462,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/providers/commons/queryCachePersistence.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/providers/commons/mergeContacts.ts",
           "type": "registry:component"
         },
