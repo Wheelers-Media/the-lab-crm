@@ -412,27 +412,34 @@ export const CommandCenter = ({
       <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_24rem] 2xl:grid-cols-[minmax(0,1fr)_28rem]">
         <aside
           aria-label="Today and what needs attention"
-          className="order-1 grid min-w-0 grid-cols-1 items-start gap-4 lg:grid-cols-2 xl:order-2 xl:flex xl:flex-col xl:items-stretch"
+          className="order-1 grid min-w-0 grid-cols-1 items-stretch gap-4 lg:grid-cols-2 xl:order-2 xl:flex xl:flex-col"
         >
-          <Reveal>{attentionCard}</Reveal>
-          <Reveal delay={120}>{todayCard}</Reveal>
+          <Reveal className="[&>*]:h-full">{attentionCard}</Reveal>
+          <Reveal delay={120} className="[&>*]:h-full">
+            {todayCard}
+          </Reveal>
           <div className="lg:col-span-2 xl:col-span-1">
             <Reveal>{floorCard}</Reveal>
           </div>
         </aside>
         <div className="order-2 flex min-w-0 flex-col gap-4 xl:order-1">
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.6fr_1fr]">
-            {revenueCard}
-            {goalsCard}
+          {/* Every pair shares one 2:1 split so the card edges line up down the page */}
+          <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-3">
+            <div className="min-w-0 lg:col-span-2 [&>*]:h-full">
+              {revenueCard}
+            </div>
+            <div className="min-w-0 [&>*]:h-full">{goalsCard}</div>
           </div>
           <Reveal>{trendBlock}</Reveal>
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.6fr_1fr]">
-            <Reveal>{mixCard}</Reveal>
-            <Reveal delay={120}>{moversCard}</Reveal>
+          <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-3">
+            <Reveal className="lg:col-span-2 [&>*]:h-full">{mixCard}</Reveal>
+            <Reveal delay={120} className="[&>*]:h-full">
+              {moversCard}
+            </Reveal>
           </div>
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-            <Reveal>{weekBlock}</Reveal>
-            <Reveal delay={120}>
+          <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-3">
+            <Reveal className="lg:col-span-2 [&>*]:h-full">{weekBlock}</Reveal>
+            <Reveal delay={120} className="[&>*]:h-full">
               <PipelineSnapshot deals={data.deals} />
             </Reveal>
           </div>

@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import {
   type Identifier,
-  useGetIdentity,
   useGetList,
   useTimeout,
   useTranslate,
@@ -32,7 +31,6 @@ export const TasksListByDueDate = ({
   /** On a wide screen, let the groups flow into two or three columns. */
   columns?: boolean;
 }) => {
-  const { identity } = useGetIdentity();
   const isMobile = useIsMobile();
   const translate = useTranslate();
 
@@ -41,13 +39,11 @@ export const TasksListByDueDate = ({
     {
       pagination: { page: 1, perPage: 1000 },
       sort: { field: "due_date", order: "ASC" },
-      filter: {
-        ...(filterByContact != null
-          ? { contact_id: filterByContact }
-          : { sales_id: identity?.id }),
-      },
+      // Without a contact this is the shop's list: automatic tasks have no
+      // owner, so filtering by the signed-in person hid most of them (Home
+      // counts all of them, so the two pages disagreed)
+      filter: filterByContact != null ? { contact_id: filterByContact } : {},
     },
-    { enabled: filterByContact != null ? true : !!identity },
   );
 
   const showContact = filterByContact == null;

@@ -22,7 +22,7 @@ export const Reveal = ({
   return (
     <div
       ref={ref}
-      className={cn("lab-reveal", inView && "is-in", className)}
+      className={cn("lab-reveal min-w-0", inView && "is-in", className)}
       style={delay ? { transitionDelay: `${delay}ms` } : undefined}
     >
       {children}

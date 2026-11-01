@@ -29,8 +29,10 @@ export const Dashboard = () => {
       <CommandCenter />
       {/* One primary column and one quieter one, rather than four cards of
           equal weight competing with the hero above */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 min-w-0 flex flex-col gap-6">
+      {/* Same column widths and gutter as the rail grid in CommandCenter, so
+          the edges line up from the top of the page to the bottom */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 xl:grid-cols-[minmax(0,1fr)_24rem] 2xl:grid-cols-[minmax(0,1fr)_28rem]">
+        <div className="lg:col-span-2 xl:col-span-1 min-w-0 flex flex-col gap-6">
           <DashboardActivityLog />
         </div>
         <div className="min-w-0 flex flex-col gap-6">

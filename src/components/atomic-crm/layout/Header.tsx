@@ -34,9 +34,6 @@ const Header = () => {
                   src={lightModeLogo}
                   alt={title}
                 />
-                <span className="font-display text-sm font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                  CRM
-                </span>
               </Link>
               <div className="min-w-0 flex-1 flex justify-center">
                 <DesktopNavigation />
