@@ -39,6 +39,7 @@ import { ContactQuotes } from "../packages/ContactQuotes";
 import { ContactQuickActions } from "./contactActions";
 import { ContactAppointments } from "./ContactAppointments";
 import { CustomerOverview } from "./CustomerOverview";
+import { ReviewAskCard } from "./ReviewAskCard";
 
 export const ContactShow = (props: ShowBaseProps = {}) => {
   const isMobile = useIsMobile();
@@ -148,6 +149,10 @@ const ContactShowContentMobile = () => {
 
         <div className="mb-6">
           <CustomerOverview contact={record} />
+        </div>
+
+        <div className="mb-6">
+          <ReviewAskCard contact={record} />
         </div>
 
         <div className="mb-6">
@@ -334,6 +339,9 @@ const ContactShowContent = () => {
             </div>
             <div className="mt-6">
               <CustomerOverview contact={record} />
+            </div>
+            <div className="mt-4">
+              <ReviewAskCard contact={record} />
             </div>
             <div className="mt-8">
               <ContactQuotes contact={record} />
