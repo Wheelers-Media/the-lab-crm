@@ -4,11 +4,13 @@ import {
   ExternalLink,
   Mail,
   MapPin,
+  Pencil,
   Phone,
+  Trash2,
   UserX,
 } from "lucide-react";
 import { type Identifier, useGetOne, useNotify, useUpdate } from "ra-core";
-import type { ComponentType, ReactNode } from "react";
+import { type ComponentType, type ReactNode, useState } from "react";
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,6 +39,8 @@ import {
 import { quoteTotals } from "../packages/quoteModel";
 import type { Appointment, Contact, Deal } from "../types";
 import { appointmentSource } from "./appointmentSource";
+import { EditAppointment } from "./EditAppointment";
+import { useRemoveAppointment } from "./useRemoveAppointment";
 
 const Row = ({
   icon: Icon,
@@ -220,6 +224,9 @@ export const AppointmentDetail = ({
   onOpenChange: (open: boolean) => void;
 }) => {
   const google = appointment.external_url;
+  const [editing, setEditing] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const { kind, remove } = useRemoveAppointment(appointment);
   const notesLabel =
     appointment.source === "google" ? "Written in Google" : "Notes";
   return (
@@ -279,7 +286,17 @@ export const AppointmentDetail = ({
                 {appointment.notes}
               </p>
             </div>
-          ) : null}
+          ) : (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="self-start"
+              onClick={() => setEditing(true)}
+            >
+              <Pencil className="w-4 h-4" />
+              Add a note
+            </Button>
+          )}
 
           {google ? (
             <Button asChild size="sm" variant="outline" className="self-start">
@@ -304,14 +321,68 @@ export const AppointmentDetail = ({
               </Link>
             </Button>
           ) : null}
-          <div className="flex gap-2">
-            <StatusActions
-              appointment={appointment}
-              onChanged={() => onOpenChange(false)}
-            />
+          <div className="flex flex-wrap justify-end gap-2">
+            {confirming ? (
+              <>
+                <span className="self-center text-sm text-muted-foreground">
+                  {kind === "delete"
+                    ? "Remove this appointment?"
+                    : "Cancel this booking?"}
+                </span>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  onClick={() => {
+                    remove();
+                    onOpenChange(false);
+                  }}
+                >
+                  {kind === "delete" ? "Remove" : "Cancel booking"}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setConfirming(false)}
+                >
+                  Keep
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setEditing(true)}
+                >
+                  <Pencil className="w-4 h-4" />
+                  Edit
+                </Button>
+                {appointment.status === "cancelled" ? null : (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setConfirming(true)}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    {kind === "delete" ? "Remove" : "Cancel"}
+                  </Button>
+                )}
+                <StatusActions
+                  appointment={appointment}
+                  onChanged={() => onOpenChange(false)}
+                />
+              </>
+            )}
           </div>
         </DialogFooter>
       </DialogContent>
+      {editing ? (
+        <EditAppointment
+          appointment={appointment}
+          open={editing}
+          onOpenChange={setEditing}
+        />
+      ) : null}
     </Dialog>
   );
 };

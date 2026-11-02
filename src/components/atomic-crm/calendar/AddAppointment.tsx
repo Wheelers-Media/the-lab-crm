@@ -88,6 +88,8 @@ export const AddAppointment = ({ defaultDay }: { defaultDay: string }) => {
 
 export interface AppointmentDefaults {
   day: string;
+  /** Minutes into the day the booking starts, as a clicked time slot gives it. */
+  time?: string;
   contact_id?: Identifier;
   title?: string;
   vehicle?: string | null;
@@ -179,7 +181,7 @@ export const AppointmentCreateDialog = ({
         record={{
           resource: defaults.resource ?? "detailing-bay",
           day: defaults.day,
-          time: "480",
+          time: defaults.time ?? "480",
           duration: "60",
           deposit_paid: false,
           contact_id: defaults.contact_id,

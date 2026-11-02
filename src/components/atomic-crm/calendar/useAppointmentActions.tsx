@@ -27,7 +27,7 @@ let pushTimer: number | undefined;
  * does not stop it. A failed push is not lost: the next sync, which shows its
  * own errors, makes the same change.
  */
-const pushToGoogleSoon = (dataProvider: CrmDataProvider) => {
+export const pushToGoogleSoon = (dataProvider: CrmDataProvider) => {
   window.clearTimeout(pushTimer);
   pushTimer = window.setTimeout(() => {
     dataProvider.syncGoogleCalendar().catch(() => undefined);

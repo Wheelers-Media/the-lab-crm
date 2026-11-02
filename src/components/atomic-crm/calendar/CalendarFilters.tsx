@@ -86,7 +86,7 @@ const Group = ({
   </div>
 );
 
-const FilterForm = ({
+export const FilterForm = ({
   filters,
   onChange,
 }: {
