@@ -73,13 +73,13 @@ const EventBlock = ({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label={`${a.title}, ${formatShopTime(a.start_at)} to ${formatShopTime(a.end_at)}`}
+        aria-label={`${a.title}, ${bay ? "Detailing bay" : "Eric"}, ${formatShopTime(a.start_at)} to ${formatShopTime(a.end_at)}`}
         title={a.title}
         className={cn(
-          "absolute z-10 min-w-0 overflow-hidden rounded-md border-l-4 px-1.5 py-1 text-left text-xs leading-tight outline-none transition-[filter] hover:brightness-125 focus-visible:ring-2 focus-visible:ring-primary",
+          "absolute z-10 min-w-0 overflow-hidden rounded-md border px-1.5 py-1 text-left text-xs leading-tight outline-none transition-[filter] hover:brightness-125 focus-visible:ring-2 focus-visible:ring-primary",
           bay
-            ? "border-[var(--lab-pos)] bg-[color-mix(in_oklab,var(--lab-pos)_24%,var(--card))]"
-            : "border-[var(--lab-blue)] bg-[color-mix(in_oklab,var(--lab-blue)_26%,var(--card))]",
+            ? "border-[color-mix(in_oklab,var(--lab-pos)_60%,transparent)] bg-[color-mix(in_oklab,var(--lab-pos)_28%,var(--card))]"
+            : "border-[color-mix(in_oklab,var(--lab-blue)_60%,transparent)] bg-[color-mix(in_oklab,var(--lab-blue)_30%,var(--card))]",
           done && "opacity-60",
         )}
         style={{
