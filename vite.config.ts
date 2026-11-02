@@ -36,6 +36,8 @@ export default defineConfig({
         skipWaiting: true,
         clientsClaim: true,
         cleanupOutdatedCaches: true,
+        // CRM alerts: the push and notification-click handlers (public/push-handlers.js)
+        importScripts: ["push-handlers.js"],
       },
       manifest: false, // Use existing manifest.json from public/
     }),

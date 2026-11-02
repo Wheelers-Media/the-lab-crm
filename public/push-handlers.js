@@ -1,9 +1,7 @@
-// THE LAB CRM: shows the alerts the server sends (Web Push) and opens the right
-// screen when one is tapped. It deliberately has no fetch handler and caches
-// nothing, so it can never serve an old copy of the app.
-self.addEventListener("install", () => self.skipWaiting());
-self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
-
+// THE LAB CRM alerts (Web Push): shows what the server sends and opens the right
+// screen when one is tapped. Loaded into the app's own service worker through
+// workbox.importScripts (vite.config.ts), so one worker both caches the app and
+// shows alerts. It must not be named sw.js: the build generates that file.
 self.addEventListener("push", (event) => {
   let data = {};
   try {
