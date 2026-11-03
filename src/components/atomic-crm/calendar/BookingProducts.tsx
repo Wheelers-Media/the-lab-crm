@@ -43,9 +43,9 @@ export const BookingProducts = () => {
     () => (Array.isArray(field.value) ? field.value : []),
     [field.value],
   );
-  const [title, vehicle, contactId, jobId] = useWatch({
-    name: ["title", "vehicle", "contact_id", "job_id"],
-  }) as [string?, string?, Identifier?, string?];
+  const [title, vehicle, contactId, jobId, newCustomer] = useWatch({
+    name: ["title", "vehicle", "contact_id", "job_id", "new_customer"],
+  }) as [string?, string?, Identifier?, string?, boolean?];
   const [open, setOpen] = useState(lines.length > 0);
   const { dealStages } = useConfigurationContext();
 
@@ -168,11 +168,11 @@ export const BookingProducts = () => {
       ) : null}
 
       {lines.length ? (
-        contactId == null ? (
+        contactId == null && !newCustomer ? (
           <p role="alert" className="text-sm text-destructive">
             Pick the customer above: products are saved on their job.
           </p>
-        ) : (
+        ) : contactId == null ? null : (
           <label className="flex flex-col gap-1.5 text-sm">
             <span className="font-medium">Save on</span>
             <Select

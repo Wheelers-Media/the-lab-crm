@@ -1494,6 +1494,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/calendar/bookingContact.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/calendar/appointmentSource.ts",
           "type": "registry:component"
         },

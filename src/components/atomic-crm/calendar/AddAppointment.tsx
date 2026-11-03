@@ -9,7 +9,9 @@ import {
   useGetIdentity,
   useNotify,
 } from "ra-core";
+import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { useFormContext, useWatch } from "react-hook-form";
 import { AutocompleteInput } from "@/components/admin/autocomplete-input";
 import { BooleanInput } from "@/components/admin/boolean-input";
 import { DateInput } from "@/components/admin/date-input";
@@ -35,6 +37,13 @@ import type {
   DealPackageLine,
   Vehicle,
 } from "../types";
+import {
+  bookingCustomerErrors,
+  contactForBooking,
+  isNewCustomer,
+  NEW_CUSTOMER_DEFAULTS,
+  type NewCustomerFields,
+} from "./bookingContact";
 import { jobPatchForBooking, newJobForBooking } from "./bookingJob";
 import { BookingProducts, NEW_JOB } from "./BookingProducts";
 import { type AppointmentForm, toAppointment } from "./toAppointment";
@@ -61,13 +70,23 @@ const RESOURCE_CHOICES = [
   { id: "eric", name: "Eric (tint, lighting, tuning, installs)" },
 ];
 
-/** Products are saved on the customer's job, so they need a customer. */
-const validateBooking = (values: Record<string, unknown>) =>
-  Array.isArray(values.packages) &&
-  values.packages.length > 0 &&
-  values.contact_id == null
-    ? { contact_id: "Pick the customer: products are saved on their job" }
-    : {};
+/**
+ * A booking needs a customer: one picked from the CRM, or the name and number
+ * Eric just took over the phone. Products are saved on that customer's job, so
+ * they need a customer too.
+ */
+const validateBooking = (data: unknown) => {
+  const values = data as BookingForm;
+  return {
+    ...bookingCustomerErrors(values),
+    ...(Array.isArray(values.packages) &&
+    values.packages.length > 0 &&
+    values.contact_id == null &&
+    !isNewCustomer(values)
+      ? { contact_id: "Pick the customer: products are saved on their job" }
+      : {}),
+  };
+};
 
 export const AddAppointment = ({ defaultDay }: { defaultDay: string }) => {
   const [open, setOpen] = useState(false);
@@ -98,10 +117,11 @@ export interface AppointmentDefaults {
   deal_id?: Identifier;
 }
 
-type BookingForm = AppointmentForm & {
-  packages?: DealPackageLine[];
-  job_id?: string;
-};
+type BookingForm = AppointmentForm &
+  NewCustomerFields & {
+    packages?: DealPackageLine[];
+    job_id?: string;
+  };
 
 /**
  * The booking form on its own, so a customer's profile can open it with the
@@ -120,6 +140,22 @@ export const AppointmentCreateDialog = ({
   const setOpen = onOpenChange;
   const dataProvider = useDataProvider();
   const { identity } = useGetIdentity();
+  const queryClient = useQueryClient();
+
+  /** Saves the customer typed into the booking and returns their id. */
+  const createBookingCustomer = async (values: BookingForm) => {
+    try {
+      const { data: contact } = await dataProvider.create<Contact>("contacts", {
+        data: contactForBooking(values, identity?.id),
+      });
+      queryClient.invalidateQueries({ queryKey: ["contacts"] });
+      queryClient.invalidateQueries({ queryKey: ["contacts_summary"] });
+      return contact.id;
+    } catch (error) {
+      notify("Could not save the new customer. Try again.", { type: "error" });
+      throw error;
+    }
+  };
 
   /**
    * Products go on the customer's job before the booking is saved, so the
@@ -128,11 +164,15 @@ export const AppointmentCreateDialog = ({
    */
   const transform = async (values: BookingForm) => {
     const appointment = toAppointment(values);
+    const contactId = isNewCustomer(values)
+      ? await createBookingCustomer(values)
+      : (values.contact_id ?? null);
+    const withCustomer = { ...appointment, contact_id: contactId };
     const lines = values.packages ?? [];
-    if (!lines.length || values.contact_id == null) {
+    if (!lines.length || contactId == null) {
       return values.job_id && values.job_id !== NEW_JOB
-        ? { ...appointment, deal_id: values.job_id }
-        : appointment;
+        ? { ...withCustomer, deal_id: values.job_id }
+        : withCustomer;
     }
     try {
       if (values.job_id && values.job_id !== NEW_JOB) {
@@ -144,12 +184,12 @@ export const AppointmentCreateDialog = ({
           data: jobPatchForBooking(job, lines),
           previousData: job,
         });
-        return { ...appointment, deal_id: job.id };
+        return { ...withCustomer, deal_id: job.id };
       }
       const [{ data: contact }, { data: vehicles }] = await Promise.all([
-        dataProvider.getOne<Contact>("contacts", { id: values.contact_id }),
+        dataProvider.getOne<Contact>("contacts", { id: contactId }),
         dataProvider.getList<Vehicle>("vehicles", {
-          filter: { contact_id: values.contact_id },
+          filter: { contact_id: contactId },
           sort: { field: "is_primary", order: "DESC" },
           pagination: { page: 1, perPage: 1 },
         }),
@@ -157,7 +197,7 @@ export const AppointmentCreateDialog = ({
       const { data: job } = await dataProvider.create<Deal>("deals", {
         data: newJobForBooking({
           title: values.title,
-          contactId: values.contact_id,
+          contactId,
           companyId: contact.company_id,
           vehicleId: vehicles[0]?.id,
           salesId: identity?.id,
@@ -165,7 +205,7 @@ export const AppointmentCreateDialog = ({
           lines,
         }),
       });
-      return { ...appointment, deal_id: job.id };
+      return { ...withCustomer, deal_id: job.id };
     } catch (error) {
       notify("Could not save the products on the job. Try again.", {
         type: "error",
@@ -179,6 +219,7 @@ export const AppointmentCreateDialog = ({
       <CreateBase
         resource="appointments"
         record={{
+          ...NEW_CUSTOMER_DEFAULTS,
           resource: defaults.resource ?? "detailing-bay",
           day: defaults.day,
           time: defaults.time ?? "480",
@@ -214,14 +255,7 @@ export const AppointmentCreateDialog = ({
                   automatically. Times are Fort St. John time.
                 </DialogDescription>
               </DialogHeader>
-              <ReferenceInput source="contact_id" reference="contacts_summary">
-                <AutocompleteInput
-                  label="Customer"
-                  optionText={contactOptionText}
-                  helperText={false}
-                  modal
-                />
-              </ReferenceInput>
+              <CustomerFields />
               <TextInput
                 source="title"
                 label="Service"
@@ -281,5 +315,82 @@ export const AppointmentCreateDialog = ({
         </Dialog>
       </CreateBase>
     </>
+  );
+};
+
+/**
+ * Who the booking is for: a customer already in the CRM, or a new one Eric is
+ * adding while they are on the phone. A new customer is saved when the booking
+ * is, so abandoning a half-filled form leaves nothing behind.
+ */
+const CustomerFields = () => {
+  const { setValue } = useFormContext();
+  const isNew = useWatch({ name: "new_customer" }) === true;
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm font-medium">Who is it for</span>
+        <div
+          role="group"
+          aria-label="Who is it for"
+          className="flex rounded-md border border-border p-0.5"
+        >
+          <Button
+            type="button"
+            size="sm"
+            variant={isNew ? "ghost" : "secondary"}
+            aria-pressed={!isNew}
+            onClick={() =>
+              setValue("new_customer", false, { shouldDirty: true })
+            }
+          >
+            Existing
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant={isNew ? "secondary" : "ghost"}
+            aria-pressed={isNew}
+            onClick={() =>
+              setValue("new_customer", true, { shouldDirty: true })
+            }
+          >
+            New customer
+          </Button>
+        </div>
+      </div>
+      {isNew ? (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <TextInput
+            source="customer_first_name"
+            label="First name"
+            validate={required()}
+            helperText={false}
+          />
+          <TextInput
+            source="customer_last_name"
+            label="Last name"
+            validate={required()}
+            helperText={false}
+          />
+          <TextInput
+            source="customer_phone"
+            label="Phone"
+            helperText="For the booking reminder and job texts."
+            className="sm:col-span-2"
+          />
+        </div>
+      ) : (
+        <ReferenceInput source="contact_id" reference="contacts_summary">
+          <AutocompleteInput
+            label="Customer"
+            optionText={contactOptionText}
+            helperText={false}
+            modal
+          />
+        </ReferenceInput>
+      )}
+    </div>
   );
 };
