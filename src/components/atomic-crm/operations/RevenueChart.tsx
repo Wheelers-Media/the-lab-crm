@@ -182,10 +182,8 @@ export const RevenueChart = ({
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            pathLength={1}
-            strokeDasharray={1}
             vectorEffect="non-scaling-stroke"
-            className="lab-draw"
+            className="lab-wipe"
           />
         </svg>
         {focused ? (
