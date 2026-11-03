@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { TextInput } from "@/components/admin/text-input";
 import { Notification } from "@/components/admin/notification";
 import { useConfigurationContext } from "@/components/atomic-crm/root/ConfigurationContext.tsx";
+// The shop's lockup (mark + LUXX AUTOMOTIVE BOUTIQUE INC.), not a text label
+import wordmark from "../root/logos/the_lab_logo_white.png";
 import { SSOAuthButton } from "./SSOAuthButton";
 import {
   disableEmailPasswordAuthentication,
@@ -91,15 +93,32 @@ export const LoginPage = (props: { redirectTo?: string }) => {
   return (
     <div className="min-h-screen flex">
       <div className="relative grid w-full lg:grid-cols-2">
-        <div className="relative hidden h-full flex-col bg-muted p-10 text-white dark:border-r lg:flex">
-          <div className="absolute inset-0 bg-zinc-900" />
-          <div className="relative z-20 flex items-center text-lg font-medium">
-            <img className="h-10 mr-2" src={darkModeLogo} alt={title} />
-            {title}
+        {/* The shop's ink, with the lockup large enough to read: the mark alone
+            at 40px was a hairline, and the app name was printed beside it. */}
+        <div className="relative hidden h-full flex-col justify-between overflow-hidden bg-[var(--lab-bg)] p-10 text-white lg:flex">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -left-40 -top-40 size-[32rem] rounded-full bg-[var(--lab-blue)]/25 blur-[130px]"
+          />
+          <img
+            src={wordmark}
+            alt={title}
+            className="relative z-20 h-16 w-auto self-start"
+          />
+          <div className="relative z-20 space-y-3">
+            <p className="max-w-xs text-2xl font-semibold leading-snug">
+              The shop, in one place.
+            </p>
+            <p className="max-w-xs text-sm text-white/55">
+              Bookings, customers, jobs and money — from drop-off to pickup.
+            </p>
           </div>
         </div>
         <div className="flex flex-col justify-center w-full p-4 lg:p-8">
           <div className="w-full space-y-6 lg:mx-auto lg:w-[350px]">
+            <div className="flex justify-center lg:hidden">
+              <img className="h-12 w-auto" src={darkModeLogo} alt={title} />
+            </div>
             <div className="text-center">
               <h1 className="text-2xl font-semibold tracking-tight">
                 {translate("ra.auth.sign_in")}
