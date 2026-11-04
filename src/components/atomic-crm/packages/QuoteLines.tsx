@@ -5,7 +5,13 @@ import { Input } from "@/components/ui/input";
 
 import type { DealPackageLine, Package } from "../types";
 import { ProductThumb } from "./ProductParts";
-import { LABOUR_RATE, labourLine, lineKind, type LineKind } from "./quoteModel";
+import {
+  LABOUR_RATE,
+  labourLine,
+  lineKind,
+  withVariant,
+  type LineKind,
+} from "./quoteModel";
 
 const KINDS: Array<[LineKind, string]> = [
   ["part", "Part"],
@@ -138,12 +144,34 @@ export const QuoteLines = ({
                       <Wrench className="size-4" aria-hidden />
                     </span>
                   )}
-                  <Input
-                    value={line.title}
-                    onChange={(e) => change(i, { title: e.target.value })}
-                    aria-label="Line description"
-                    className="h-10 min-w-0 flex-1"
-                  />
+                  <div className="flex min-w-0 flex-1 flex-col gap-2">
+                    <Input
+                      value={line.title}
+                      onChange={(e) => change(i, { title: e.target.value })}
+                      aria-label="Line description"
+                      className="h-10 min-w-0"
+                    />
+                    {pkg && pkg.variants.length > 1 ? (
+                      <select
+                        value={line.variant_id ?? ""}
+                        onChange={(e) =>
+                          onChange(
+                            lines.map((l, j) =>
+                              j === i ? withVariant(l, pkg, e.target.value) : l,
+                            ),
+                          )
+                        }
+                        aria-label={`Option for ${pkg.title}`}
+                        className="h-10 w-full min-w-0 rounded-md border border-input bg-transparent px-2 text-sm dark:bg-input/30"
+                      >
+                        {pkg.variants.map((v) => (
+                          <option key={v.id} value={v.id}>
+                            {v.title} - ${v.price}
+                          </option>
+                        ))}
+                      </select>
+                    ) : null}
+                  </div>
                 </div>
                 <div className="grid w-full grid-cols-[auto_minmax(0,1fr)_minmax(0,1.4fr)_auto] items-center gap-2 sm:flex sm:w-auto">
                   <KindSwitch
