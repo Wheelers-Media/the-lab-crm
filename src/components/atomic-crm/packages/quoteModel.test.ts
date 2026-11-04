@@ -10,6 +10,7 @@ import {
   quoteContext,
   quoteTotals,
   suggestProducts,
+  withVariant,
   needsOffroadAck,
 } from "./quoteModel";
 
@@ -431,5 +432,22 @@ describe("needsOffroadAck", () => {
       needsOffroadAck([{ title: "Ceramic tint" }, { title: "Labour" }], null),
     ).toBe(false);
     expect(needsOffroadAck([], null)).toBe(false);
+  });
+});
+
+describe("withVariant", () => {
+  it("switches id, price and title to the chosen option", () => {
+    const pkg = product("Intake", {
+      variants: [
+        { id: "a", title: "Black", price: 100 },
+        { id: "b", title: "Red", price: 120 },
+      ],
+    });
+    const line = withVariant(lineFromCatalog(pkg), pkg, "b");
+    expect(line).toMatchObject({
+      variant_id: "b",
+      price: 120,
+      title: "Intake - Red",
+    });
   });
 });
