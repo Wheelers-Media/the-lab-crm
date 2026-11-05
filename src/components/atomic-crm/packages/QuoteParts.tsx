@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import type { Package } from "../types";
 import { packagePriceLabel } from "./packageModel";
 import { ProductThumb, StockChip } from "./ProductParts";
+import { VariantPicker } from "./VariantPicker";
 import {
   fitsTruck,
   groupByType,
@@ -23,34 +24,43 @@ const PartRow = ({
   pkg: Package;
   added: boolean;
   fits?: boolean;
-  onAdd: (pkg: Package) => void;
-}) => (
-  <li className="flex items-center gap-3 rounded-lg border border-border p-2 pr-3">
-    <ProductThumb pkg={pkg} size={48} />
-    <div className="min-w-0 flex-1">
-      <p className="line-clamp-2 text-sm leading-snug">{pkg.title}</p>
-      <div className="mt-1 flex flex-wrap items-center gap-2">
-        <span className="text-sm lab-num">{packagePriceLabel(pkg)}</span>
-        <StockChip inventory={pkg.inventory} />
-        {fits ? (
-          <span className="lab-chip lab-chip-bay">Fits this truck</span>
-        ) : null}
+  onAdd: (pkg: Package, variantId?: string) => void;
+}) => {
+  const [variantId, setVariantId] = useState(pkg.variants[0]?.id ?? "");
+  const chosen = pkg.variants.find((v) => v.id === variantId);
+  return (
+    <li className="flex items-center gap-3 rounded-lg border border-border p-2 pr-3">
+      <ProductThumb pkg={pkg} size={48} />
+      <div className="flex min-w-0 flex-1 flex-col gap-2">
+        <p className="line-clamp-2 text-sm leading-snug">{pkg.title}</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm lab-num">
+            {pkg.variants.length > 1 && chosen
+              ? `$${chosen.price}`
+              : packagePriceLabel(pkg)}
+          </span>
+          <StockChip inventory={pkg.inventory} />
+          {fits ? (
+            <span className="lab-chip lab-chip-bay">Fits this truck</span>
+          ) : null}
+        </div>
+        <VariantPicker pkg={pkg} value={variantId} onChange={setVariantId} />
       </div>
-    </div>
-    <Button
-      type="button"
-      size="sm"
-      variant={added ? "ghost" : "outline"}
-      disabled={added}
-      onClick={() => onAdd(pkg)}
-      aria-label={added ? `${pkg.title} added` : `Add ${pkg.title}`}
-      className="shrink-0"
-    >
-      {added ? <Check className="size-4" /> : <Plus className="size-4" />}
-      {added ? "Added" : "Add"}
-    </Button>
-  </li>
-);
+      <Button
+        type="button"
+        size="sm"
+        variant={added ? "ghost" : "outline"}
+        disabled={added}
+        onClick={() => onAdd(pkg, variantId)}
+        aria-label={added ? `${pkg.title} added` : `Add ${pkg.title}`}
+        className="shrink-0"
+      >
+        {added ? <Check className="size-4" /> : <Plus className="size-4" />}
+        {added ? "Added" : "Add"}
+      </Button>
+    </li>
+  );
+};
 
 const Group = ({
   type,
@@ -63,7 +73,7 @@ const Group = ({
   items: Package[];
   asked: boolean;
   addedIds: Set<string>;
-  onAdd: (pkg: Package) => void;
+  onAdd: (pkg: Package, variantId?: string) => void;
 }) => {
   const [open, setOpen] = useState(asked);
   const shown = open ? items : items.slice(0, GROUP_PREVIEW);
@@ -122,7 +132,7 @@ export const QuoteParts = ({
   suggestions: Package[];
   ctx: QuoteContext;
   addedIds: Set<string>;
-  onAdd: (pkg: Package) => void;
+  onAdd: (pkg: Package, variantId?: string) => void;
   /** Plain words for what the suggestions are based on. */
   reason: string;
   /** Engines to choose from when the truck's engine is not known. */

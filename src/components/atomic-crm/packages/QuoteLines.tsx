@@ -9,9 +9,11 @@ import {
   LABOUR_RATE,
   labourLine,
   lineKind,
+  TUNE_DETAILS,
   withVariant,
   type LineKind,
 } from "./quoteModel";
+import { VariantPicker } from "./VariantPicker";
 
 const KINDS: Array<[LineKind, string]> = [
   ["part", "Part"],
@@ -152,24 +154,38 @@ export const QuoteLines = ({
                       className="h-10 min-w-0"
                     />
                     {pkg && pkg.variants.length > 1 ? (
-                      <select
+                      <VariantPicker
+                        pkg={pkg}
                         value={line.variant_id ?? ""}
-                        onChange={(e) =>
+                        onChange={(id) =>
                           onChange(
                             lines.map((l, j) =>
-                              j === i ? withVariant(l, pkg, e.target.value) : l,
+                              j === i ? withVariant(l, pkg, id) : l,
                             ),
                           )
                         }
-                        aria-label={`Option for ${pkg.title}`}
-                        className="h-10 w-full min-w-0 rounded-md border border-input bg-transparent px-2 text-sm dark:bg-input/30"
-                      >
-                        {pkg.variants.map((v) => (
-                          <option key={v.id} value={v.id}>
-                            {v.title} - ${v.price}
-                          </option>
+                      />
+                    ) : null}
+                    {pkg?.category === "tuning" && pkg.kind === "product" ? (
+                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        {TUNE_DETAILS.map((name) => (
+                          <Input
+                            key={name}
+                            value={line.details?.[name] ?? ""}
+                            onChange={(e) =>
+                              change(i, {
+                                details: {
+                                  ...line.details,
+                                  [name]: e.target.value,
+                                },
+                              })
+                            }
+                            placeholder={name}
+                            aria-label={`${name} for ${line.title}`}
+                            className="h-10 min-w-0"
+                          />
                         ))}
-                      </select>
+                      </div>
                     ) : null}
                   </div>
                 </div>

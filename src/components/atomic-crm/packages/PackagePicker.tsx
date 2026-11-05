@@ -39,6 +39,8 @@ export const usePackageGroups = () => {
     const map = new Map<string, Package[]>();
     for (const pkg of data) {
       if (NOT_FOR_JOBS.test(pkg.title)) continue;
+      // Like the website: products for sale and the shop's own services only
+      if (pkg.status !== "active" && pkg.status !== "unlisted") continue;
       const label =
         pkg.kind === "product"
           ? `Parts Store: ${labelOf(pkg.category)}`

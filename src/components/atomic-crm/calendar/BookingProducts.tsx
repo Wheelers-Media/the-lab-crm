@@ -209,8 +209,8 @@ export const BookingProducts = () => {
         engines={engines}
         onPickEngine={setPickedEngine}
         heading="Add products"
-        onAdd={(pkg) => {
-          field.onChange([...lines, lineFromCatalog(pkg)]);
+        onAdd={(pkg, variantId) => {
+          field.onChange([...lines, lineFromCatalog(pkg, variantId)]);
           // The first product names the booking when nothing was typed
           if (!getValues("title")?.trim())
             setValue("title", pkg.title, { shouldDirty: true });

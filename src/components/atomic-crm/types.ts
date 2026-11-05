@@ -219,6 +219,8 @@ export type DealPackageLine = {
   variant_id?: string | null;
   /** Parts are paid up front; labour can wait until pickup. */
   kind?: "part" | "labour";
+  /** Order-line details a tune needs (VIN, device serial...), sent to Shopify with the line. */
+  details?: Record<string, string>;
 };
 
 /** What the customer saw and chose on thelabfsj.ca (lead_intake). */

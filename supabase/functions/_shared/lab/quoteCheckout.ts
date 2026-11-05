@@ -10,6 +10,8 @@ export type QuoteLine = {
   quantity: number;
   variant_id?: string | null;
   kind?: "part" | "labour";
+  /** Tune details (VIN, device serial...) kept on the order line, like the website's cart. */
+  details?: Record<string, string>;
 };
 
 export type PayMode = "parts" | "all";
@@ -65,10 +67,14 @@ export const draftOrderPlan = (
     const price = money(Math.max(0, Number(line.price) || 0));
     // A catalog part sells the real Shopify variant, at the quoted price
     if (line.variant_id) {
+      const customAttributes = Object.entries(line.details ?? {})
+        .map(([key, value]) => ({ key, value: String(value).trim() }))
+        .filter((a) => a.value);
       return {
         variantId: `gid://shopify/ProductVariant/${String(line.variant_id).replace(/\D/g, "")}`,
         quantity,
         priceOverride: price,
+        ...(customAttributes.length ? { customAttributes } : {}),
       };
     }
     // Shopify counts whole units; 1.5 hours becomes one line for the hours
