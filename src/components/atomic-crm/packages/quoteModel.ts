@@ -134,6 +134,23 @@ export const withVariant = (
   };
 };
 
+/** The same line switched to another variant of its product: variant id, price and name. */
+export const withVariant = (
+  line: DealPackageLine,
+  pkg: Package,
+  variantId: string,
+): DealPackageLine => {
+  const v = pkg.variants.find((x) => x.id === variantId);
+  if (!v) return line;
+  const named = pkg.variants.length > 1 && v.title !== "Default Title";
+  return {
+    ...line,
+    variant_id: v.id,
+    price: v.price,
+    title: named ? `${pkg.title} - ${v.title}` : pkg.title,
+  };
+};
+
 type Platform =
   | "cummins"
   | "duramax"
