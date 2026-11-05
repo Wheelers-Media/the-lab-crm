@@ -294,7 +294,9 @@ export const QuoteBuilderPage = () => {
             reason={reason}
             engines={engines}
             onPickEngine={pickEngine}
-            onAdd={(pkg) => edit([...lines, lineFromCatalog(pkg)])}
+            onAdd={(pkg, variantId) =>
+              edit([...lines, lineFromCatalog(pkg, variantId, vehicle?.vin)])
+            }
           />
 
           <section

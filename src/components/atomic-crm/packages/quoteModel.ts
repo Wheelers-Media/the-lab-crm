@@ -37,10 +37,23 @@ export const labourLine = (hours = 1): DealPackageLine => ({
   kind: "labour",
 });
 
-/** A catalog item as a quote line, priced at its first variant. */
-export const lineFromCatalog = (pkg: Package): DealPackageLine => {
-  const variant = pkg.variants[0];
-  return {
+/** Tune details a customer fills in on the website; Shopify keeps them on the order line. */
+export const TUNE_DETAILS = [
+  "VIN",
+  "Transmission Strategy",
+  "Device Serial Number",
+  "Vehicle Modifications",
+] as const;
+
+/** A catalog item as a quote line, priced at the chosen variant (the first when none is given). */
+export const lineFromCatalog = (
+  pkg: Package,
+  variantId?: string | null,
+  vin?: string | null,
+): DealPackageLine => {
+  const variant =
+    pkg.variants.find((v) => v.id === variantId) ?? pkg.variants[0];
+  const line: DealPackageLine = {
     package_id: pkg.id,
     title: pkg.title,
     price: variant?.price ?? pkg.price ?? 0,
@@ -48,6 +61,60 @@ export const lineFromCatalog = (pkg: Package): DealPackageLine => {
     variant_id: pkg.kind === "product" && variant ? variant.id : null,
     kind: pkg.kind === "product" ? "part" : "labour",
   };
+  const picked = variant ? withVariant(line, pkg, variant.id) : line;
+  return pkg.kind === "product" && pkg.category === "tuning" && vin
+    ? { ...picked, details: { VIN: vin } }
+    : picked;
+};
+
+/**
+ * Shopify joins a product's options in a variant title ("Tune-Level 1 / Add
+ * VIN License"). The pieces, per variant, when every title has the same 2-3
+ * pieces; null when the title is one plain name.
+ */
+export const variantChoices = (
+  variants: Package["variants"],
+): string[][] | null => {
+  const parts = variants.map((v) => v.title.split(" / ").map((p) => p.trim()));
+  const n = parts[0]?.length ?? 0;
+  return n >= 2 && n <= 3 && parts.every((p) => p.length === n) ? parts : null;
+};
+
+/** The values to offer for option `position`, given the choices made before it. */
+export const optionValues = (
+  variants: Package["variants"],
+  currentId: string,
+  position: number,
+): string[] => {
+  const parts = variantChoices(variants);
+  const at = variants.findIndex((v) => v.id === currentId);
+  if (!parts || at < 0) return [];
+  const same = parts.filter((p) =>
+    p.slice(0, position).every((x, k) => x === parts[at][k]),
+  );
+  return [...new Set(same.map((p) => p[position]))];
+};
+
+/** The variant after setting option `position` to `value`, keeping the other choices where possible. */
+export const chooseVariant = (
+  variants: Package["variants"],
+  currentId: string,
+  position: number,
+  value: string,
+): string => {
+  const parts = variantChoices(variants);
+  const at = variants.findIndex((v) => v.id === currentId);
+  if (!parts || at < 0) return currentId;
+  const cur = parts[at];
+  const head = (p: string[]) =>
+    p.slice(0, position).every((x, k) => x === cur[k]) && p[position] === value;
+  const matches = parts
+    .map((p, i) => [p, i] as const)
+    .filter(([p]) => head(p));
+  const best =
+    matches.find(([p]) => p.slice(position + 1).every((x, k) => x === cur[position + 1 + k])) ??
+    matches[0];
+  return best ? variants[best[1]].id : currentId;
 };
 
 /** The same line switched to another variant of its product: variant id, price and name. */
@@ -374,7 +441,11 @@ export const searchCatalog = (
   const words = query.toLowerCase().split(/\s+/).filter(Boolean);
   if (!words.length) return [];
   const hits = catalog.filter((pkg) => {
-    if (pkg.status === "deleted" || /secure booking deposit/i.test(pkg.title))
+    // Like the website: only what is for sale (active) and the shop's own services (unlisted)
+    if (
+      (pkg.status !== "active" && pkg.status !== "unlisted") ||
+      /secure booking deposit/i.test(pkg.title)
+    )
       return false;
     const text = [
       pkg.title,

@@ -115,4 +115,21 @@ describe("draftOrderNote", () => {
       "Exhaust - Sierra. Parts paid now. Labour of $350.00 plus tax is paid at pickup.",
     );
   });
+
+  it("keeps tune details on the order line, skipping blanks", () => {
+    const plan = draftOrderPlan(
+      [
+        {
+          ...lines[0],
+          details: { VIN: "1FT8W3BT0LED00001", "Device Serial Number": " " },
+        },
+      ],
+      "parts",
+    );
+    expect(plan).toMatchObject({
+      lineItems: [
+        { customAttributes: [{ key: "VIN", value: "1FT8W3BT0LED00001" }] },
+      ],
+    });
+  });
 });

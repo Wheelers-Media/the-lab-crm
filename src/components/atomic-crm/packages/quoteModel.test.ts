@@ -11,6 +11,9 @@ import {
   quoteTotals,
   suggestProducts,
   withVariant,
+  variantChoices,
+  optionValues,
+  chooseVariant,
   needsOffroadAck,
 } from "./quoteModel";
 
@@ -449,5 +452,43 @@ describe("withVariant", () => {
       price: 120,
       title: "Intake - Red",
     });
+  });
+});
+
+describe("tune options like the website", () => {
+  const tune = product("2020-2022 F250 6.7L Powerstroke Engine Tuning", {
+    category: "tuning",
+    variants: [
+      { id: "a", title: "Level 1 / Add VIN License", price: 1700 },
+      { id: "b", title: "Level 1 / No VIN License", price: 1150 },
+      { id: "c", title: "Level 2 / Add VIN License", price: 1700 },
+      { id: "d", title: "Level 2 / No VIN License", price: 1150 },
+    ],
+  });
+
+  it("splits option names and keeps the other choice when one changes", () => {
+    expect(variantChoices(tune.variants)?.[1]).toEqual([
+      "Level 1",
+      "No VIN License",
+    ]);
+    expect(optionValues(tune.variants, "b", 0)).toEqual(["Level 1", "Level 2"]);
+    expect(chooseVariant(tune.variants, "b", 0, "Level 2")).toBe("d");
+  });
+
+  it("adds the chosen variant with the customer's VIN", () => {
+    const line = lineFromCatalog(tune, "d", "1FT8W3BT0LED00001");
+    expect(line).toMatchObject({
+      variant_id: "d",
+      price: 1150,
+      details: { VIN: "1FT8W3BT0LED00001" },
+    });
+  });
+
+  it("does not offer drafts or archived products", () => {
+    const draft = product("Fish Tuning SOTF Switch", { status: "draft" });
+    expect(searchCatalog([draft, tune], "tuning", quoteContext({}))).toEqual([
+      tune,
+    ]);
+    expect(searchCatalog([draft], "switch", quoteContext({}))).toEqual([]);
   });
 });
