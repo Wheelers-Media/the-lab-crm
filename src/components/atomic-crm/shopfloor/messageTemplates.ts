@@ -6,6 +6,9 @@ import { reviewAsk } from "./reviewAsk";
 
 export const SHOP_PHONE = "(250) 261-9502";
 
+/** Where customers pick an install day once their parts are at the shop. */
+export const INSTALL_BOOKING_LINK = "https://cal.com/the-lab/eric-services";
+
 /** Opens the Google review form for the shop. */
 export { REVIEW_LINK } from "./reviewAsk";
 
@@ -16,6 +19,7 @@ export type TemplateId =
   | "followup"
   | "quote"
   | "deposit"
+  | "book"
   | "review";
 
 /** The customer's private status page; the token comes from the job. */
@@ -97,6 +101,12 @@ It shows where it's at, your drop-off time and what's due. No login needed.`
     },
   },
   {
+    id: "book",
+    label: "Parts arrived: pick an install day",
+    build: (c) =>
+      `${hello(c)} your parts for the ${job(c)} have arrived at THE LAB. Pick your install day here: ${INSTALL_BOOKING_LINK}\n\nPlan on one to two days in the shop. Text or call ${SHOP_PHONE} if you have any questions.${follow(c)}`,
+  },
+  {
     id: "deposit",
     label: "Deposit reminder",
     build: (c) =>
@@ -128,7 +138,9 @@ export const templatesFor = (
     ? LEAD[deal.work_status]
     : deal.stage === "quoted"
       ? "followup"
-      : undefined;
+      : deal.stage === "ready_to_book"
+        ? "book"
+        : undefined;
   return TEXT_TEMPLATES.map((t) => ({
     id: t.id,
     label: t.label,

@@ -14,6 +14,7 @@ import type { SheetAction } from "../misc/ActionSheet";
 import type { SwipeAction } from "../misc/SwipeRow";
 import { useConfigurationContext } from "../root/ConfigurationContext";
 import type { Contact, Deal } from "../types";
+import { nextStage } from "./stages";
 
 const CLOSED = new Set(["won", "lost"]);
 
@@ -44,7 +45,12 @@ export const useDealActions = (
   const contact = contacts?.[0];
 
   const at = dealStages.findIndex((s) => s.value === deal.stage);
-  const next = CLOSED.has(deal.stage) ? undefined : dealStages[at + 1];
+  const next = CLOSED.has(deal.stage)
+    ? undefined
+    : nextStage(dealStages, deal.stage);
+  // Install jobs: the step after "Parts on the way" is the parts arriving
+  const nextLabel =
+    deal.stage === "parts_on_the_way" ? "Parts arrived" : next?.label;
 
   const save = (data: Partial<Deal>, message: string) =>
     update(
@@ -85,7 +91,11 @@ export const useDealActions = (
       onSelect: () => navigate(`/contacts/${customerId}/show`),
     },
     {
-      label: next ? `Move to ${next.label}` : "",
+      label: next
+        ? deal.stage === "parts_on_the_way"
+          ? "Parts arrived"
+          : `Move to ${next.label}`
+        : "",
       icon: ArrowRight,
       hidden: !next,
       onSelect: () => next && move(next.value, next.label),
@@ -110,7 +120,7 @@ export const useDealActions = (
     stageLabel: dealStages[at]?.label,
     swipeRight: next
       ? {
-          label: next.label,
+          label: nextLabel ?? next.label,
           icon: ArrowRight,
           tone: "primary",
           onTrigger: () => move(next.value, next.label),

@@ -31,6 +31,8 @@ export const defaultDealStages = [
   { value: "intake", label: "Intake" },
   { value: "qualified", label: "Qualified" },
   { value: "quoted", label: "Quoted" },
+  { value: "parts_on_the_way", label: "Parts on the way" },
+  { value: "ready_to_book", label: "Ready to book" },
   { value: "booked", label: "Booked" },
   { value: "won", label: "Converted" },
   { value: "lost", label: "Not now" },

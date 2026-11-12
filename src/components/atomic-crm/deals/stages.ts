@@ -34,3 +34,21 @@ export const getDealsByStage = (
   });
   return dealsByStage;
 };
+
+/** The two stages only install jobs (parts shipped to the shop) pass through. */
+export const INSTALL_STAGES = ["parts_on_the_way", "ready_to_book"];
+
+/**
+ * The stage a job moves to next. Ordinary jobs skip the install stages
+ * (Quoted goes straight to Booked); install jobs step through them.
+ */
+export const nextStage = (
+  dealStages: ConfigurationContextValue["dealStages"],
+  stage: string,
+) => {
+  const path = INSTALL_STAGES.includes(stage)
+    ? dealStages
+    : dealStages.filter((s) => !INSTALL_STAGES.includes(s.value));
+  const at = path.findIndex((s) => s.value === stage);
+  return at === -1 ? undefined : path[at + 1];
+};

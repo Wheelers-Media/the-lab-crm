@@ -129,3 +129,17 @@ describe("smsHref", () => {
     );
   });
 });
+
+describe("install jobs", () => {
+  it("leads with the install booking text once the parts have arrived", () => {
+    const texts = templatesFor(
+      { work_status: null, stage: "ready_to_book" },
+      { firstName: "Sam", job: "Install: 2023-2026 Powerstroke" },
+    );
+
+    expect(texts[0].id).toBe("book");
+    expect(texts[0].body).toContain("Hi Sam,");
+    expect(texts[0].body).toContain("https://cal.com/the-lab/eric-services");
+    expect(texts[0].body).not.toMatch(/deposit/i);
+  });
+});

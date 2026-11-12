@@ -330,6 +330,8 @@ export type ShopifyOrder = {
   cancelledAt: string | null;
   checkoutToken: string;
   note: string;
+  /** Cart attributes the customer's checkout carried (note_attributes). */
+  attributes: Record<string, string>;
 };
 
 type AnyRecord = Record<string, unknown>;
@@ -368,6 +370,16 @@ const lineItemsFrom = (value: unknown): LineItem[] =>
     };
   });
 
+const attributesFrom = (value: unknown): Record<string, string> => {
+  const out: Record<string, string> = {};
+  for (const raw of Array.isArray(value) ? value : []) {
+    const a = rec(raw);
+    const name = clip(a.name, 60);
+    if (name) out[name] = clip(a.value, 500);
+  }
+  return out;
+};
+
 export const parseShopifyOrder = (
   payload: unknown,
 ): ParseResult<ShopifyOrder> => {
@@ -405,6 +417,7 @@ export const parseShopifyOrder = (
       cancelledAt: clip(p.cancelled_at, 40) || null,
       checkoutToken: clip(p.checkout_token, 120),
       note: clip(p.note, 2000),
+      attributes: attributesFrom(p.note_attributes),
     },
   };
 };

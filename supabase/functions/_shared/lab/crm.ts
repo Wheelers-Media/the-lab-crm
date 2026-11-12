@@ -18,7 +18,14 @@ const TAG_COLORS = [
 ];
 
 // Deal stages that are still in progress (won = Converted, lost = Not now)
-export const OPEN_STAGES = ["intake", "qualified", "quoted", "booked"];
+export const OPEN_STAGES = [
+  "intake",
+  "qualified",
+  "quoted",
+  "parts_on_the_way",
+  "ready_to_book",
+  "booked",
+];
 
 /** "Mon, Oct 13, 2:00 p.m." in the shop's time zone. */
 export const shopTimeText = (iso: string): string =>

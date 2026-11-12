@@ -1,3 +1,4 @@
+import { InstallPanel } from "./InstallPanel";
 import { useMutation } from "@tanstack/react-query";
 import { isValid } from "date-fns";
 import { Archive, ArchiveRestore, FileText } from "lucide-react";
@@ -168,6 +169,8 @@ const DealShowContent = () => {
                   )}
                 </div>
               </div>
+
+              {record.archived_at ? null : <InstallPanel deal={record} />}
 
               {record.archived_at ? null : <WorkStatusPanel deal={record} />}
 

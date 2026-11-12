@@ -24,8 +24,15 @@ export interface StageChange {
 const HOUR_MS = 3_600_000;
 const DAY_MS = 86_400_000;
 
+// Install jobs wait for parts between a paid order and a booking: for the
+// funnel that is the same step as Quoted, not extra steps on the path.
+const FUNNEL_ALIAS: Record<string, string> = {
+  parts_on_the_way: "quoted",
+  ready_to_book: "quoted",
+};
+
 const stageIndex = (stage: string): number =>
-  (FUNNEL_STAGES as readonly string[]).indexOf(stage);
+  (FUNNEL_STAGES as readonly string[]).indexOf(FUNNEL_ALIAS[stage] ?? stage);
 
 /**
  * How far along the path the job ever got. A job that went straight from a

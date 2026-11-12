@@ -27,12 +27,14 @@ import {
   type NamedBooking,
   pickBookingForCustomer,
 } from "../_shared/lab/bookingMatch.ts";
+import { installJobFrom } from "../_shared/lab/installOrder.ts";
 import { packageFromProduct } from "../_shared/lab/packages.ts";
 import { notify } from "../_shared/lab/push.ts";
 import { depositMessage, orderMessage } from "../_shared/lab/pushMessages.ts";
 import {
   addContactNote,
   addDealNote,
+  createDeal,
   createTask,
   defaultSalesId,
   finishEvent,
@@ -177,6 +179,25 @@ const handleOrder = async (
           .update({ deposit_paid: true })
           .eq("id", sameDayBooking.id);
     }
+  }
+
+  // Parts for the shop to install: the customer's job waits in "Parts on the
+  // way" until the parts arrive and they are asked to pick an install day.
+  const install = isNew && !history && contact ? installJobFrom(order) : null;
+  if (install && contact) {
+    dealId = await createDeal({
+      name: install.name,
+      contactId: contact.id,
+      stage: "parts_on_the_way",
+      category: "tuning",
+      amount: order.total,
+      leadSource: "website",
+      description: install.description,
+    });
+    await addDealNote(
+      dealId,
+      `Parts paid (Shopify order ${order.orderNumber}) and shipping to the shop. No deposit is needed. When the parts arrive, press "Parts arrived" to ask the customer to pick an install day.`,
+    );
   }
 
   const row = {

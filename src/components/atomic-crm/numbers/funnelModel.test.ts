@@ -47,6 +47,11 @@ describe("furthestStage", () => {
     expect(reached).toBe(2); // quoted
   });
 
+  it("counts a job waiting for parts as past Quoted but before Booked", () => {
+    expect(furthestStage(deal(3, { stage: "parts_on_the_way" }), [])).toBe(2);
+    expect(furthestStage(deal(4, { stage: "ready_to_book" }), [])).toBe(2);
+  });
+
   it("places a job with no log by where it is now", () => {
     expect(furthestStage(deal(2, { stage: "booked" }), [])).toBe(3);
   });

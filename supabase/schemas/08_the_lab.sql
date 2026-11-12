@@ -378,6 +378,12 @@ begin
         select 1 from public.appointments a
         where a.deal_id = d.id and a.deposit_paid and a.status in ('booked', 'completed')
       )
+      -- A job whose parts were paid up front (a power package installed at the
+      -- shop) takes no deposit
+      and not exists (
+        select 1 from public.orders o
+        where o.deal_id = d.id and not o.is_deposit and o.financial_status = 'paid'
+      )
   loop
     if public.lab_add_task('deposit-reminder', r.id, r.contact_id, 'deposit',
         'Deposit not paid yet: ' || r.name, r.sales_id) is not null then
@@ -452,6 +458,32 @@ begin
   loop
     if public.lab_add_task('review-request', r.id, r.contact_id, 'text',
         'Ask for a Google review: ' || r.name, r.sales_id) is not null then
+      v_count := v_count + 1;
+    end if;
+  end loop;
+
+  -- 10. Parts for an install paid for 10+ days ago and not arrived yet
+  for r in
+    select d.id, d.name, d.contact_ids[1] as contact_id, d.sales_id
+    from public.deals d
+    where d.stage = 'parts_on_the_way' and d.archived_at is null
+      and d.stage_changed_at < now() - interval '10 days'
+  loop
+    if public.lab_add_task('parts-on-the-way-check', r.id, r.contact_id, 'follow-up',
+        'Parts on the way for 10 days. Check the order and update the customer: ' || r.name, r.sales_id) is not null then
+      v_count := v_count + 1;
+    end if;
+  end loop;
+
+  -- 11. Parts arrived 3+ days ago and no install day picked yet
+  for r in
+    select d.id, d.name, d.contact_ids[1] as contact_id, d.sales_id
+    from public.deals d
+    where d.stage = 'ready_to_book' and d.archived_at is null
+      and d.stage_changed_at < now() - interval '3 days'
+  loop
+    if public.lab_add_task('install-booking-follow-up', r.id, r.contact_id, 'follow-up',
+        'Parts are in but no install day is booked. Follow up: ' || r.name, r.sales_id) is not null then
       v_count := v_count + 1;
     end if;
   end loop;
@@ -570,7 +602,7 @@ begin
     select d.id, d.stage into v_deal
     from public.deals d
     where d.contact_ids @> array[r.contact_id] and d.archived_at is null
-      and d.stage in ('intake', 'qualified', 'quoted', 'booked')
+      and d.stage in ('intake', 'qualified', 'quoted', 'parts_on_the_way', 'ready_to_book', 'booked')
     order by d.updated_at desc
     limit 1;
 

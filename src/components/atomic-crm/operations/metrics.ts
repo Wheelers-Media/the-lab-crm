@@ -9,7 +9,14 @@ import {
   shopHour,
 } from "./shopTime";
 
-export const OPEN_STAGES = ["intake", "qualified", "quoted", "booked"];
+export const OPEN_STAGES = [
+  "intake",
+  "qualified",
+  "quoted",
+  "parts_on_the_way",
+  "ready_to_book",
+  "booked",
+];
 export const BAY_SLOTS_PER_DAY = 2;
 export const BIG_CART_THRESHOLD = 2000;
 
