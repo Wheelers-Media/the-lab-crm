@@ -27,13 +27,17 @@ https://<project-ref>.supabase.co/functions/v1/shopify_webhook
 
 ## 2. Tell Shopify to send orders and carts
 
-Shopify admin → **Settings** → **Notifications** → **Webhooks** (at the bottom) → **Create webhook**. Make three, all with format **JSON**, the URL from step 1, and the newest API version:
+Shopify admin → **Settings** → **Notifications** → **Webhooks** (at the bottom) → **Create webhook**. Make five, all with format **JSON**, the URL from step 1, and the newest API version:
 
 | Event | Why |
 |---|---|
 | Order payment | Paid orders and deposits |
 | Checkout creation | Starts tracking a cart |
 | Checkout update | Keeps the cart total and contact current |
+| Order update | Records refunds, so a referral commission refunded inside its window comes off |
+| Order cancellation | Records cancellations, for the same reason |
+
+**Referral commission.** A product earns a partner commission only when it carries a Shopify tag `commission:<role>`, for example `commission:tune` or `commission:exhaust` (Products → the product → Tags). The CRM's Numbers → Referrals → Rules says how much each set of roles pays, the monthly cap and the windows. Adding a tag is picked up by the product webhooks; Packages → Sync from Shopify copies all tags at once.
 
 ## 3. Give the CRM the signing secret
 

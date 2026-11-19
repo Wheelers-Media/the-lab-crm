@@ -30,7 +30,9 @@ import {
   findOrCreateContact,
   findUnclaimedDeposits,
   moveDeal,
+  noteReferral,
   recordEvent,
+  referralColumns,
   shopTimeText,
 } from "../_shared/lab/crm.ts";
 
@@ -96,6 +98,7 @@ const handleCreated = async (b: CalBooking) => {
   if (await findAppointment(b.uid)) return; // already filed
   const contact = await findOrCreateContact(b.contact, ["Booked online"]);
   if (!contact) throw new Error("Booking has no email or phone");
+  const referral = await noteReferral(contact.id, b.referral);
 
   // A deposit paid before the booking was made: by this customer, else by name
   const deposit = pickByCustomer(await findUnclaimedDeposits(), {
@@ -117,9 +120,16 @@ const handleCreated = async (b: CalBooking) => {
       category: b.category,
       amount: 0,
       leadSource: "cal.com",
+      referral,
     }));
   if (deal && deal.id === dealId && deal.stage !== "booked")
     await moveDeal(deal.id, "booked");
+  if (referral)
+    await supabaseAdmin
+      .from("deals")
+      .update(referralColumns(referral))
+      .eq("id", dealId)
+      .is("referral_code", null);
 
   const taskId = await createTask(
     contact.id,
@@ -146,6 +156,7 @@ const handleCreated = async (b: CalBooking) => {
       vehicle_id: vehicle?.id ?? null,
       vehicle: vehicle?.label || null,
       sales_id: await defaultSalesId(),
+      ...referralColumns(referral),
     })
     .select("id")
     .single();

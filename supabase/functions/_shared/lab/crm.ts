@@ -2,7 +2,7 @@
 import { supabaseAdmin } from "../supabaseAdmin.ts";
 import type { NamedBooking } from "./bookingMatch.ts";
 import { nameTokens, titleNames } from "./bookingMatch.ts";
-import type { ContactInput } from "./parse.ts";
+import type { ContactInput, Referral } from "./parse.ts";
 import type { Candidate } from "./depositMatch.ts";
 
 /** The shop's clock; bookings and orders are grouped by its days. */
@@ -357,6 +357,8 @@ export type NewDeal = {
   }>;
   /** The website quote that started the job */
   quote?: unknown;
+  /** The partner tag the request carried, if any */
+  referral?: Referral | null;
 };
 
 export const createDeal = async (deal: NewDeal): Promise<number> => {
@@ -377,6 +379,7 @@ export const createDeal = async (deal: NewDeal): Promise<number> => {
       description: deal.description ?? null,
       packages: deal.packages ?? [],
       quote: deal.quote ?? null,
+      ...referralColumns(deal.referral ?? null),
       expected_closing_date: new Date().toISOString().slice(0, 10),
       sales_id: await defaultSalesId(),
       index: count ?? 0,
@@ -513,6 +516,50 @@ export const noteContactProfile = async (
     if (error) fail("update contact profile", error);
   }
 };
+
+/**
+ * Tags a customer with a partner's referral the first time one arrives. The
+ * first tag sticks: a later visit, tagged or not, never moves the credit.
+ * A code with no active program is ignored. Returns the tag when it is valid,
+ * so the order, deal or booking can carry it too.
+ */
+export const noteReferral = async (
+  contactId: number | null,
+  referral: Referral | null,
+  at: string = new Date().toISOString(),
+): Promise<Referral | null> => {
+  if (!referral) return null;
+  const { data: program } = await supabaseAdmin
+    .from("referral_programs")
+    .select("code")
+    .eq("code", referral.code)
+    .eq("active", true)
+    .maybeSingle();
+  if (!program) return null;
+  if (contactId) {
+    // ponytail: the first tag never comes off the customer; the program window decides what it still earns
+    const { error } = await supabaseAdmin
+      .from("contacts")
+      .update({
+        referral_code: referral.code,
+        referral_keyword: referral.keyword || null,
+        referred_at: at,
+      })
+      .eq("id", contactId)
+      .is("referral_code", null);
+    if (error) fail("tag referral", error);
+  }
+  return referral;
+};
+
+/** The columns a tagged order, deal, booking or checkout carries. */
+export const referralColumns = (referral: Referral | null) =>
+  referral
+    ? {
+        referral_code: referral.code,
+        referral_keyword: referral.keyword || null,
+      }
+    : {};
 
 /** How the contact embedded in a row reads: PostgREST returns an object or a list. */
 type EmbeddedContact =

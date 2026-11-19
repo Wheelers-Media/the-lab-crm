@@ -21,6 +21,7 @@ import { type Drill, OrderDrillSheet } from "./OrderDrillSheet";
 import { type NumbersPeriod, NUMBERS_PERIODS } from "./periods";
 import { PipelineSection } from "./PipelineSection";
 import { ProductsSection } from "./ProductsSection";
+import { ReferralsSection } from "./ReferralsSection";
 import { SalesSection } from "./SalesSection";
 import { type NumbersSection, SectionNav } from "./SectionNav";
 import { ShopSection } from "./ShopSection";
@@ -40,6 +41,7 @@ const SECTIONS: NumbersSection[] = [
   { id: "customers", label: "Customers" },
   { id: "leads", label: "Leads" },
   { id: "stock", label: "Stock" },
+  { id: "referrals", label: "Referrals" },
 ];
 
 /**
@@ -265,6 +267,11 @@ export const NumbersPage = () => {
                 ranges={data.ranges}
                 now={data.now}
               />
+            </div>
+          ) : null}
+          {section === "referrals" ? (
+            <div className="flex flex-col gap-4" role="tabpanel">
+              <ReferralsSection />
             </div>
           ) : null}
         </>
