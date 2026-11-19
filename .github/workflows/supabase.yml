@@ -50,7 +50,7 @@ jobs:
               run: supabase link --project-ref "$SUPABASE_PROJECT_ID"
 
             - name: Apply database migrations
-              run: supabase db push --remote
+              run: supabase db push --remote --yes
 
             - name: Deploy edge functions
               run: supabase functions deploy --project-ref "$SUPABASE_PROJECT_ID" --yes
