@@ -94,6 +94,21 @@ export type WebsiteLead = {
   /** Human line for the note, e.g. "Instagram (spring-tint), landed on /boutique/tinting/". */
   cameFrom: string;
   quote: WebsiteQuote;
+  /** A partner's referral tag (?ref=nw&kw=L5P) the visitor carried, if any. */
+  referral: Referral | null;
+};
+
+/** A partner's referral tag: the program code and the keyword of the link. */
+export type Referral = { code: string; keyword: string };
+
+/** A valid tag from untrusted input, else null. Unknown codes are dropped later, against the programs table. */
+export const referralFrom = (
+  code: unknown,
+  keyword: unknown,
+): Referral | null => {
+  const c = clip(code, 20).toLowerCase();
+  if (!/^[a-z0-9]{1,20}$/.test(c)) return null;
+  return { code: c, keyword: clip(keyword, 40).replace(/[^\w-]/g, "") };
 };
 
 /** Lead sources the site can report; anything else is plain "website". */
@@ -241,6 +256,7 @@ export const parseWebsiteLead = (body: unknown): ParseResult<WebsiteLead> => {
         page: clip(b.page, MAX.short),
         ...(b.offroad_ack === true ? { offroad: true as const } : {}),
       },
+      referral: referralFrom(rec(b.referral).code, rec(b.referral).keyword),
     },
   };
 };
@@ -310,6 +326,8 @@ export type LineItem = {
   quantity: number;
   price: number;
   sku?: string;
+  /** The Shopify product, so commission roles can be read from its tags. */
+  product_id?: string;
 };
 
 export type ShopifyOrder = {
@@ -332,6 +350,10 @@ export type ShopifyOrder = {
   note: string;
   /** Cart attributes the customer's checkout carried (note_attributes). */
   attributes: Record<string, string>;
+  /** When the latest refund was made, if any. */
+  refundedAt: string | null;
+  /** The partner tag the website put on the cart ("Ref" / "Ref keyword"). */
+  referral: Referral | null;
 };
 
 type AnyRecord = Record<string, unknown>;
@@ -367,6 +389,8 @@ const lineItemsFrom = (value: unknown): LineItem[] =>
       quantity: Number(item.quantity) || 1,
       price: parseAmount(item.price),
       sku: clip(item.sku, 80) || undefined,
+      product_id:
+        item.product_id == null ? undefined : clip(String(item.product_id), 40),
     };
   });
 
@@ -386,7 +410,12 @@ export const parseShopifyOrder = (
   const p = rec(payload);
   if (p.id == null) return { ok: false, error: "Missing order id" };
   const lineItems = lineItemsFrom(p.line_items);
+  const attributes = attributesFrom(p.note_attributes);
   const refunds = Array.isArray(p.refunds) ? p.refunds : [];
+  const refundDates = refunds
+    .map((r) => clip(rec(r).created_at, 40))
+    .filter(Boolean)
+    .sort();
   const refunded = refunds.reduce((sum: number, r) => {
     const transactions = Array.isArray(rec(r).transactions)
       ? (rec(r).transactions as unknown[])
@@ -417,7 +446,9 @@ export const parseShopifyOrder = (
       cancelledAt: clip(p.cancelled_at, 40) || null,
       checkoutToken: clip(p.checkout_token, 120),
       note: clip(p.note, 2000),
-      attributes: attributesFrom(p.note_attributes),
+      attributes,
+      refundedAt: refundDates.at(-1) ?? null,
+      referral: referralFrom(attributes["Ref"], attributes["Ref keyword"]),
     },
   };
 };
@@ -431,6 +462,7 @@ export type ShopifyCheckout = {
   recoveryUrl: string;
   completedAt: string | null;
   updatedAt: string;
+  referral: Referral | null;
 };
 
 export const parseShopifyCheckout = (
@@ -453,6 +485,10 @@ export const parseShopifyCheckout = (
       recoveryUrl: clip(p.abandoned_checkout_url, 500),
       completedAt: clip(p.completed_at, 40) || null,
       updatedAt: clip(p.updated_at, 40) || new Date().toISOString(),
+      referral: (() => {
+        const a = attributesFrom(p.note_attributes);
+        return referralFrom(a["Ref"], a["Ref keyword"]);
+      })(),
     },
   };
 };
@@ -489,6 +525,8 @@ export type CalBooking = {
   endAt: string;
   contact: ContactInput;
   notes: string;
+  /** The website passes the partner tag as booking metadata (metadata[ref], metadata[kw]). */
+  referral: Referral | null;
 };
 
 const responseValue = (responses: AnyRecord, key: string): string => {
@@ -541,6 +579,7 @@ export const parseCalBooking = (body: unknown): ParseResult<CalBooking> => {
       notes:
         responseValue(responses, "notes") ||
         clip(p.description ?? p.additionalNotes, MAX.text),
+      referral: referralFrom(rec(p.metadata).ref, rec(p.metadata).kw),
     },
   };
 };

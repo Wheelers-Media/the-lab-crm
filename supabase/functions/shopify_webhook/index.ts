@@ -45,7 +45,9 @@ import {
   findUnpaidBookings,
   linkBooking,
   moveDeal,
+  noteReferral,
   recordEvent,
+  referralColumns,
   shopTimeText,
   type UnpaidBooking,
 } from "../_shared/lab/crm.ts";
@@ -113,6 +115,13 @@ const handleOrder = async (
     // Paying on the day of a booking already on file: that customer is this
     // payer, so the new email and phone join their record
     sameDayBooking?.contactId ?? booking?.contactId ?? undefined,
+  );
+  // A partner tag on the cart credits this order and, if it is the customer's
+  // first, their later shop and invoice sales inside the program window
+  const referral = await noteReferral(
+    contact?.id ?? null,
+    order.referral,
+    order.orderedAt,
   );
   let dealId: number | null = null;
   let appointmentId: number | null = booking?.id ?? null;
@@ -193,6 +202,7 @@ const handleOrder = async (
       amount: order.total,
       leadSource: "website",
       description: install.description,
+      referral,
     });
     await addDealNote(
       dealId,
@@ -211,6 +221,8 @@ const handleOrder = async (
     subtotal: order.subtotal,
     total: order.total,
     refunded_amount: order.refundedAmount,
+    refunded_at: order.refundedAt,
+    ...referralColumns(referral),
     line_items: order.lineItems,
     categories: order.categories,
     is_deposit: order.isDeposit,
@@ -268,6 +280,7 @@ const handleCheckout = async (payload: unknown) => {
       recovery_url: c.recoveryUrl || null,
       completed_at: c.completedAt,
       checkout_updated_at: c.updatedAt,
+      ...referralColumns(await noteReferral(contact?.id ?? null, c.referral)),
     },
     { onConflict: "checkout_token" },
   );
@@ -288,6 +301,27 @@ const handleCheckout = async (payload: unknown) => {
         .eq("checkout_token", c.token);
     }
   }
+};
+
+/**
+ * A refund or cancellation on an order already on file: its status and refund
+ * are brought up to date (a refund inside the window takes back a referral
+ * commission). Orders not on file yet are left to orders/paid.
+ */
+const handleOrderUpdate = async (order: ShopifyOrder): Promise<boolean> => {
+  const { data, error } = await supabaseAdmin
+    .from("orders")
+    .update({
+      financial_status: order.financialStatus,
+      fulfillment_status: order.fulfillmentStatus,
+      refunded_amount: order.refundedAmount,
+      refunded_at: order.refundedAt,
+      cancelled_at: order.cancelledAt,
+    })
+    .eq("shopify_order_id", order.shopifyOrderId)
+    .select("id");
+  if (error) throw new Error(`update order: ${error.message}`);
+  return (data?.length ?? 0) > 0;
 };
 
 /** Keeps the catalog in step with Shopify; deleted products are marked so. */
@@ -353,6 +387,13 @@ Deno.serve(async (req: Request) => {
         return ok();
       }
       await handleOrder(parsed.value);
+    } else if (topic === "orders/updated" || topic === "orders/cancelled") {
+      const parsed = parseShopifyOrder(payload);
+      if (!parsed.ok) throw new Error(parsed.error);
+      if (!(await handleOrderUpdate(parsed.value))) {
+        await finishEvent(eventId, "ignored", "order not on file yet");
+        return ok();
+      }
     } else if (topic === HISTORY_TOPIC) {
       const parsed = parseShopifyOrder(payload);
       if (!parsed.ok) throw new Error(parsed.error);

@@ -20,6 +20,7 @@ import {
   findOrCreateContact,
   findOrCreateVehicle,
   noteContactProfile,
+  noteReferral,
   recordEvent,
 } from "../_shared/lab/crm.ts";
 
@@ -105,6 +106,7 @@ Deno.serve(async (req: Request) => {
       smsConsent: lead.smsConsent,
       leadSource: lead.channel,
     });
+    const referral = await noteReferral(contact.id, lead.referral);
     const vehicleId = await findOrCreateVehicle(contact.id, {
       ...lead.vehicleParts,
       vin: lead.vin,
@@ -134,6 +136,7 @@ Deno.serve(async (req: Request) => {
             quantity: 1,
           })),
           quote: lead.quote,
+          referral,
         });
 
     if (sameService && vehicleId) {
@@ -149,6 +152,15 @@ Deno.serve(async (req: Request) => {
         .from("deals")
         .update({ quote: lead.quote })
         .eq("id", dealId);
+      if (referral)
+        await supabaseAdmin
+          .from("deals")
+          .update({
+            referral_code: referral.code,
+            referral_keyword: referral.keyword || null,
+          })
+          .eq("id", dealId)
+          .is("referral_code", null);
     }
 
     const header =
@@ -164,6 +176,8 @@ Deno.serve(async (req: Request) => {
       lead.details,
       lead.page && `Sent from: ${lead.page}`,
       lead.cameFrom && `Came from: ${lead.cameFrom}`,
+      referral &&
+        `Referral: ${referral.code}${referral.keyword ? ` (keyword ${referral.keyword})` : ""}`,
       `SMS consent: ${lead.smsConsent ? "yes" : "no"}`,
       lead.offroadAgreed &&
         "Off-road disclaimer: agreed (off-road and sanctioned racing use only)",
