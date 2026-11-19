@@ -30,6 +30,41 @@ export interface MonthlyTargets {
   newCustomers?: number;
 }
 
+/**
+ * A logo URL that points at this app's own build output (or is relative) is a
+ * snapshot of a past deploy's hashed asset, e.g. /assets/logo-AbC123.png. It
+ * 404s once the file changes, so it must never override the current default.
+ * Uploaded logos live on another host (storage) or are data URIs: keep those.
+ */
+export const isStaleBuildLogo = (
+  logo: unknown,
+  origin: string = window.location.origin,
+): boolean => {
+  if (typeof logo !== "string" || logo === "") return true;
+  if (logo.startsWith("data:")) return false;
+  try {
+    return new URL(logo, origin).origin === origin;
+  } catch {
+    return true;
+  }
+};
+
+export const mergeWithDefaults = (
+  config: Partial<ConfigurationContextValue> | undefined,
+  origin?: string,
+): ConfigurationContextValue => {
+  const merged = { ...defaultConfiguration, ...config };
+  return {
+    ...merged,
+    darkModeLogo: isStaleBuildLogo(merged.darkModeLogo, origin)
+      ? defaultConfiguration.darkModeLogo
+      : merged.darkModeLogo,
+    lightModeLogo: isStaleBuildLogo(merged.lightModeLogo, origin)
+      ? defaultConfiguration.lightModeLogo
+      : merged.lightModeLogo,
+  };
+};
+
 export const useConfigurationContext = () => {
   const [config] = useStore<ConfigurationContextValue>(
     CONFIGURATION_STORE_KEY,
@@ -37,7 +72,7 @@ export const useConfigurationContext = () => {
   );
   // Merge with defaults so that missing fields in stored config
   // fall back to default values (e.g. when new settings are added)
-  return useMemo(() => ({ ...defaultConfiguration, ...config }), [config]);
+  return useMemo(() => mergeWithDefaults(config), [config]);
 };
 
 export const useConfigurationUpdater = () => {
