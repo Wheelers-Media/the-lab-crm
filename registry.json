@@ -526,6 +526,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/packages/VariantPicker.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/packages/SyncCatalogButton.tsx",
           "type": "registry:component"
         },
@@ -722,6 +726,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/numbers/referralModel.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/numbers/periods.ts",
           "type": "registry:component"
         },
@@ -783,6 +791,10 @@
         },
         {
           "path": "src/components/atomic-crm/numbers/SalesSection.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/numbers/ReferralsSection.tsx",
           "type": "registry:component"
         },
         {
@@ -1127,6 +1139,10 @@
         },
         {
           "path": "src/components/atomic-crm/deals/MobileDealList.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/deals/InstallPanel.tsx",
           "type": "registry:component"
         },
         {
