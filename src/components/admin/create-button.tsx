@@ -57,6 +57,8 @@ export const CreateButton = (props: CreateButtonProps) => {
   return (
     <Link
       className={buttonVariants({ variant: "outline" })}
+      data-slot="button"
+      data-size="default"
       to={link}
       onClick={stopPropagation}
       aria-label={typeof label === "string" ? label : undefined}

@@ -49,10 +49,12 @@ function Button({
 
   return (
     <Comp
-      data-slot="button"
-      data-size={size ?? "default"}
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
+      // After the spread: a Radix trigger passing asChild would otherwise
+      // replace this with its own slot name and drop the site button style.
+      data-slot="button"
+      data-size={size ?? "default"}
     />
   )
 }

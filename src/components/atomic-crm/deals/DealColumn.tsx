@@ -20,7 +20,7 @@ export const DealColumn = ({
   const view = columnView(deals, stage, { showOlder, showAll });
   const totalAmount = stageTotal(deals);
   return (
-    <div className="flex-1 min-w-0 pb-8">
+    <div className="flex-1 min-w-[14rem] xl:min-w-0 snap-start pb-8">
       <div className="flex flex-col items-center">
         <h3 className="text-base font-display uppercase tracking-wide">
           {findDealLabel(dealStages, stage)}{" "}

@@ -221,6 +221,16 @@ html body {
   --lab-neg: #e5484d;
   --lab-ice: #cfe3ff;
   --lab-amber: #ff8a1f;
+  /* Area colours: one hue per part of the shop (sidebar icons, active bar,
+     header label). Green is the bay, sky is the sales pipeline, violet is
+     people, orange is money, ice is the numbers, grey is admin. Never the only
+     cue: every one sits beside a label. All clear 4.5:1 on the sidebar. */
+  --area-shop: #3fb27f;
+  --area-sales: #38b6e8;
+  --area-people: #9d8df0;
+  --area-store: #ff8a1f;
+  --area-insights: #cfe3ff;
+  --area-admin: #8b909a;
   /* Charts: one series per meaning. The pale blues need darker values on a
      white card to stay above 3:1, so the light scheme overrides them below. */
   --chart-this: var(--lab-blue);
@@ -797,6 +807,12 @@ html {
    on a white card the green, red, link blue and grey text all fell under
    4.5:1, so the light scheme uses deeper versions of the same hues. */
 :root:not(.dark) {
+  --area-shop: #12744a;
+  --area-sales: #0a6e99;
+  --area-people: #6250d6;
+  --area-store: #b4530a;
+  --area-insights: #0047b3;
+  --area-admin: #5c6066;
   --muted-foreground: #5c6066;
   --lab-pos: #12744a;
   --lab-neg: #c42a30;

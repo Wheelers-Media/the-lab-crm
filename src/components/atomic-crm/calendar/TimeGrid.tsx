@@ -91,14 +91,19 @@ const EventBlock = ({
       >
         <span
           className={cn(
-            "block truncate font-semibold",
+            "block font-semibold",
+            // Tall blocks wrap the title so side-by-side jobs stay readable
+            // on a narrow week; short ones keep a single line.
+            height >= 56 ? "line-clamp-2 break-words" : "truncate",
             a.status === "no_show" && "line-through",
           )}
         >
           {a.title}
         </span>
         <span className="block truncate text-muted-foreground lab-num">
-          {formatShopTime(a.start_at)} to {formatShopTime(a.end_at)}
+          {cols > 1
+            ? formatShopTime(a.start_at)
+            : `${formatShopTime(a.start_at)} to ${formatShopTime(a.end_at)}`}
         </span>
         {height >= 64 && contact ? (
           <span className="block truncate">{contactName(contact)}</span>

@@ -1,63 +1,51 @@
 import { FileText, Import, Settings, User, Users } from "lucide-react";
 import { CanAccess, useTranslate, useUserMenu } from "ra-core";
-import { Link } from "react-router";
+import type { CSSProperties } from "react";
+import { Link, useLocation } from "react-router";
 import { RefreshButton } from "@/components/admin/refresh-button";
 import { ThemeModeToggle } from "@/components/admin/theme-mode-toggle";
 import { UserMenu } from "@/components/admin/user-menu";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
-import { useConfigurationContext } from "../root/ConfigurationContext";
 import { PAGE_PATHS } from "../root/lazyPages";
-import { DesktopNavigation } from "./DesktopNavigation";
+import { areaOf } from "./navigation";
 
 const Header = () => {
-  const { darkModeLogo, lightModeLogo, title } = useConfigurationContext();
+  const { pathname } = useLocation();
+  const { area, label } = areaOf(pathname);
 
   return (
-    <>
-      {/* Sticky like the website's header: the page scrolls under it */}
-      <nav className="sticky top-0 z-40 grow">
-        <header className="border-b border-border bg-background/95 backdrop-blur-xl">
-          <div className="px-4">
-            <div className="flex justify-between items-center flex-1">
-              <Link
-                to="/"
-                className="flex items-center gap-2 shrink-0 text-secondary-foreground no-underline"
-              >
-                <img
-                  className="[.light_&]:hidden h-10"
-                  src={darkModeLogo}
-                  alt={title}
-                />
-                <img
-                  className="[.dark_&]:hidden h-10"
-                  src={lightModeLogo}
-                  alt={title}
-                />
-              </Link>
-              <div className="min-w-0 flex-1 flex justify-center">
-                <DesktopNavigation />
-              </div>
-              <div className="flex items-center">
-                <ThemeModeToggle />
-                <RefreshButton />
-                <UserMenu>
-                  <ProfileMenu />
-                  <CanAccess resource="sales" action="list">
-                    <UsersMenu />
-                  </CanAccess>
-                  <CanAccess resource="configuration" action="edit">
-                    <SettingsMenu />
-                  </CanAccess>
-                  <ImportFromJsonMenuItem />
-                  <ChangelogMenuItem />
-                </UserMenu>
-              </div>
-            </div>
-          </div>
-        </header>
-      </nav>
-    </>
+    // Sticky like the website's header: the page scrolls under it
+    <header className="sticky top-0 z-30 border-b border-border bg-background/95 backdrop-blur-xl">
+      <div className="flex h-14 items-center justify-between px-4">
+        {/* Which area of the shop this page belongs to, in its colour */}
+        <p
+          className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground"
+          style={{ "--a": `var(--area-${area})` } as CSSProperties}
+        >
+          <span
+            aria-hidden="true"
+            className="size-2 rounded-full bg-[var(--a)]"
+          />
+          {label}
+        </p>
+        <div className="flex items-center">
+          <ThemeModeToggle />
+          <RefreshButton />
+          <UserMenu>
+            <ProfileMenu />
+            <CanAccess resource="sales" action="list">
+              <UsersMenu />
+            </CanAccess>
+            <CanAccess resource="configuration" action="edit">
+              <SettingsMenu />
+            </CanAccess>
+            <ImportFromJsonMenuItem />
+            <ChangelogMenuItem />
+          </UserMenu>
+        </div>
+      </div>
+    </header>
   );
 };
 
