@@ -125,7 +125,10 @@ export const QuoteParts = ({
   engines,
   onPickEngine,
   heading = "Add parts",
+  hideSuggestions = false,
 }: {
+  /** The truck has a power package: its steps replace the suggested list. */
+  hideSuggestions?: boolean;
   /** The section's title; a booking adds services as well as parts. */
   heading?: string;
   catalog: Package[];
@@ -205,7 +208,7 @@ export const QuoteParts = ({
             Nothing in the catalog matches "{query}".
           </p>
         )
-      ) : (
+      ) : hideSuggestions ? null : (
         <div className="flex flex-col gap-4">
           <p className="flex items-center gap-2 text-sm font-semibold">
             <Sparkles className="size-4 text-primary" aria-hidden />
