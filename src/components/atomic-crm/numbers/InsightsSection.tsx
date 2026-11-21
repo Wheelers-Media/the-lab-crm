@@ -597,7 +597,7 @@ export const InsightsSection = ({
     [orders, period, now],
   );
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
       {pace ? (
         <div className="lg:col-span-2">
           <PaceCard pace={pace} />

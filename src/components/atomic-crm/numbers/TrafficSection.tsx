@@ -387,7 +387,7 @@ export const TrafficSection = ({
             />
           </SectionCard>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
             <SectionCard
               title="Path to a purchase"
               hint="Each step against all sessions. A visit can go straight to checkout, so a step can be bigger than the one above. Tap a step to chart it."
