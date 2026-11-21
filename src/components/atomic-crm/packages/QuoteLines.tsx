@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import type { DealPackageLine, Package } from "../types";
+import { stepTitle } from "./powerPackageModel";
 import { ProductThumb } from "./ProductParts";
 import {
   LABOUR_RATE,
@@ -147,6 +148,11 @@ export const QuoteLines = ({
                     </span>
                   )}
                   <div className="flex min-w-0 flex-1 flex-col gap-2">
+                    {stepTitle(line.build, line.step) ? (
+                      <span className="lab-chip lab-chip-parts w-fit">
+                        {stepTitle(line.build, line.step)}
+                      </span>
+                    ) : null}
                     <Input
                       value={line.title}
                       onChange={(e) => change(i, { title: e.target.value })}

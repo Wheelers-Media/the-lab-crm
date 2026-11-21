@@ -407,42 +407,46 @@ export const CommandCenter = ({
   return (
     <div className="flex flex-col gap-4 mt-1">
       {headerBlock}
-      {/* What needs doing sits in a rail beside the numbers on a wide screen and
-          above them on a narrow one, so the order follows the window. */}
-      <div className="grid grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_24rem] 2xl:grid-cols-[minmax(0,1fr)_28rem]">
-        <aside
-          aria-label="Today and what needs attention"
-          className="order-1 grid min-w-0 grid-cols-1 items-stretch gap-4 lg:grid-cols-2 xl:order-2 xl:flex xl:flex-col"
-        >
-          <Reveal className="[&>*]:h-full">{attentionCard}</Reveal>
+      {/* One grid, three rows. Each rail cell (right) shares a row with a block
+          on the left and stretches to the row's height, so the bottoms line up
+          and nothing leaves a hole. Below xl the rail drops above the numbers
+          (what needs doing first), via `order`. */}
+      <div className="grid grid-cols-1 items-stretch gap-4 xl:grid-cols-[minmax(0,1fr)_24rem] xl:grid-rows-[auto_auto_auto] 2xl:grid-cols-[minmax(0,1fr)_28rem]">
+        {/* Row 1: the money and the goal; what needs attention */}
+        <div className="order-4 grid min-w-0 grid-cols-1 items-stretch gap-4 lg:grid-cols-5 xl:order-none xl:col-start-1 xl:row-start-1">
+          <div className="min-w-0 lg:col-span-3 [&>*]:h-full">
+            {revenueCard}
+          </div>
+          <div className="min-w-0 lg:col-span-2 [&>*]:h-full">{goalsCard}</div>
+        </div>
+        <Reveal className="order-1 min-w-0 xl:order-none xl:col-start-2 xl:row-start-1 [&>*]:h-full">
+          {attentionCard}
+        </Reveal>
+        {/* Row 2: the trend tiles; today at the bay over the shop floor */}
+        <Reveal className="order-5 min-w-0 xl:order-none xl:col-start-1 xl:row-start-2">
+          {trendBlock}
+        </Reveal>
+        <div className="order-2 flex min-w-0 flex-col gap-4 xl:order-none xl:col-start-2 xl:row-start-2 [&>*]:flex-1">
           <Reveal delay={120} className="[&>*]:h-full">
             {todayCard}
           </Reveal>
-          <div className="lg:col-span-2 xl:col-span-1">
-            <Reveal>{floorCard}</Reveal>
-          </div>
-        </aside>
-        <div className="order-2 flex min-w-0 flex-col gap-4 xl:order-1">
-          {/* Every pair shares one 2:1 split so the card edges line up down the page */}
-          <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-3">
-            <div className="min-w-0 lg:col-span-2 [&>*]:h-full">
-              {revenueCard}
-            </div>
-            <div className="min-w-0 [&>*]:h-full">{goalsCard}</div>
-          </div>
-          <Reveal>{trendBlock}</Reveal>
-          <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-3">
-            <Reveal className="lg:col-span-2 [&>*]:h-full">{mixCard}</Reveal>
-            <Reveal delay={120} className="[&>*]:h-full">
-              {moversCard}
-            </Reveal>
-          </div>
-          <div className="grid grid-cols-1 items-stretch gap-4 lg:grid-cols-3">
-            <Reveal className="lg:col-span-2 [&>*]:h-full">{weekBlock}</Reveal>
-            <Reveal delay={120} className="[&>*]:h-full">
-              <PipelineSnapshot deals={data.deals} />
-            </Reveal>
-          </div>
+          <Reveal className="[&>*]:h-full">{floorCard}</Reveal>
+        </div>
+        {/* Row 3: where the money comes from and what is moving; the pipeline
+            over the week's bays */}
+        <div className="order-6 grid min-w-0 grid-cols-1 items-stretch gap-4 lg:grid-cols-3 xl:order-none xl:col-start-1 xl:row-start-3">
+          <Reveal className="lg:col-span-2 [&>*]:h-full">{mixCard}</Reveal>
+          <Reveal delay={120} className="[&>*]:h-full">
+            {moversCard}
+          </Reveal>
+        </div>
+        <div className="order-7 flex min-w-0 flex-col gap-4 xl:order-none xl:col-start-2 xl:row-start-3 [&>*]:flex-1">
+          <Reveal className="[&>*]:h-full">
+            <PipelineSnapshot deals={data.deals} />
+          </Reveal>
+          <Reveal delay={120} className="[&>*]:h-full">
+            {weekBlock}
+          </Reveal>
         </div>
       </div>
     </div>

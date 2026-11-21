@@ -187,7 +187,7 @@ export const GoalsCard = ({
       {isPending ? (
         <Skeleton className="h-36 w-full" />
       ) : (
-        <div className="flex items-center gap-4">
+        <div className="flex flex-1 items-center gap-4">
           <Rings goals={goals} elapsed={elapsed} />
           <ul className="flex min-w-0 flex-1 flex-col gap-3">
             {goals.map((goal) => {

@@ -1,5 +1,6 @@
 import type { Package } from "../../../types";
 import { CATALOGUE } from "./shop";
+import { POWER_PACKAGE_FILES } from "../../../packages/powerPackages";
 
 // Demo catalog built from the demo order lines, plus a few Shopify-only items,
 // so customer package history links to catalog entries.
@@ -15,6 +16,13 @@ const CATEGORY: Record<string, string> = {
   Lighting: "lighting",
   Mechanical: "install",
   "Gift card": "gift-certificate",
+};
+
+type PowerFile = {
+  steps: Array<{
+    id: string;
+    options: Array<{ handle: string; name: string; brand?: string }>;
+  }>;
 };
 
 const EXTRA: Array<{
@@ -115,7 +123,39 @@ export const generatePackages = (): Package[] => {
     shopify_title: e.title,
     price_max: e.price_max ?? e.price,
   }));
-  return [...fromOrders, ...extra].map((p, id) => ({
+  // Every product the website's power packages name, so the quote builder has
+  // something to offer in the demo (prices are made up, like the rest)
+  const BASE_PRICE: Record<string, number> = {
+    tune: 1295,
+    device: 449,
+    exhaust: 1149,
+    downpipe: 699,
+    tips: 159,
+    egr: 389,
+    ccv: 279,
+  };
+  const seen = new Set<string>();
+  const power = (POWER_PACKAGE_FILES as unknown as PowerFile[]).flatMap((pkg) =>
+    pkg.steps.flatMap((step) =>
+      step.options
+        .filter((o) => !seen.has(o.handle) && seen.add(o.handle))
+        .map((o) => {
+          const price = BASE_PRICE[step.id] ?? 129;
+          return {
+            title: o.name,
+            shopify_title: o.name,
+            vendor: o.brand ?? "Polar Diesel",
+            category: step.id === "tune" ? "tuning" : "diesel-parts",
+            price,
+            price_max: price,
+            kind: "product" as Package["kind"],
+            inventory: 3,
+            handle: o.handle,
+          };
+        }),
+    ),
+  );
+  return [...fromOrders, ...extra, ...power].map((p, id) => ({
     id,
     shopify_product_id: String(9000 + id),
     title: p.title,
@@ -152,7 +192,7 @@ export const generatePackages = (): Package[] => {
     synced_at: now,
     kind: p.kind,
     product_type: null,
-    handle: null,
+    handle: (p as { handle?: string }).handle ?? null,
     image_url: p.kind === "product" ? demoImage(p.title, id) : null,
     inventory: p.inventory,
     description: DESCRIPTION[p.category] ?? "",

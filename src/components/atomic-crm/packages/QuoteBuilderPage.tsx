@@ -19,6 +19,8 @@ import type {
   Vehicle,
 } from "../types";
 import { QuoteCheckout } from "./QuoteCheckout";
+import { PowerPackageBuilder } from "./PowerPackageBuilder";
+import { powerPackageFor } from "./powerPackageModel";
 import { QuoteLines } from "./QuoteLines";
 import { QuoteParts } from "./QuoteParts";
 import {
@@ -145,6 +147,8 @@ export const QuoteBuilderPage = () => {
       ),
     [lines],
   );
+  // The website's power package for this truck, when it builds one
+  const powerPackage = useMemo(() => powerPackageFor(ctx), [ctx]);
   const totals = quoteTotals(lines);
 
   const save = () =>
@@ -286,7 +290,19 @@ export const QuoteBuilderPage = () => {
             </details>
           ) : null}
 
+          {powerPackage ? (
+            <PowerPackageBuilder
+              pkg={powerPackage}
+              catalog={catalog}
+              lines={lines}
+              onChange={edit}
+              vin={vehicle?.vin}
+            />
+          ) : null}
+
           <QuoteParts
+            heading={powerPackage ? "Add anything else" : "Add parts"}
+            hideSuggestions={Boolean(powerPackage)}
             catalog={catalog}
             suggestions={suggestions}
             ctx={ctx}

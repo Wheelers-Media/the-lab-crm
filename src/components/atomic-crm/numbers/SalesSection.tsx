@@ -259,7 +259,7 @@ export const SalesSection = ({
         />
       </SectionCard>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
         <SectionCard
           title="By kind of work"
           hint="Tap a slice or row to filter the whole screen to it. Discounts are spread over each order's lines."

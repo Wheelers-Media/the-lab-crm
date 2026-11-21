@@ -115,7 +115,7 @@ export const RevenueCard = ({
         </Link>
       </div>
 
-      <div>
+      <div className="flex min-h-0 flex-1 flex-col">
         <p className="mb-2 text-xs text-muted-foreground tabular-nums">
           Today{" "}
           <span className="font-medium text-foreground">{money(today)}</span>

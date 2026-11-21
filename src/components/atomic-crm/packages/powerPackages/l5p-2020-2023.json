@@ -1,0 +1,205 @@
+{
+  "id": "l5p-2020-2023",
+  "title": "2020-2023 Chevy/GMC HD 6.6L L5P Duramax",
+  "make": "GM",
+  "engine": "6.6L L5P Duramax",
+  "years": "2020-2023",
+  "steps": [
+    {
+      "id": "tune",
+      "title": "Tuning",
+      "required": true,
+      "mode": "one",
+      "text": "The tune is the heart of the build. Pick the tuning platform you want to run: EZ LYNK or HP Tuners. Your tune is custom written for your truck and the parts you choose below. Add transmission tuning here if you want it.",
+      "options": [
+        {
+          "handle": "amdp-2017-2019-6-6l-l5p-duramax-ez-lynk-custom-tuning-support-package-copy",
+          "brand": "AMDP",
+          "name": "EZ LYNK Custom Tuning Support Package",
+          "note": "Limited is a 4-week support window. Full is longer support.",
+          "runner": "EZ LYNK"
+        },
+        {
+          "handle": "amdp-2020-2023-6-6l-duramax-hp-tuners-custom-tuning",
+          "brand": "AMDP",
+          "name": "HP Tuners Custom Tuning",
+          "note": "Choose your level, credits and transmission tuning.",
+          "runner": "HP Tuners"
+        }
+      ]
+    },
+    {
+      "id": "device",
+      "title": "Tuning Device",
+      "required": false,
+      "mode": "one",
+      "text": "The device loads your tune onto the truck. Already have one? Skip this step. Choose the device that matches the tune you picked.",
+      "options": [
+        {
+          "handle": "ez-lynk-autoagent-3",
+          "brand": "EZ LYNK",
+          "name": "AutoAgent 3"
+        },
+        {
+          "handle": "hp-tuners-mpvi3",
+          "brand": "HP Tuners",
+          "name": "MPVI4 Interface"
+        }
+      ]
+    },
+    {
+      "id": "canbus",
+      "title": "CAN Bus Plugs",
+      "required": false,
+      "mode": "one",
+      "text": "CAN bus plugs are needed to tune a 2020-2023 L5P, so we added them for you. Remove them if you already have a set.",
+      "options": [
+        {
+          "handle": "2020-duramax-can-bus-connector",
+          "brand": "Polar",
+          "name": "2020+ Duramax CAN Bus Connector",
+          "preselect": true
+        }
+      ]
+    },
+    {
+      "id": "exhaust",
+      "title": "Exhaust",
+      "required": true,
+      "mode": "one",
+      "text": "Choose the exhaust that goes with your tune. 5 inch moves the most air. A muffler keeps the cab quieter.",
+      "options": [
+        {
+          "handle": "2017-2025-duramax-6-6l-4-exhaust",
+          "brand": "Polar",
+          "name": "4\" Exhaust"
+        },
+        {
+          "handle": "2017-2025-duramax-6-6l-5-exhaust",
+          "brand": "Polar",
+          "name": "5\" Exhaust"
+        },
+        {
+          "handle": "2017-2025-duramax-6-6l-4-polar-exhaust-with-muffler",
+          "brand": "Polar",
+          "name": "4\" Exhaust With Muffler"
+        },
+        {
+          "handle": "2017-2025-duramax-6-6l-5-polar-exhaust-with-muffler",
+          "brand": "Polar",
+          "name": "5\" Exhaust With Muffler"
+        },
+        {
+          "handle": "2017-2025-duramax-6-6l-304ss-5-polar-exhaust",
+          "brand": "Polar",
+          "name": "304SS 5\" Exhaust"
+        },
+        {
+          "handle": "2017-2025-duramax-6-6l-304ss-5-polar-exhaust-with-muffler",
+          "brand": "Polar",
+          "name": "304SS 5\" Exhaust With Muffler"
+        },
+        {
+          "handle": "2017-2025-duramax-6-6l-5-polished-polar-exhaust",
+          "brand": "Polar",
+          "name": "304SS 5\" Polished Exhaust"
+        }
+      ]
+    },
+    {
+      "id": "tips",
+      "title": "Exhaust Tips",
+      "required": false,
+      "mode": "one",
+      "text": "Finish the exhaust with a tip. Match the inlet size to your pipe (4 inch or 5 inch).",
+      "options": [
+        {
+          "handle": "polar-diesel-polished-oval-exhaust-tip-1",
+          "brand": "Polar",
+          "name": "304SS Polished Oval Tip"
+        },
+        {
+          "handle": "polar-diesel-black-oval-exhaust-tip",
+          "brand": "Polar",
+          "name": "304SS Black Oval Tip"
+        },
+        {
+          "handle": "octagon-exhaust-tip",
+          "brand": "Polar",
+          "name": "304SS Octagon Tip"
+        },
+        {
+          "handle": "polar-diesel-polished-exhaust-elbow",
+          "brand": "Polar",
+          "name": "304SS Polished Exhaust Elbow"
+        }
+      ]
+    },
+    {
+      "id": "downpipe",
+      "title": "Downpipe",
+      "required": false,
+      "mode": "one",
+      "text": "The pipe between the turbo and the exhaust. Choose the downpipe or the delete pipe.",
+      "options": [
+        {
+          "handle": "2017-2025-duramax-6-6l-downpipe",
+          "brand": "Polar",
+          "name": "Duramax 6.6L Downpipe"
+        },
+        {
+          "handle": "2017-2025-duramax-6-6l-delete-pipe",
+          "brand": "Polar",
+          "name": "Duramax 6.6L Delete Pipe"
+        }
+      ]
+    },
+    {
+      "id": "egr",
+      "title": "EGR",
+      "required": false,
+      "mode": "many",
+      "text": "EGR kit. Optional. Skip it if you don't need it.",
+      "options": [
+        {
+          "handle": "2017-2025-duramax-6-6l-egr-delete-kit",
+          "brand": "Polar",
+          "name": "EGR Delete Kit"
+        }
+      ]
+    },
+    {
+      "id": "extras",
+      "title": "Extras",
+      "required": false,
+      "mode": "many",
+      "text": "Small parts that finish the job.",
+      "options": [
+        {
+          "handle": "2017-2026-duramax-6-6l-intake-resonator-delete-plug",
+          "brand": "Polar",
+          "name": "Intake Resonator Delete Plug"
+        },
+        {
+          "handle": "2000-2025-duramax-6-6l-firewall-coolant-fitting",
+          "brand": "Polar",
+          "name": "Aluminum Coolant Firewall Fitting"
+        }
+      ]
+    },
+    {
+      "id": "monitor",
+      "title": "Monitoring",
+      "required": false,
+      "mode": "one",
+      "text": "A gauge and monitor so you can watch temperatures while you tow or haul.",
+      "options": [
+        {
+          "handle": "edge-insight-cts3-monitor",
+          "brand": "Edge",
+          "name": "Insight CTS3 Monitor"
+        }
+      ]
+    }
+  ]
+}

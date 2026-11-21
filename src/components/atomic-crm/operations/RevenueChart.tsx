@@ -78,7 +78,7 @@ export const RevenueChart = ({
         : `${money(Math.abs(gap))} ${gap > 0 ? "ahead of" : "behind"} ${lastPeriod.toLowerCase()}.`);
 
   return (
-    <figure className="m-0">
+    <figure className="m-0 flex min-h-0 flex-1 flex-col">
       <figcaption className="sr-only">{summary}</figcaption>
 
       <div className="mb-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
@@ -126,7 +126,7 @@ export const RevenueChart = ({
       </p>
 
       <div
-        className="relative h-28 touch-pan-y rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        className="relative min-h-28 flex-1 touch-pan-y rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
         role="img"
         aria-label={`${thisPeriod} against ${lastPeriod}, step by step. Use the arrow keys to read each point.`}
         tabIndex={0}

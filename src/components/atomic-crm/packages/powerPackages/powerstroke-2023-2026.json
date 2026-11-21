@@ -1,0 +1,204 @@
+{
+  "id": "powerstroke-2023-2026",
+  "title": "2023-2026 Ford Super Duty 6.7L Powerstroke",
+  "make": "Ford",
+  "engine": "6.7L Powerstroke",
+  "years": "2023-2026",
+  "steps": [
+    {
+      "id": "tune",
+      "title": "Tuning",
+      "required": true,
+      "mode": "one",
+      "text": "The tune is the heart of the build. Pick a support package. Your tune is custom written for your truck and the parts you choose below. Add transmission tuning here if you want it.",
+      "options": [
+        {
+          "handle": "amdp-2023-2024-6-7l-powerstroke-ez-lynk-custom-tuning-support-package",
+          "brand": "AMDP",
+          "name": "EZ LYNK Custom Tuning Support Package",
+          "note": "Limited is a 4-week support window. Full is longer support.",
+          "runner": "EZ LYNK"
+        }
+      ]
+    },
+    {
+      "id": "device",
+      "title": "Tuning Device",
+      "required": false,
+      "mode": "one",
+      "text": "The device loads your tune onto the truck. Already have one? Skip this step.",
+      "options": [
+        {
+          "handle": "ez-lynk-autoagent-3",
+          "brand": "EZ LYNK",
+          "name": "AutoAgent 3"
+        }
+      ]
+    },
+    {
+      "id": "exhaust",
+      "title": "Exhaust",
+      "required": true,
+      "mode": "one",
+      "text": "Choose the exhaust that goes with your tune. On the 2023-2026 only the downpipe-back packages fit, and each one includes the downpipe. 5 inch moves the most air. A muffler keeps the cab quieter.",
+      "options": [
+        {
+          "handle": "2023-2026-ford-powerstroke-6-7l-4-downpipe-back-exhaust-downpipe-package-1",
+          "brand": "Polar",
+          "name": "4\" Downpipe-Back Exhaust and Downpipe Package",
+          "includes": ["downpipe"],
+          "note": "Includes the downpipe."
+        },
+        {
+          "handle": "2023-2026-ford-powerstroke-6-7l-5-downpipe-back-exhaust-downpipe-package",
+          "brand": "Polar",
+          "name": "5\" Downpipe-Back Exhaust and Downpipe Package",
+          "includes": ["downpipe"],
+          "note": "Includes the downpipe."
+        },
+        {
+          "handle": "2023-2026-ford-powerstroke-6-7l-4-downpipe-back-exhaust-downpipe-package-with-muffler",
+          "brand": "Polar",
+          "name": "4\" Exhaust and Downpipe Package With Muffler",
+          "includes": ["downpipe"],
+          "note": "Includes the downpipe."
+        },
+        {
+          "handle": "2023-2026-ford-powerstroke-6-7l-5-downpipe-back-exhaust-downpipe-package-with-muffler",
+          "brand": "Polar",
+          "name": "5\" Exhaust and Downpipe Package With Muffler",
+          "includes": ["downpipe"],
+          "note": "Includes the downpipe."
+        },
+        {
+          "handle": "2023-2026-ford-powerstroke-6-7l-5-polished-downpipe-back-exhaust-downpipe-package-1",
+          "brand": "Polar",
+          "name": "304SS 5\" Polished Exhaust and Downpipe Package",
+          "includes": ["downpipe"],
+          "note": "Includes the downpipe."
+        },
+        {
+          "handle": "2023-2026-ford-powerstroke-6-7l-polar-delete-pipe-downpipe-package",
+          "brand": "Polar",
+          "name": "Delete Pipe and Downpipe Package",
+          "includes": ["downpipe"],
+          "note": "Includes the downpipe."
+        },
+        {
+          "handle": "2023-2026-ford-powerstroke-6-7l-304ss-5-polar-exhaust-downpipe-package",
+          "brand": "Polar",
+          "name": "304SS 5\" Exhaust and Downpipe Package",
+          "includes": ["downpipe"],
+          "note": "Includes the downpipe."
+        },
+        {
+          "handle": "2023-2026-ford-powerstroke-6-7l-304ss-5-polar-exhaust-downpipe-package-with-muffler",
+          "brand": "Polar",
+          "name": "304SS 5\" Exhaust and Downpipe Package With Muffler",
+          "includes": ["downpipe"],
+          "note": "Includes the downpipe."
+        }
+      ]
+    },
+    {
+      "id": "tips",
+      "title": "Exhaust Tips",
+      "required": false,
+      "mode": "one",
+      "text": "Finish the exhaust with a tip. Match the inlet size to your pipe (4 inch or 5 inch).",
+      "options": [
+        {
+          "handle": "polar-diesel-polished-oval-exhaust-tip-1",
+          "brand": "Polar",
+          "name": "304SS Polished Oval Tip"
+        },
+        {
+          "handle": "polar-diesel-black-oval-exhaust-tip",
+          "brand": "Polar",
+          "name": "304SS Black Oval Tip"
+        },
+        {
+          "handle": "octagon-exhaust-tip",
+          "brand": "Polar",
+          "name": "304SS Octagon Tip"
+        },
+        {
+          "handle": "polar-diesel-polished-exhaust-elbow",
+          "brand": "Polar",
+          "name": "304SS Polished Exhaust Elbow"
+        }
+      ]
+    },
+    {
+      "id": "egr",
+      "title": "EGR",
+      "required": false,
+      "mode": "many",
+      "text": "EGR kit and fittings. Optional. Skip it if you don't need it.",
+      "options": [
+        {
+          "handle": "2011-2026-ford-powerstroke-6-7l-egr-delete-kit",
+          "brand": "Polar",
+          "name": "EGR Delete Kit"
+        },
+        {
+          "handle": "polar-diesel-egt-probe-adapter-fitting",
+          "brand": "Polar",
+          "name": "EGT Probe Adapter Fitting"
+        },
+        {
+          "handle": "polar-diesel-1-8th-npt-plug",
+          "brand": "Polar",
+          "name": "1/8 NPT Plug"
+        }
+      ]
+    },
+    {
+      "id": "ccv",
+      "title": "CCV",
+      "required": false,
+      "mode": "one",
+      "text": "Crankcase ventilation kit. Optional. The kit with venturi suits a build with a catch setup.",
+      "options": [
+        {
+          "handle": "2011-2026-ford-powerstroke-6-7l-ccv-delete-kit",
+          "brand": "Polar",
+          "name": "CCV Delete Kit"
+        },
+        {
+          "handle": "2011-2026-ford-powerstroke-6-7l-polar-ccv-delete-kit-venturi",
+          "brand": "Polar",
+          "name": "CCV Delete Kit and Venturi"
+        }
+      ]
+    },
+    {
+      "id": "fuel",
+      "title": "Fuel System",
+      "required": false,
+      "mode": "one",
+      "text": "Protect the CP4 high pressure pump, especially if you are adding power.",
+      "options": [
+        {
+          "handle": "2011-2025-powerstroke-gen2-1-cp4-disaster-prevention-full-kit-cp4-6-7f-bp-g2-1",
+          "brand": "Dirty Diesel Customs",
+          "name": "Gen2.1 CP4 Disaster Prevention Full Kit"
+        }
+      ]
+    },
+    {
+      "id": "monitor",
+      "title": "Monitoring",
+      "required": false,
+      "mode": "one",
+      "text": "A gauge and monitor so you can watch temperatures while you tow or haul.",
+      "options": [
+        {
+          "handle": "edge-insight-cts3-monitor",
+          "brand": "Edge",
+          "name": "Insight CTS3 Monitor"
+        }
+      ]
+    }
+  ]
+}
