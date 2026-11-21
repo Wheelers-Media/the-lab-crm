@@ -57,7 +57,7 @@ export const DealCardContent = ({
         >
           <CardContent className="px-3 flex flex-col gap-0.5">
             <div className="flex-1 flex gap-2">
-              <p className="flex-1 text-sm font-semibold leading-snug">
+              <p className="flex-1 min-w-0 text-sm font-semibold leading-snug break-words">
                 {deal.name}
               </p>
             </div>

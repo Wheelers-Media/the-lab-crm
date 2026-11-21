@@ -132,25 +132,64 @@ export const isInGroup = (group: NavGroup, pathname: string): boolean =>
   group.pages.some((page) => isOnPage(page, pathname));
 
 /**
- * Desktop header. Single pages are plain links; groups open on hover. The
- * links Eric uses all day stay one click away; the store and the business
- * accounts sit one hover deeper.
+ * What an area of the shop is called in colour. One hue per area, used for the
+ * sidebar icons, the active bar and the header label, so Eric learns "green is
+ * the bay, orange is money" once and it holds on every screen. The values are
+ * the --area-* tokens in index.css.
  */
-export type DesktopNavItem = NavPage | NavGroup;
+export type Area = "shop" | "sales" | "people" | "store" | "insights" | "admin";
 
-export const DESKTOP_NAV: DesktopNavItem[] = [
-  PAGES.home,
-  PAGES.calendar,
-  PAGES.shopFloor,
-  PAGES.jobs,
-  PAGES.tasks,
-  { label: "Customers", pages: [PAGES.customers, PAGES.businesses] },
-  { label: "Store", pages: [PAGES.orders, PAGES.carts, PAGES.packages] },
-  PAGES.numbers,
+export interface SidebarGroup {
+  id: string;
+  label: string;
+  area: Area;
+  pages: NavPage[];
+}
+
+/** Always visible at the top of the sidebar: the two pages used all day. */
+export const SIDEBAR_PINNED: NavPage[] = [PAGES.home, PAGES.calendar];
+
+/** Drawers, in the order the shop's day runs. Each opens and closes. */
+export const SIDEBAR_GROUPS: SidebarGroup[] = [
+  {
+    id: "shop",
+    label: "In the shop",
+    area: "shop",
+    pages: [PAGES.shopFloor, PAGES.tasks],
+  },
+  { id: "sales", label: "Sales", area: "sales", pages: [PAGES.jobs] },
+  {
+    id: "people",
+    label: "Customers",
+    area: "people",
+    pages: [PAGES.customers, PAGES.businesses],
+  },
+  {
+    id: "store",
+    label: "Store",
+    area: "store",
+    pages: [PAGES.orders, PAGES.carts, PAGES.packages],
+  },
+  {
+    id: "insights",
+    label: "Insights",
+    area: "insights",
+    pages: [PAGES.numbers],
+  },
 ];
 
-export const isNavGroup = (item: DesktopNavItem): item is NavGroup =>
-  "pages" in item;
+/** Settings sits apart at the foot of the sidebar. */
+export const SIDEBAR_FOOT: NavPage = PAGES.settings;
+
+/** The area a path belongs to, for the header label and colour. */
+export const areaOf = (pathname: string): { area: Area; label: string } => {
+  if (isOnPage(PAGES.home, pathname)) return { area: "shop", label: "Home" };
+  if (isOnPage(PAGES.calendar, pathname))
+    return { area: "shop", label: "Calendar" };
+  const group = SIDEBAR_GROUPS.find((g) => isInGroup(g, pathname));
+  if (group) return { area: group.area, label: group.label };
+  return { area: "admin", label: "Settings" };
+};
 
 /** The phone's tab bar: four pages and More. Calendar is always a tap away. */
 export const PHONE_TABS: NavPage[] = [
