@@ -42,7 +42,15 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/vehicles/workDone.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/vehicles/vehicleModel.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/vehicles/useContactVehicles.ts",
           "type": "registry:component"
         },
         {
@@ -55,6 +63,10 @@
         },
         {
           "path": "src/components/atomic-crm/vehicles/DealVehicleInput.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/vehicles/CustomerVehicleCard.tsx",
           "type": "registry:component"
         },
         {
@@ -522,6 +534,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/packages/powerPackageModel.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/packages/packageModel.ts",
           "type": "registry:component"
         },
@@ -574,6 +590,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/packages/PowerPackageBuilder.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/packages/PackagePicker.tsx",
           "type": "registry:component"
         },
@@ -591,6 +611,10 @@
         },
         {
           "path": "src/components/atomic-crm/packages/ContactQuotes.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/packages/powerPackages/index.ts",
           "type": "registry:component"
         },
         {
@@ -1058,6 +1082,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/layout/Sidebar.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/layout/ScrollMemory.tsx",
           "type": "registry:component"
         },
@@ -1106,10 +1134,6 @@
           "type": "registry:component"
         },
         {
-          "path": "src/components/atomic-crm/layout/DesktopNavigation.tsx",
-          "type": "registry:component"
-        },
-        {
           "path": "src/components/atomic-crm/filters/FilterCategory.tsx",
           "type": "registry:component"
         },
@@ -1126,6 +1150,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/deals/jobAge.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/deals/index.ts",
           "type": "registry:component"
         },
@@ -1139,6 +1167,10 @@
         },
         {
           "path": "src/components/atomic-crm/deals/MobileDealList.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/deals/JobAgeTag.tsx",
           "type": "registry:component"
         },
         {
@@ -1282,11 +1314,31 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/contacts/vehicleSales.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/contacts/useSendText.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/contacts/useNextSales.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/contacts/useCustomerHistory.ts",
           "type": "registry:component"
         },
         {
           "path": "src/components/atomic-crm/contacts/useContactImport.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/contacts/suggestionTexts.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/contacts/salePrices.ts",
           "type": "registry:component"
         },
         {
