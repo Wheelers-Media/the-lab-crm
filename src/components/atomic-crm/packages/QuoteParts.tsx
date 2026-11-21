@@ -15,18 +15,23 @@ import {
 
 const GROUP_PREVIEW = 4;
 
-const PartRow = ({
+export const PartRow = ({
   pkg,
   added,
   fits,
+  initialVariantId,
   onAdd,
 }: {
   pkg: Package;
   added: boolean;
   fits?: boolean;
+  /** The option to start on, e.g. the finish the customer asked for. */
+  initialVariantId?: string;
   onAdd: (pkg: Package, variantId?: string) => void;
 }) => {
-  const [variantId, setVariantId] = useState(pkg.variants[0]?.id ?? "");
+  const [variantId, setVariantId] = useState(
+    initialVariantId || pkg.variants[0]?.id || "",
+  );
   const chosen = pkg.variants.find((v) => v.id === variantId);
   return (
     <li className="flex items-center gap-3 rounded-lg border border-border p-2 pr-3">

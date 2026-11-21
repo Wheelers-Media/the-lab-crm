@@ -542,6 +542,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/packages/gridironModel.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/packages/VariantPicker.tsx",
           "type": "registry:component"
         },
@@ -595,6 +599,10 @@
         },
         {
           "path": "src/components/atomic-crm/packages/PackagePicker.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/packages/GridironPanel.tsx",
           "type": "registry:component"
         },
         {

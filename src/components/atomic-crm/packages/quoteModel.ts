@@ -53,13 +53,17 @@ export const lineFromCatalog = (
 ): DealPackageLine => {
   const variant =
     pkg.variants.find((v) => v.id === variantId) ?? pkg.variants[0];
+  // Gridiron bumpers are filed with the shop's services (sold and fitted
+  // here), but they are parts: ordered with their Shopify variant and paid
+  // up front like any other part
+  const isPart = pkg.kind === "product" || pkg.category === "gridiron";
   const line: DealPackageLine = {
     package_id: pkg.id,
     title: pkg.title,
     price: variant?.price ?? pkg.price ?? 0,
     quantity: 1,
-    variant_id: pkg.kind === "product" && variant ? variant.id : null,
-    kind: pkg.kind === "product" ? "part" : "labour",
+    variant_id: isPart && variant ? variant.id : null,
+    kind: isPart ? "part" : "labour",
   };
   const picked = variant ? withVariant(line, pkg, variant.id) : line;
   return pkg.kind === "product" && pkg.category === "tuning" && vin
@@ -108,12 +112,11 @@ export const chooseVariant = (
   const cur = parts[at];
   const head = (p: string[]) =>
     p.slice(0, position).every((x, k) => x === cur[k]) && p[position] === value;
-  const matches = parts
-    .map((p, i) => [p, i] as const)
-    .filter(([p]) => head(p));
+  const matches = parts.map((p, i) => [p, i] as const).filter(([p]) => head(p));
   const best =
-    matches.find(([p]) => p.slice(position + 1).every((x, k) => x === cur[position + 1 + k])) ??
-    matches[0];
+    matches.find(([p]) =>
+      p.slice(position + 1).every((x, k) => x === cur[position + 1 + k]),
+    ) ?? matches[0];
   return best ? variants[best[1]].id : currentId;
 };
 
