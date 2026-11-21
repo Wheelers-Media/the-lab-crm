@@ -221,6 +221,10 @@ export type DealPackageLine = {
   kind?: "part" | "labour";
   /** Order-line details a tune needs (VIN, device serial...), sent to Shopify with the line. */
   details?: Record<string, string>;
+  /** The website power package this line was built from (e.g. "powerstroke-2023-2026"). */
+  build?: string;
+  /** The step of that package it fills (e.g. "exhaust"). */
+  step?: string;
 };
 
 /** What the customer saw and chose on thelabfsj.ca (lead_intake). */

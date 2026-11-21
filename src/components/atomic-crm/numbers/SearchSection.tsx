@@ -332,7 +332,7 @@ export const SearchSection = ({
             />
           </SectionCard>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
             <SectionCard
               title="What people searched"
               hint="Searches the website showed up for. One shown often with few clicks is a page worth improving."
