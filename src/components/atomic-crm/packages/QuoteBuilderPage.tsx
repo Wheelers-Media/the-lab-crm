@@ -1,4 +1,4 @@
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Gauge } from "lucide-react";
 import { useGetList, useGetOne, useNotify, useUpdate } from "ra-core";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router";
@@ -18,6 +18,8 @@ import type {
   Package,
   Vehicle,
 } from "../types";
+import { GridironPanel } from "./GridironPanel";
+import { bumperRequest } from "./gridironModel";
 import { QuoteCheckout } from "./QuoteCheckout";
 import { PowerPackageBuilder } from "./PowerPackageBuilder";
 import { powerPackageFor } from "./powerPackageModel";
@@ -42,6 +44,10 @@ const SERVICE_NAMES: Record<string, string> = {
   tuning: "Tuning",
   coolant: "Coolant",
 };
+
+/** "2023 Ford F350" */
+const truckName = (v?: Vehicle | null) =>
+  v ? [v.year, v.make, v.model].filter(Boolean).join(" ") : "";
 
 const vehicleName = (v?: Vehicle | null) =>
   v ? [v.year, v.make, v.model, v.engine].filter(Boolean).join(" ") : "";
@@ -149,6 +155,23 @@ export const QuoteBuilderPage = () => {
   );
   // The website's power package for this truck, when it builds one
   const powerPackage = useMemo(() => powerPackageFor(ctx), [ctx]);
+  // A Gridiron bumper they asked for comes first on the quote
+  const bumper = useMemo(
+    () =>
+      bumperRequest({
+        name: deal?.name,
+        category: deal?.category,
+        quote: deal?.quote,
+      }),
+    [deal?.name, deal?.category, deal?.quote],
+  );
+  // The power package builder opens on its own only for a diesel request
+  // (tuning, exhaust, EGR, CCV) or a build already started on this quote;
+  // otherwise it is one tap away
+  const [isPowerOpened, setPowerOpened] = useState(false);
+  const isPowerOpen =
+    powerPackage != null &&
+    (isPowerOpened || ctx.services.length > 0 || lines.some((l) => l.build));
   const totals = quoteTotals(lines);
 
   const save = () =>
@@ -290,7 +313,21 @@ export const QuoteBuilderPage = () => {
             </details>
           ) : null}
 
-          {powerPackage ? (
+          {bumper ? (
+            <GridironPanel
+              request={bumper}
+              ctx={ctx}
+              truck={truckName(vehicle) || "this truck"}
+              catalog={catalog}
+              addedIds={addedIds}
+              onAdd={(pkg, variantId) =>
+                edit([...lines, lineFromCatalog(pkg, variantId, vehicle?.vin)])
+              }
+              onAddLine={(line) => edit([...lines, line])}
+            />
+          ) : null}
+
+          {powerPackage && isPowerOpen ? (
             <PowerPackageBuilder
               pkg={powerPackage}
               catalog={catalog}
@@ -298,11 +335,35 @@ export const QuoteBuilderPage = () => {
               onChange={edit}
               vin={vehicle?.vin}
             />
+          ) : powerPackage ? (
+            <section className="flex items-center gap-3 rounded-lg border border-dashed border-border p-3">
+              <Gauge
+                className="size-5 shrink-0 text-muted-foreground"
+                aria-hidden
+              />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                  Power package for this truck
+                </p>
+                <p className="text-sm font-medium">{powerPackage.title}</p>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="shrink-0"
+                onClick={() => setPowerOpened(true)}
+              >
+                Build
+              </Button>
+            </section>
           ) : null}
 
           <QuoteParts
-            heading={powerPackage ? "Add anything else" : "Add parts"}
-            hideSuggestions={Boolean(powerPackage)}
+            heading={bumper || isPowerOpen ? "Add anything else" : "Add parts"}
+            hideSuggestions={
+              isPowerOpen || (bumper != null && !ctx.services.length)
+            }
             catalog={catalog}
             suggestions={suggestions}
             ctx={ctx}
