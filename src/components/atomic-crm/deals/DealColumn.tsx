@@ -6,6 +6,8 @@ import type { Deal } from "../types";
 import { findDealLabel } from "./dealUtils";
 import { DealCard } from "./DealCard";
 import { columnView, RECENT_CLOSED_DAYS, stageTotal } from "./pipelineView";
+import { columnAge } from "./jobAge";
+import { ColumnAgeLine } from "./JobAgeTag";
 
 export const DealColumn = ({
   stage,
@@ -34,6 +36,7 @@ export const DealColumn = ({
             maximumFractionDigits: 0,
           })}
         </p>
+        <ColumnAgeLine age={columnAge(deals)} />
       </div>
       <Droppable droppableId={stage}>
         {(droppableProvided, snapshot) => (

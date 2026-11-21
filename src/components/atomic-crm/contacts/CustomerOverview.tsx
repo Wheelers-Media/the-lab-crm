@@ -5,7 +5,7 @@ import {
   Lightbulb,
   MessageSquare,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -24,8 +24,9 @@ import {
 import { useStartQuote } from "../packages/useStartQuote";
 import type { Contact } from "../types";
 import { firstPhone } from "./firstPhone";
-import { customerSnapshot, type NextSale, nextSales } from "./nextSaleModel";
-import { useCustomerHistory, useMembershipPrice } from "./useCustomerHistory";
+import type { NextSale } from "./nextSaleModel";
+import { type SuggestionWithText, useNextSales } from "./useNextSales";
+import { useSendText } from "./useSendText";
 
 const shortDate = (iso: string) =>
   new Date(iso).toLocaleDateString("en-CA", {
@@ -60,37 +61,11 @@ const Stat = ({
  * comes with the button that acts on it.
  */
 export const CustomerOverview = ({ contact }: { contact: Contact }) => {
-  const now = useMemo(() => new Date(), []);
-  const history = useCustomerHistory(contact.id);
-  const membershipPrice = useMembershipPrice();
+  const { now, snapshot, suggestions, isPending } = useNextSales(contact);
   const [bookOpen, setBookOpen] = useState(false);
   const [bookDefaults, setBookDefaults] = useState<AppointmentDefaults>({
     day: shopDayKey(now),
   });
-
-  const snapshot = useMemo(
-    () => customerSnapshot(history.orders, history.appointments, now),
-    [history.orders, history.appointments, now],
-  );
-  const suggestions = useMemo(
-    () =>
-      nextSales({
-        orders: history.orders,
-        appointments: history.appointments,
-        deals: history.deals,
-        membership: contact.membership,
-        membershipPrice,
-        now,
-      }),
-    [
-      history.orders,
-      history.appointments,
-      history.deals,
-      contact.membership,
-      membershipPrice,
-      now,
-    ],
-  );
 
   const book = (title?: string) => {
     setBookDefaults({
@@ -102,7 +77,7 @@ export const CustomerOverview = ({ contact }: { contact: Contact }) => {
     setBookOpen(true);
   };
 
-  if (history.isPending) {
+  if (isPending) {
     return (
       <div className="flex flex-col gap-3" aria-busy="true">
         <Skeleton className="h-16 w-full" />
@@ -238,14 +213,15 @@ const NextSaleList = ({
   onBook,
 }: {
   contact: Contact;
-  suggestions: NextSale[];
+  suggestions: SuggestionWithText[];
   onBook: (title?: string) => void;
 }) => {
   const navigate = useNavigate();
   const { startQuote, isStarting } = useStartQuote();
   const phone = firstPhone(contact);
+  const sendText = useSendText();
 
-  const act = (sale: NextSale) => {
+  const act = (sale: SuggestionWithText) => {
     if (sale.action === "open-quote" && sale.dealId != null) {
       navigate(`/quotes/${sale.dealId}`);
     } else if (sale.action === "quote") {
@@ -253,7 +229,7 @@ const NextSaleList = ({
     } else if (sale.action === "book") {
       onBook(sale.id === "detail-due" ? "Signature detail" : undefined);
     } else if (sale.action === "text" && phone) {
-      window.location.href = `sms:${phone.replace(/[^\d+]/g, "")}`;
+      sendText(phone, sale.text);
     }
   };
 
@@ -282,7 +258,27 @@ const NextSaleList = ({
                   <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground text-pretty">
                     {sale.reason}
                   </p>
+                  {sale.price ? (
+                    <p className="mt-1 text-xs font-medium lab-num text-[var(--lab-blue-text)]">
+                      {sale.price}
+                    </p>
+                  ) : null}
                 </div>
+                {sale.action !== "text" ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={!phone}
+                    title={phone ? sale.text : "No phone number on file"}
+                    aria-label={`Text: ${sale.title}`}
+                    onClick={() => phone && sendText(phone, sale.text)}
+                    className="shrink-0 active:scale-[0.97]"
+                  >
+                    <MessageSquare className="size-4" aria-hidden />
+                    <span className="sr-only sm:not-sr-only">Text</span>
+                  </Button>
+                ) : null}
                 <Button
                   type="button"
                   size="sm"

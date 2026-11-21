@@ -16,6 +16,8 @@ import { DealEdit } from "./DealEdit";
 import { DealShow } from "./DealShow";
 import { useDealActions } from "./useDealActions";
 import { columnView, stageTotal } from "./pipelineView";
+import { columnAge } from "./jobAge";
+import { ColumnAgeLine } from "./JobAgeTag";
 import { getDealsByStage } from "./stages";
 
 const money = (amount: number) =>
@@ -46,6 +48,16 @@ const MobileDealCard = ({ deal }: { deal: Deal }) => {
       <DealCardContent deal={deal} />
     </ActionRow>
   );
+};
+
+/** A red count on a stage tab when jobs there are overdue. */
+const StaleCount = ({ deals }: { deals: Deal[] }) => {
+  const { stale } = columnAge(deals);
+  return stale ? (
+    <span className="mt-1 lab-chip lab-chip-danger lab-num">
+      {stale} overdue
+    </span>
+  ) : null;
 };
 
 /** Jobs on the phone: one stage at a time, picked from a row of tabs. */
@@ -119,10 +131,12 @@ const MobileDealBoard = () => {
               <span className="block text-xs lab-num">
                 {money(stageTotal(deals))}
               </span>
+              <StaleCount deals={deals} />
             </button>
           );
         })}
       </div>
+      <ColumnAgeLine age={columnAge(current)} />
       {isPending ? null : view.visible.length ? (
         <div className="flex flex-col gap-2">
           {view.visible.map((deal) => (

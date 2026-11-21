@@ -10,12 +10,15 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router";
 
 import { AppointmentCreateDialog } from "../calendar/AddAppointment";
-import type { SheetAction } from "../misc/ActionSheet";
+import { ActionSheet, type SheetAction } from "../misc/ActionSheet";
 import { shopDayKey } from "../operations/shopTime";
 import { useStartQuote } from "../packages/useStartQuote";
 import type { Contact } from "../types";
 import { firstPhone } from "./firstPhone";
 import { dial, go } from "./reach";
+import { helloText } from "./suggestionTexts";
+import { useNextSales } from "./useNextSales";
+import { useSendText } from "./useSendText";
 
 const firstEmail = (c: Contact) =>
   c.email_jsonb?.find((e) => e.email?.trim())?.email?.trim() ?? null;
@@ -76,9 +79,15 @@ export const useContactActions = (contact: Contact) => {
 export const ContactQuickActions = ({ contact }: { contact: Contact }) => {
   const { quick } = useContactActions(contact);
   const [bookOpen, setBookOpen] = useState(false);
+  const [textOpen, setTextOpen] = useState(false);
   const today = useMemo(() => shopDayKey(new Date()), []);
   const actions = [
-    ...quick,
+    // Text opens the ready-made texts for this customer, not a blank message
+    ...quick.map((action) =>
+      action.short === "Text"
+        ? { ...action, onSelect: () => setTextOpen(true) }
+        : action,
+    ),
     {
       label: "Book an appointment",
       short: "Book",
@@ -109,6 +118,9 @@ export const ContactQuickActions = ({ contact }: { contact: Contact }) => {
           );
         })}
       </div>
+      {textOpen ? (
+        <TextPickerSheet contact={contact} onClose={() => setTextOpen(false)} />
+      ) : null}
       {bookOpen ? (
         <AppointmentCreateDialog
           open={bookOpen}
@@ -121,5 +133,45 @@ export const ContactQuickActions = ({ contact }: { contact: Contact }) => {
         />
       ) : null}
     </>
+  );
+};
+
+/** The texts that fit this customer right now, from the profile's suggestions. */
+const TextPickerSheet = ({
+  contact,
+  onClose,
+}: {
+  contact: Contact;
+  onClose: () => void;
+}) => {
+  const { suggestions, vehicle } = useNextSales(contact);
+  const sendText = useSendText();
+  const phone = firstPhone(contact);
+  if (!phone) return null;
+  const actions: SheetAction[] = [
+    ...suggestions.map((sale) => ({
+      label: sale.title,
+      icon: MessageSquare,
+      onSelect: () => sendText(phone, sale.text),
+    })),
+    {
+      label: "Just say hello",
+      icon: MessageSquare,
+      onSelect: () =>
+        sendText(phone, helloText({ firstName: contact.first_name, vehicle })),
+    },
+    {
+      label: "Blank message",
+      onSelect: () => go(`sms:${dial(phone)}`),
+    },
+  ];
+  return (
+    <ActionSheet
+      open
+      onOpenChange={(open) => !open && onClose()}
+      title={`Text ${contact.first_name || phone}`}
+      subtitle="Opens Messages with the text filled in. Nothing sends until you tap send."
+      actions={actions}
+    />
   );
 };

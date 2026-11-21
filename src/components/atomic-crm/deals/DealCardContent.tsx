@@ -17,6 +17,7 @@ import { useConfigurationContext } from "../root/ConfigurationContext";
 import type { Contact, Deal } from "../types";
 import { VehicleLabelField } from "../vehicles/VehicleField";
 import { WORK_STATUS_LABEL } from "../shopfloor/workStatus";
+import { JobAgeTag } from "./JobAgeTag";
 
 export const DealCardContent = ({
   provided,
@@ -98,6 +99,9 @@ export const DealCardContent = ({
                 optionValue="value"
               />
             </p>
+            <div className="mt-1">
+              <JobAgeTag deal={deal} />
+            </div>
             {deal.work_status ? (
               <p>
                 <span className="lab-chip lab-chip-bay">
