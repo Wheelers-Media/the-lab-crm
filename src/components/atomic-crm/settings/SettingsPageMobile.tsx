@@ -49,6 +49,7 @@ import ImageEditorField from "../misc/ImageEditorField";
 import type { CrmDataProvider } from "../providers/types";
 import { getSalesErrorNotification } from "../sales/salesErrorNotification";
 import type { SalesFormData } from "../types";
+import { NotificationsCard } from "../notifications/NotificationsCard";
 import { SetPasswordButton } from "./SetPasswordDialog";
 
 export const SettingsPageMobile = () => {
@@ -68,6 +69,8 @@ export const SettingsPageMobile = () => {
       <MobileContent>
         <div className="flex flex-col min-h-[calc(100dvh-3.5rem-4.5rem)]">
           <div className="space-y-6">
+            {/* Alerts are switched on per phone, so they belong here first */}
+            <NotificationsCard />
             <ProfileSection />
             <PreferencesSection />
             <AdvancedSection>
