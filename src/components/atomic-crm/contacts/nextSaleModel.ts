@@ -7,7 +7,15 @@
 import type { Identifier } from "ra-core";
 
 import { orderKinds, type ServiceKind } from "../operations/serviceKinds";
-import type { Appointment, Deal, Order } from "../types";
+import type { Appointment, Deal, Order, Vehicle } from "../types";
+import {
+  detailPrice,
+  isSxs,
+  tintPrice,
+  type VehicleSaleId,
+  vehicleName,
+  vehicleSales,
+} from "./vehicleSales";
 
 export type NextSaleAction = "quote" | "book" | "text" | "open-quote";
 
@@ -21,13 +29,20 @@ export interface NextSale {
     | "tint"
     | "detail"
     | "tune"
-    | "first-job";
+    | "first-job"
+    | VehicleSaleId;
   title: string;
   /** Why, in one sentence from the customer's own history. */
   reason: string;
   action: NextSaleAction;
+  /** A fact-sheet starting price, when one applies ("From $850-$1,100 ceramic"). */
+  price?: string;
   /** The job to open, for a quote follow-up. */
   dealId?: Identifier;
+  /** That job's name, for the follow-up text. */
+  dealName?: string;
+  /** Days since the last visit or purchase the suggestion is about. */
+  sinceDays?: number;
 }
 
 export interface NextSaleInput {
@@ -38,6 +53,8 @@ export interface NextSaleInput {
   membership?: string | null;
   /** The membership's catalog price, to say what it costs. */
   membershipPrice?: number | null;
+  /** Their main vehicle, so suggestions fit what they drive. */
+  vehicle?: Vehicle | null;
   now?: Date;
 }
 
@@ -91,6 +108,7 @@ export const nextSales = ({
   deals,
   membership,
   membershipPrice,
+  vehicle,
   now = new Date(),
 }: NextSaleInput): NextSale[] => {
   const sales = orders
@@ -135,6 +153,8 @@ export const nextSales = ({
       reason: `${waiting.name}${Number(waiting.amount) ? `, ${money(Number(waiting.amount))}` : ""}, quoted ${plural(days, "day", "days")} ago with no answer.`,
       action: "open-quote",
       dealId: waiting.id,
+      dealName: waiting.name,
+      sinceDays: days,
       rank: 100,
     });
   }
@@ -175,6 +195,8 @@ export const nextSales = ({
         id: "detail-due",
         title: "Due for a detail",
         reason: `Last detail ${shortDate(lastDetail)}, ${plural(days, "day", "days")} ago.`,
+        price: detailPrice(vehicle),
+        sinceDays: days,
         action: "book",
         rank: 80,
       });
@@ -186,17 +208,32 @@ export const nextSales = ({
       id: "win-back",
       title: "Check in",
       reason: `Nothing bought in ${plural(months, "month", "months")} (last ${shortDate(lastSale)}).`,
+      sinceDays: daysSince(lastSale, now),
       action: "text",
       rank: 70,
     });
   }
 
+  // What they drive: side-by-side tint, the truck's power package, a brow
+  const byVehicle = vehicleSales({
+    vehicle,
+    hasTint: ever("tint"),
+    hasTune: ever("tune"),
+    lineNames: sales.flatMap((o) =>
+      (o.line_items ?? []).map((l) => l.name ?? ""),
+    ),
+  });
+  out.push(...byVehicle);
+  const offersPackage = byVehicle.some((s) => s.id === "power-package");
+
   // Cross-sells: the next service people like them usually buy
-  if (ever("detail") && !ever("tint")) {
+  if (ever("detail") && !ever("tint") && !isSxs(vehicle)) {
+    const tint = tintPrice(vehicle);
     out.push({
       id: "tint",
       title: "Offer ceramic tint",
-      reason: "They keep the truck clean with us but have never had it tinted.",
+      reason: `They keep the ${vehicleName(vehicle)} clean with us but have never had it tinted.`,
+      price: tint.label,
       action: "quote",
       rank: 50,
     });
@@ -206,11 +243,12 @@ export const nextSales = ({
       id: "detail",
       title: "Offer a Signature detail",
       reason: "They buy upgrades from us but have never had a detail.",
+      price: detailPrice(vehicle),
       action: "quote",
       rank: 45,
     });
   }
-  if (ever("parts") && !ever("tune")) {
+  if (ever("parts") && !ever("tune") && !offersPackage) {
     out.push({
       id: "tune",
       title: "Offer a tune",

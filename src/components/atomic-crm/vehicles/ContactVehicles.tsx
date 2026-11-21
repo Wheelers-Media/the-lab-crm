@@ -5,7 +5,6 @@ import {
   Form,
   type Identifier,
   useDataProvider,
-  useGetList,
   useNotify,
 } from "ra-core";
 import { useState } from "react";
@@ -21,6 +20,7 @@ import {
 } from "@/components/ui/dialog";
 
 import type { Vehicle } from "../types";
+import { useContactVehicles } from "./useContactVehicles";
 import { VehicleInputs } from "./VehicleInputs";
 import {
   DIESEL_PLATFORMS,
@@ -53,7 +53,7 @@ const useKeepOnePrimary = (contactId: Identifier) => {
   };
 };
 
-const VehicleDialog = ({
+export const VehicleDialog = ({
   open,
   onClose,
   contactId,
@@ -174,11 +174,7 @@ export const VehicleSummary = ({ vehicle }: { vehicle: Vehicle }) => {
 /** The customer's vehicles, main one first, with add and edit. */
 export const ContactVehicles = ({ contactId }: { contactId: Identifier }) => {
   const [editing, setEditing] = useState<Vehicle | "new" | null>(null);
-  const { data: vehicles = [], isPending } = useGetList<Vehicle>("vehicles", {
-    filter: { contact_id: contactId },
-    pagination: { page: 1, perPage: 50 },
-    sort: { field: "is_primary", order: "DESC" },
-  });
+  const { vehicles, isPending } = useContactVehicles(contactId);
   return (
     <div className="flex flex-col gap-3">
       {!isPending && !vehicles.length ? (
