@@ -1,10 +1,9 @@
-import { Bell, BellOff, BellRing } from "lucide-react";
+import { Bell, BellOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 
 import { type PushKind, usePushNotifications } from "./usePushNotifications";
-import { useTestAlert } from "./useTestAlert";
 
 const KINDS: Array<{ kind: PushKind; label: string; hint: string }> = [
   {
@@ -23,13 +22,22 @@ const KINDS: Array<{ kind: PushKind; label: string; hint: string }> = [
     hint: "A $50 booking deposit came in",
   },
   { kind: "order", label: "Shop orders", hint: "A Shopify order was paid" },
+  {
+    kind: "morning",
+    label: "Morning plan",
+    hint: "8:30 a.m. weekdays: your tasks and today's bookings",
+  },
+  {
+    kind: "end_of_day",
+    label: "End of day",
+    hint: "4:30 p.m. who showed up, 5:15 p.m. the day's shop numbers",
+  },
 ];
 
 /** Alerts for this phone or computer. Each device chooses for itself. */
 export const NotificationsCard = () => {
   const { state, prefs, error, busy, enable, disable, setKind } =
     usePushNotifications();
-  const test = useTestAlert();
 
   return (
     <Card id="notifications">
@@ -60,7 +68,8 @@ export const NotificationsCard = () => {
           <>
             <p className="text-sm text-muted-foreground">
               Get an alert on this device the moment something comes in: a new
-              lead, a booking, a deposit or an order. Tap one to open it.
+              lead, a booking, a deposit or an order, plus a morning plan and an
+              end-of-day wrap-up. Tap one to open it.
             </p>
             <Button type="button" onClick={enable} disabled={busy}>
               <Bell className="size-4" />
@@ -92,39 +101,16 @@ export const NotificationsCard = () => {
                 </li>
               ))}
             </ul>
-            <div className="flex flex-col gap-2">
-              <Button
-                type="button"
-                size="sm"
-                onClick={test.send}
-                disabled={busy || test.state === "sending"}
-              >
-                <BellRing className="size-4" />
-                {test.state === "sending" ? "Sending…" : "Send a test alert"}
-              </Button>
-              {test.message ? (
-                <p
-                  role={test.state === "failed" ? "alert" : "status"}
-                  className={
-                    test.state === "failed"
-                      ? "text-sm text-destructive"
-                      : "text-sm text-muted-foreground"
-                  }
-                >
-                  {test.message}
-                </p>
-              ) : null}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={disable}
-                disabled={busy}
-              >
-                <BellOff className="size-4" />
-                Turn off alerts on this device
-              </Button>
-            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={disable}
+              disabled={busy}
+            >
+              <BellOff className="size-4" />
+              Turn off alerts on this device
+            </Button>
           </>
         ) : null}
 
