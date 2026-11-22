@@ -314,6 +314,39 @@ describe("needs attention", () => {
     ]);
   });
 
+  it("adds today's bookings to the show check once they are over", () => {
+    // Arrange: NOW is Fri Oct 9 2026, 9:00 shop time
+    const appointments = [
+      {
+        title: "Over",
+        status: "booked",
+        resource: "eric",
+        start_at: "2026-10-09T14:00:00Z",
+        end_at: "2026-10-09T15:00:00Z",
+      },
+      {
+        title: "Moved, over",
+        status: "rescheduled",
+        resource: "eric",
+        start_at: "2026-10-09T14:30:00Z",
+        end_at: "2026-10-09T15:30:00Z",
+      },
+      {
+        title: "Running",
+        status: "booked",
+        resource: "eric",
+        start_at: "2026-10-09T15:30:00Z",
+        end_at: "2026-10-09T17:00:00Z",
+      },
+    ] as Appointment[];
+
+    // Act
+    const toCheck = bookingsToCheck(appointments, NOW);
+
+    // Assert
+    expect(toCheck.map((a) => a.title)).toEqual(["Over", "Moved, over"]);
+  });
+
   it("asks whether last week's unsettled bookings showed up, not today's or settled ones", () => {
     // Arrange: NOW is Fri Oct 9 2026, 9:00 shop time
     const appointment = (start_at: string, status: Appointment["status"]) =>

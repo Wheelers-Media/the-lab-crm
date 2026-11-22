@@ -11,8 +11,8 @@ import {
   Wrench,
 } from "lucide-react";
 import { type Identifier, useDataProvider, useNotify } from "ra-core";
-import { type ComponentType, useState } from "react";
-import { Link } from "react-router";
+import { type ComponentType, useEffect, useState } from "react";
+import { Link, useLocation } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -228,6 +228,13 @@ export const AttentionCard = ({
   contactsById?: Map<Identifier, Contact>;
 }) => {
   const [checking, setChecking] = useState(false);
+  // The 4:30 p.m. "who showed up?" alert opens Home with ?check=shows
+  const { search } = useLocation();
+  const asksShowCheck =
+    new URLSearchParams(search).get("check") === "shows" && toCheck.length > 0;
+  useEffect(() => {
+    if (asksShowCheck) setChecking(true);
+  }, [asksShowCheck]);
   const config = useConfigurationContext();
   const setConfig = useConfigurationUpdater();
   const dataProvider = useDataProvider<CrmDataProvider>();

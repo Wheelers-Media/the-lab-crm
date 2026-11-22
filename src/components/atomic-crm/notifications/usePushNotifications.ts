@@ -4,7 +4,13 @@ import { useCallback, useEffect, useState } from "react";
 import { getSupabaseClient } from "../providers/supabase/supabase";
 import { urlBase64ToBytes, VAPID_PUBLIC_KEY } from "./vapid";
 
-export type PushKind = "lead" | "booking" | "deposit" | "order";
+export type PushKind =
+  | "lead"
+  | "booking"
+  | "deposit"
+  | "order"
+  | "morning"
+  | "end_of_day";
 export type PushPrefs = Partial<Record<PushKind, boolean>>;
 
 /**

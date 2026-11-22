@@ -2,8 +2,21 @@
 // the deep links can be tested without a database or a push service.
 
 /** The kinds of alert a device can switch on or off. */
-export type PushKind = "lead" | "booking" | "deposit" | "order";
-export const PUSH_KINDS: PushKind[] = ["lead", "booking", "deposit", "order"];
+export type PushKind =
+  | "lead"
+  | "booking"
+  | "deposit"
+  | "order"
+  | "morning"
+  | "end_of_day";
+export const PUSH_KINDS: PushKind[] = [
+  "lead",
+  "booking",
+  "deposit",
+  "order",
+  "morning",
+  "end_of_day",
+];
 
 export interface PushMessage {
   kind: PushKind;

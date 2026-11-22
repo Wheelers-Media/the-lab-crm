@@ -32,6 +32,8 @@ export interface AttentionItem {
 
 /** How far back Home asks "did they show?" about bookings nobody settled. */
 export const SHOW_CHECK_DAYS = 7;
+// A booking with no end time counts as over two hours after it starts
+const BOOKING_FALLBACK_MS = 2 * 3_600_000;
 
 /**
  * Bookings from the last week, before today, still marked booked: nobody
@@ -44,10 +46,17 @@ export const bookingsToCheck = (
 ): Appointment[] => {
   const today = startOfShopDay(shopDayKey(now)).getTime();
   const since = today - SHOW_CHECK_DAYS * DAY_MS;
+  // Today's bookings join once they are over, so the 4:30 p.m. "who showed
+  // up?" reminder opens on today's list (supabase/functions/reminders)
+  const isOver = (a: Appointment) =>
+    (a.end_at
+      ? new Date(a.end_at).getTime()
+      : new Date(a.start_at).getTime() + BOOKING_FALLBACK_MS) <= now.getTime();
   return appointments
     .filter((a) => {
       const start = new Date(a.start_at).getTime();
-      return a.status === "booked" && start < today && start >= since;
+      const isOpen = a.status === "booked" || a.status === "rescheduled";
+      return isOpen && start >= since && (start < today || isOver(a));
     })
     .sort((a, b) => a.start_at.localeCompare(b.start_at));
 };
