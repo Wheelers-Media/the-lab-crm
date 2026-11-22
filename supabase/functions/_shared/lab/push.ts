@@ -7,7 +7,7 @@ import { type PushMessage, wantsKind } from "./pushMessages.ts";
 
 /** The public half of the signing key. The browser needs the same value (src/components/atomic-crm/notifications/vapid.ts). */
 export const VAPID_PUBLIC_KEY =
-  "BEcT-_WD593swCVLqZ0a8TQ4xFOb2nLORXDqxEV6bXn-ssWFaP4UiSfouR4sVGdQ0bWS5sLnwz3KsdlA9JswvKc";
+  "BDFlaQ3hZOGyTFx10yq6d9ZsPHUh5izj-YROSGb1rZPOgSKaZ2STG6Uv4PYcVm0Hb1Et6Tw3R52fQ5RdryiNUgM";
 
 const SEND_BUDGET_MS = 6000;
 
