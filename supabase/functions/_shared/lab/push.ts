@@ -27,12 +27,35 @@ export type SendResult = { id: number; ok: boolean; status?: number };
  * push service says are gone (404, 410) are removed. Throws only when the key
  * is not set, so callers that must never fail wrap it (see notify).
  */
+/**
+ * The private key as web-push wants it (URL-safe Base64, no padding), however
+ * it was pasted into Supabase: with quotes or spaces, standard Base64 (+ / =),
+ * or the whole {"publicKey": ..., "privateKey": ...} output of a key generator.
+ */
+export const normalizeVapidKey = (raw: string): string => {
+  let key = raw.trim();
+  if (key.startsWith("{")) {
+    try {
+      key = String(JSON.parse(key).privateKey ?? "");
+    } catch {
+      // not JSON after all: clean it like any other value
+    }
+  }
+  return key
+    .replace(/^["']+|["']+$/g, "")
+    .replace(/\s+/g, "")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+};
+
 export const sendPush = async (
   targets: Subscription[],
   message: Omit<PushMessage, "kind">,
 ): Promise<SendResult[]> => {
-  const privateKey = Deno.env.get("VAPID_PRIVATE_KEY");
-  if (!privateKey) throw new Error("VAPID_PRIVATE_KEY is not set");
+  const raw = Deno.env.get("VAPID_PRIVATE_KEY");
+  if (!raw) throw new Error("VAPID_PRIVATE_KEY is not set");
+  const privateKey = normalizeVapidKey(raw);
   if (!targets.length) return [];
 
   // Loaded here so a problem with the library can only ever cost the alert
