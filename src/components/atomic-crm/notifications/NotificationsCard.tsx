@@ -1,9 +1,10 @@
-import { Bell, BellOff } from "lucide-react";
+import { Bell, BellOff, BellRing } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 
 import { type PushKind, usePushNotifications } from "./usePushNotifications";
+import { useTestAlert } from "./useTestAlert";
 
 const KINDS: Array<{ kind: PushKind; label: string; hint: string }> = [
   {
@@ -28,6 +29,7 @@ const KINDS: Array<{ kind: PushKind; label: string; hint: string }> = [
 export const NotificationsCard = () => {
   const { state, prefs, error, busy, enable, disable, setKind } =
     usePushNotifications();
+  const test = useTestAlert();
 
   return (
     <Card id="notifications">
@@ -90,16 +92,39 @@ export const NotificationsCard = () => {
                 </li>
               ))}
             </ul>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={disable}
-              disabled={busy}
-            >
-              <BellOff className="size-4" />
-              Turn off alerts on this device
-            </Button>
+            <div className="flex flex-col gap-2">
+              <Button
+                type="button"
+                size="sm"
+                onClick={test.send}
+                disabled={busy || test.state === "sending"}
+              >
+                <BellRing className="size-4" />
+                {test.state === "sending" ? "Sending…" : "Send a test alert"}
+              </Button>
+              {test.message ? (
+                <p
+                  role={test.state === "failed" ? "alert" : "status"}
+                  className={
+                    test.state === "failed"
+                      ? "text-sm text-destructive"
+                      : "text-sm text-muted-foreground"
+                  }
+                >
+                  {test.message}
+                </p>
+              ) : null}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={disable}
+                disabled={busy}
+              >
+                <BellOff className="size-4" />
+                Turn off alerts on this device
+              </Button>
+            </div>
           </>
         ) : null}
 

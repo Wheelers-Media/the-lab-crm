@@ -858,6 +858,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/notifications/useTestAlert.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/notifications/usePushNotifications.ts",
           "type": "registry:component"
         },

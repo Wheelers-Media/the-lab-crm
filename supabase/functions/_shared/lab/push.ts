@@ -11,7 +11,7 @@ export const VAPID_PUBLIC_KEY =
 
 const SEND_BUDGET_MS = 6000;
 
-type Subscription = {
+export type Subscription = {
   id: number;
   endpoint: string;
   p256dh: string;
@@ -19,10 +19,69 @@ type Subscription = {
   prefs: unknown;
 };
 
+/** What happened to one device: sent, or the push service's error status. */
+export type SendResult = { id: number; ok: boolean; status?: number };
+
+/**
+ * Sends one alert to the given devices with the shop's signing key. Devices the
+ * push service says are gone (404, 410) are removed. Throws only when the key
+ * is not set, so callers that must never fail wrap it (see notify).
+ */
+export const sendPush = async (
+  targets: Subscription[],
+  message: Omit<PushMessage, "kind">,
+): Promise<SendResult[]> => {
+  const privateKey = Deno.env.get("VAPID_PRIVATE_KEY");
+  if (!privateKey) throw new Error("VAPID_PRIVATE_KEY is not set");
+  if (!targets.length) return [];
+
+  // Loaded here so a problem with the library can only ever cost the alert
+  const { default: webpush } = await import("npm:web-push@3.6.7");
+  webpush.setVapidDetails(
+    Deno.env.get("VAPID_SUBJECT") ?? "mailto:info@luxxautomotiveboutique.com",
+    VAPID_PUBLIC_KEY,
+    privateKey,
+  );
+  const payload = JSON.stringify({
+    title: message.title,
+    body: message.body,
+    url: message.url,
+    tag: message.tag,
+  });
+
+  return Promise.all(
+    targets.map(async (s): Promise<SendResult> => {
+      try {
+        await webpush.sendNotification(
+          { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
+          payload,
+          { TTL: 3600, urgency: "high" },
+        );
+        await supabaseAdmin
+          .from("push_subscriptions")
+          .update({ last_sent_at: new Date().toISOString() })
+          .eq("id", s.id);
+        return { id: s.id, ok: true };
+      } catch (e) {
+        // 404 and 410 mean the phone removed the app or the permission
+        const status = (e as { statusCode?: number })?.statusCode;
+        if (status === 404 || status === 410) {
+          await supabaseAdmin
+            .from("push_subscriptions")
+            .delete()
+            .eq("id", s.id);
+        } else {
+          console.error("push send failed", status ?? e);
+        }
+        return { id: s.id, ok: false, status };
+      }
+    }),
+  );
+};
+
 export const notify = async (message: PushMessage): Promise<void> => {
   try {
-    const privateKey = Deno.env.get("VAPID_PRIVATE_KEY");
-    if (!privateKey) return;
+    if (!Deno.env.get("VAPID_PRIVATE_KEY")) return;
 
     const { data, error } = await supabaseAdmin
       .from("push_subscriptions")
@@ -34,48 +93,8 @@ export const notify = async (message: PushMessage): Promise<void> => {
     );
     if (!targets.length) return;
 
-    // Loaded here so a problem with the library can only ever cost the alert
-    const { default: webpush } = await import("npm:web-push@3.6.7");
-    webpush.setVapidDetails(
-      Deno.env.get("VAPID_SUBJECT") ?? "mailto:info@luxxautomotiveboutique.com",
-      VAPID_PUBLIC_KEY,
-      privateKey,
-    );
-    const payload = JSON.stringify({
-      title: message.title,
-      body: message.body,
-      url: message.url,
-      tag: message.tag,
-    });
-
-    const sendAll = Promise.allSettled(
-      targets.map(async (s) => {
-        try {
-          await webpush.sendNotification(
-            { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
-            payload,
-            { TTL: 3600, urgency: "high" },
-          );
-          await supabaseAdmin
-            .from("push_subscriptions")
-            .update({ last_sent_at: new Date().toISOString() })
-            .eq("id", s.id);
-        } catch (e) {
-          // 404 and 410 mean the phone removed the app or the permission
-          const status = (e as { statusCode?: number })?.statusCode;
-          if (status === 404 || status === 410) {
-            await supabaseAdmin
-              .from("push_subscriptions")
-              .delete()
-              .eq("id", s.id);
-          } else {
-            console.error("push send failed", status ?? e);
-          }
-        }
-      }),
-    );
     await Promise.race([
-      sendAll,
+      sendPush(targets, message),
       new Promise((resolve) => setTimeout(resolve, SEND_BUDGET_MS)),
     ]);
   } catch (e) {
