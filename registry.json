@@ -202,6 +202,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/shopfloor/floorVisibility.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/shopfloor/WorkStatusPanel.tsx",
           "type": "registry:component"
         },
@@ -230,7 +234,27 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/shop/orderReview.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/shop/index.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/shop/cartModel.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/shop/ReviewQueuePage.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/shop/ReviewAskDialog.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/shop/ReviewAskButton.tsx",
           "type": "registry:component"
         },
         {
@@ -259,6 +283,10 @@
         },
         {
           "path": "src/components/atomic-crm/shop/CheckoutList.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/shop/CheckoutDetail.tsx",
           "type": "registry:component"
         },
         {
@@ -526,6 +554,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/packages/useCatalogBrowser.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/packages/quoteModel.ts",
           "type": "registry:component"
         },
@@ -543,6 +575,10 @@
         },
         {
           "path": "src/components/atomic-crm/packages/gridironModel.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/packages/catalogSections.ts",
           "type": "registry:component"
         },
         {
@@ -594,6 +630,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/packages/PowerPackagesGallery.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/packages/PowerPackageBuilder.tsx",
           "type": "registry:component"
         },
@@ -619,6 +659,10 @@
         },
         {
           "path": "src/components/atomic-crm/packages/ContactQuotes.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/packages/CatalogControls.tsx",
           "type": "registry:component"
         },
         {
@@ -1003,6 +1047,10 @@
         },
         {
           "path": "src/components/atomic-crm/misc/ImageEditorDialog.tsx",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/misc/HelpPage.tsx",
           "type": "registry:component"
         },
         {
