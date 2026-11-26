@@ -88,6 +88,7 @@ export const CatalogControls = ({ browser }: { browser: Browser }) => {
       <div
         role="group"
         aria-label="Store sections"
+        data-scroll-key="store-sections"
         className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0"
       >
         <button

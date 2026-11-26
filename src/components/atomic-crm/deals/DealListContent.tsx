@@ -72,7 +72,10 @@ export const DealListContent = () => {
     <DragDropContext onDragEnd={onDragEnd}>
       {/* Below desktop width eight columns cannot share the row: each keeps a
           readable width and the board scrolls sideways, snapping to a column. */}
-      <div className="flex gap-4 overflow-x-auto snap-x snap-proximity overscroll-x-contain scroll-pl-4 xl:scroll-pl-0 pb-2 -mx-4 px-4 xl:mx-0 xl:px-0">
+      <div
+        data-scroll-key="job-board"
+        className="flex gap-4 overflow-x-auto snap-x snap-proximity overscroll-x-contain scroll-pl-4 xl:scroll-pl-0 pb-2 -mx-4 px-4 xl:mx-0 xl:px-0"
+      >
         {dealStages.map((stage) => (
           <DealColumn
             stage={stage.value}

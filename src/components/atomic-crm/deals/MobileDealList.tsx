@@ -103,6 +103,7 @@ const MobileDealBoard = () => {
       </label>
       <div
         role="tablist"
+        data-scroll-key="stage-tabs"
         aria-label="Stage"
         className="-mx-4 px-4 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]"
       >

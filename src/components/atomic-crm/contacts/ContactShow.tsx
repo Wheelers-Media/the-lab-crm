@@ -39,6 +39,7 @@ import { ContactQuotes } from "../packages/ContactQuotes";
 import { ContactQuickActions } from "./contactActions";
 import { ContactAppointments } from "./ContactAppointments";
 import { CustomerOverview } from "./CustomerOverview";
+import { usePageMemory } from "../layout/pageMemory";
 import { ReviewAskCard } from "./ReviewAskCard";
 import { CustomerVehicleCard } from "../vehicles/CustomerVehicleCard";
 
@@ -68,6 +69,7 @@ const ContactShowContentMobile = () => {
   const { record, isPending } = useShowContext<Contact>();
   const [noteCreateOpen, setNoteCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [tab, setTab] = usePageMemory("tab", "notes");
   if (isPending || !record) return null;
 
   const taskCount = record.nb_tasks ?? 0;
@@ -164,7 +166,7 @@ const ContactShowContentMobile = () => {
           <ContactQuotes contact={record} />
         </div>
 
-        <Tabs defaultValue="notes" className="w-full">
+        <Tabs value={tab} onValueChange={setTab} className="w-full">
           <TabsList className="grid w-full grid-cols-5 h-11">
             <TabsTrigger value="notes" className="px-0.5 text-[12px]">
               {translate("resources.notes.name", { smart_count: 2 })}
@@ -302,6 +304,7 @@ const ContactShowContentMobile = () => {
 const ContactShowContent = () => {
   const translate = useTranslate();
   const { record, isPending } = useShowContext<Contact>();
+  const [tab, setTab] = usePageMemory("tab", "notes");
   if (isPending || !record) return null;
 
   return (
@@ -354,7 +357,7 @@ const ContactShowContent = () => {
             <div className="mt-8">
               <ContactQuotes contact={record} />
             </div>
-            <Tabs defaultValue="notes" className="w-full mt-8">
+            <Tabs value={tab} onValueChange={setTab} className="w-full mt-8">
               <TabsList className="grid w-full max-w-md grid-cols-3 h-11">
                 <TabsTrigger value="notes">
                   {translate("resources.notes.name", { smart_count: 2 })}
