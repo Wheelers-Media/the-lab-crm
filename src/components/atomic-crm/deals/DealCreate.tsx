@@ -73,7 +73,7 @@ export const DealCreate = ({ open }: { open: boolean }) => {
   const { identity } = useGetIdentity();
 
   return (
-    <Dialog open={open} onOpenChange={() => handleClose()}>
+    <Dialog historyBack={false} open={open} onOpenChange={() => handleClose()}>
       <DialogContent className="lg:max-w-4xl overflow-y-auto max-h-9/10 top-1/20 translate-y-0">
         <Create resource="deals" mutationOptions={{ onSuccess }}>
           <Form

@@ -2,10 +2,35 @@ import * as React from "react"
 import * as SheetPrimitive from "@radix-ui/react-dialog"
 import { XIcon } from "lucide-react"
 
+import { useOverlayHistory } from "@/hooks/use-overlay-history"
 import { cn } from "@/lib/utils"
 
-function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
-  return <SheetPrimitive.Root data-slot="sheet" {...props} />
+function Sheet({
+  open,
+  defaultOpen,
+  onOpenChange,
+  historyBack = true,
+  ...props
+}: React.ComponentProps<typeof SheetPrimitive.Root> & {
+  /** Back closes it before leaving the page. Off for pop-ups that are a page of their own (a route). */
+  historyBack?: boolean
+}) {
+  const [inner, setInner] = React.useState(defaultOpen ?? false)
+  const controlled = open !== undefined
+  const current = controlled ? open : inner
+  const change = (next: boolean) => {
+    if (!controlled) setInner(next)
+    onOpenChange?.(next)
+  }
+  useOverlayHistory(current, () => change(false), historyBack)
+  return (
+    <SheetPrimitive.Root
+      data-slot="sheet"
+      open={current}
+      onOpenChange={change}
+      {...props}
+    />
+  )
 }
 
 function SheetTrigger({
