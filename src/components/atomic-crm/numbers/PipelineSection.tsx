@@ -14,6 +14,7 @@ import {
   type StageChange,
 } from "./funnelModel";
 import { cartRows, dealRows } from "./drillRows";
+import { tileForecast } from "./forecastTile";
 import type { NumbersRanges } from "./periods";
 import type { Column } from "./widgets";
 import { SectionCard, StatTable } from "./widgets";
@@ -66,6 +67,28 @@ export const PipelineSection = ({
       ),
     [checkouts, ranges, now],
   );
+  const forecasts = useMemo(() => {
+    const count = (n: number) => String(Math.round(n));
+    return {
+      leads: tileForecast(
+        deals,
+        (d) => d.created_at,
+        () => 1,
+        ranges,
+        now,
+        count,
+      ),
+      carts: tileForecast(
+        checkouts.filter((c) => !c.completed_at),
+        (c) => c.checkout_updated_at,
+        () => 1,
+        ranges,
+        now,
+        count,
+        "lower",
+      ),
+    };
+  }, [deals, checkouts, ranges, now]);
   const dealDrill =
     (title: string, description: string, list: () => Deal[]) =>
     (): DrillContent => ({
@@ -120,6 +143,7 @@ export const PipelineSection = ({
             "Every request and booking that started in this period, newest first.",
             () => leads,
           )}
+          forecast={forecasts.leads}
         />
         <KpiTile
           label="Lead to converted"
@@ -170,6 +194,7 @@ export const PipelineSection = ({
             empty: "No abandoned carts in this period.",
             rows: cartRows(abandoned, setOpenCart),
           })}
+          forecast={forecasts.carts}
         />
       </div>
       <SectionCard

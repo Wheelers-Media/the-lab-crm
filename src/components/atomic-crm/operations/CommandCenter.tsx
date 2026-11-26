@@ -8,6 +8,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   activeAppointments,
   dayLoads,
+  isSale,
   openPipeline,
   depositsHeld,
   orderRevenue,
@@ -21,6 +22,8 @@ import { Reveal } from "./Reveal";
 import { RevenueMixCard } from "./RevenueMixCard";
 import { GoalsCard } from "./GoalsCard";
 import { elapsedShare, goalProgress, monthlyTargets } from "./goalsModel";
+import { projectRecords } from "./forecast";
+import { customerLedger } from "../numbers/customerModel";
 import { useConfigurationContext } from "../root/ConfigurationContext";
 import { TrendTiles } from "./TrendTiles";
 import { movers, trends, weeklyMix } from "./trendsModel";
@@ -151,8 +154,40 @@ export const CommandCenter = ({
     });
     const elapsed = elapsedShare(range, now);
     const current = trend.current;
+    // Where each goal ends at this pace; not for a single day, which has no pace to speak of
+    const projections =
+      period === "today"
+        ? undefined
+        : {
+            revenue: projectRecords(
+              history.orders.filter(isSale),
+              (o) => o.ordered_at,
+              (o) =>
+                Math.max(
+                  0,
+                  (Number(o.total) || 0) - (Number(o.refunded_amount) || 0),
+                ),
+              range,
+              now,
+            ),
+            orders: projectRecords(
+              history.orders.filter(isSale),
+              (o) => o.ordered_at,
+              () => 1,
+              range,
+              now,
+            ),
+            newCustomers: projectRecords(
+              [...customerLedger(history.ledgerOrders).values()],
+              (r) => r.firstOrderAt,
+              () => 1,
+              range,
+              now,
+            ),
+          };
     return {
       elapsed,
+      projections,
       monthly: {
         revenue: monthly.revenue.value,
         orders: monthly.orders.value,
@@ -302,6 +337,7 @@ export const CommandCenter = ({
     <GoalsCard
       goals={goals.list}
       monthly={goals.monthly}
+      projections={goals.projections}
       elapsed={goals.elapsed}
       periodLabel={periodLabel.thisPeriod}
       isPending={history.isPending || data.isPending}

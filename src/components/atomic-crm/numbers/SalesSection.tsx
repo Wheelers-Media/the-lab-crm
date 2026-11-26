@@ -22,7 +22,9 @@ import {
   type SalesMetric,
   type Segment,
 } from "./insightsModel";
+import { shortMoney } from "../operations/forecast";
 import { orderRows } from "./drillRows";
+import { tileForecast } from "./forecastTile";
 import type { Drill } from "./OrderDrillSheet";
 import type { NumbersRanges } from "./periods";
 import {
@@ -32,6 +34,7 @@ import {
   salesOrders,
   salesByChannel,
   netOf,
+  unitsOf,
   salesSummary,
   withPrevious,
 } from "./salesModel";
@@ -128,6 +131,59 @@ export const SalesSection = ({
     () => metricTrend(orders, ranges, metric),
     [orders, ranges, metric],
   );
+  const forecasts = useMemo(() => {
+    const now = new Date();
+    const sales = salesOrders(
+      orders,
+      ranges.fullPeriod ?? ranges.current,
+    ).concat(
+      ranges.fullPrevious ? salesOrders(orders, ranges.fullPrevious) : [],
+    );
+    const count = (n: number) => String(Math.round(n));
+    return {
+      netSales: tileForecast(
+        sales,
+        (o) => o.ordered_at,
+        netOf,
+        ranges,
+        now,
+        shortMoney,
+      ),
+      orders: tileForecast(
+        sales,
+        (o) => o.ordered_at,
+        () => 1,
+        ranges,
+        now,
+        count,
+      ),
+      units: tileForecast(
+        sales,
+        (o) => o.ordered_at,
+        unitsOf,
+        ranges,
+        now,
+        count,
+      ),
+      refunds: tileForecast(
+        sales,
+        (o) => o.ordered_at,
+        (o) => Number(o.refunded_amount) || 0,
+        ranges,
+        now,
+        shortMoney,
+        "lower",
+      ),
+      deposits: tileForecast(
+        orders.filter((o) => o.is_deposit && !o.cancelled_at),
+        (o) => o.ordered_at,
+        () => 1,
+        ranges,
+        now,
+        count,
+      ),
+    };
+  }, [orders, ranges]);
   const periodOrders = useMemo(
     () => salesOrders(orders, ranges.current),
     [orders, ranges],
@@ -167,6 +223,7 @@ export const SalesSection = ({
             "Every order that makes up this figure, before tax and shipping.",
             () => periodOrders,
           )}
+          forecast={forecasts.netSales}
         />
         <KpiTile
           label="Orders"
@@ -180,6 +237,7 @@ export const SalesSection = ({
             "Paid orders in this period. Deposits and cancelled orders are not counted.",
             () => periodOrders,
           )}
+          forecast={forecasts.orders}
         />
         <KpiTile
           label="Average order"
@@ -214,6 +272,7 @@ export const SalesSection = ({
             "The orders the units came from.",
             () => periodOrders,
           )}
+          forecast={forecasts.units}
         />
         <KpiTile
           label="Refunds"
@@ -228,6 +287,7 @@ export const SalesSection = ({
             "Orders in this period that had money refunded.",
             () => periodOrders.filter((o) => Number(o.refunded_amount) > 0),
           )}
+          forecast={forecasts.refunds}
         />
         <KpiTile
           label="Deposits"
@@ -238,6 +298,7 @@ export const SalesSection = ({
             "Booking deposits taken. They hold a spot and come off the final bill, so they are not counted as sales.",
             () => depositOrders(orders, ranges.current),
           )}
+          forecast={forecasts.deposits}
         />
       </div>
 

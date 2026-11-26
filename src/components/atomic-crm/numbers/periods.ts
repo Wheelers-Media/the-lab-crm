@@ -38,6 +38,10 @@ export interface NumbersRanges {
   current: DateRange;
   previous: DateRange;
   bucket: Bucket;
+  /** The whole month, for projecting to its end; only on "This month". */
+  fullPeriod?: DateRange;
+  /** The whole month before, to set the projection against; only on This month. */
+  fullPrevious?: DateRange;
 }
 
 const utcMidnight = (key: string): number => {
@@ -85,6 +89,8 @@ export const numbersRanges = (
         previousEnd > monthStart ? monthStart : previousEnd,
       ),
       bucket: "day",
+      fullPeriod: range(monthStart, addMonths(monthStart, 1)),
+      fullPrevious: range(previousStart, monthStart),
     };
   }
   if (period === "last-month") {

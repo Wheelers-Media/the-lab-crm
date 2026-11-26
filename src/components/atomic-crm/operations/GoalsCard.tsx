@@ -23,6 +23,7 @@ import {
   useConfigurationUpdater,
 } from "../root/ConfigurationContext";
 import { money } from "./format";
+import { landing, type Projection, shortMoney } from "./forecast";
 import type { GoalKey, GoalProgress } from "./goalsModel";
 import { useInView } from "./useInView";
 
@@ -135,6 +136,83 @@ const Rings = ({
 };
 
 /**
+ * Where a goal ends the period if the shop keeps this pace: a bar with what is
+ * done, the stretch the pace adds, and a tick at the goal, then one sentence
+ * saying whether the goal is reached and, if not, what each working day needs.
+ */
+const GoalForecast = ({
+  goal,
+  projection,
+  colour,
+  isMoney,
+  periodLabel,
+}: {
+  goal: GoalProgress;
+  projection?: Projection;
+  colour: string;
+  isMoney: boolean;
+  periodLabel: string;
+}) => {
+  if (!projection || projection.final || goal.target <= 0) return null;
+  const fmt = (n: number) => (isMoney ? shortMoney(n) : String(Math.round(n)));
+  const l = landing(projection, goal.target);
+  // The bar's full width is the larger of the goal and the projection
+  const scale = Math.max(
+    goal.target,
+    projection.projected,
+    projection.current,
+    1,
+  );
+  const pct = (n: number) => `${Math.min(100, (n / scale) * 100)}%`;
+  const early = projection.confidence === "early";
+  return (
+    <div className="mt-1.5">
+      <div
+        className="relative h-1.5 w-full rounded-full bg-muted"
+        role="img"
+        aria-label={`${fmt(projection.current)} done, ${fmt(projection.projected)} projected, goal ${fmt(goal.target)}`}
+      >
+        <span
+          className="absolute inset-y-0 left-0 rounded-full opacity-30"
+          style={{ width: pct(projection.projected), background: colour }}
+        />
+        <span
+          className="absolute inset-y-0 left-0 rounded-full"
+          style={{ width: pct(projection.current), background: colour }}
+        />
+        <span
+          className="absolute -top-0.5 h-2.5 w-0.5 rounded-sm bg-foreground"
+          style={{ left: pct(goal.target) }}
+          aria-hidden
+        />
+      </div>
+      <p
+        className={cn(
+          "mt-1 text-xs leading-4",
+          early
+            ? "text-muted-foreground"
+            : l.hits
+              ? "text-[var(--lab-pos)]"
+              : "text-[var(--lab-neg)]",
+        )}
+      >
+        {early ? "Early guess: " : "At this pace: "}
+        <span className="font-medium">{fmt(projection.projected)}</span>
+        {" by "}
+        {periodLabel.replace(/^this /, "")} end ({l.percent}% of goal).
+        {!l.hits && !early && l.perDayNeeded > 0 ? (
+          <>
+            {" "}
+            Needs {fmt(l.perDayNeeded)} a working day to hit it, now{" "}
+            {fmt(l.perDayNow)}.
+          </>
+        ) : null}
+      </p>
+    </div>
+  );
+};
+
+/**
  * The period's goals: how far along each one is, and whether the shop is on
  * pace to hit it. Unset goals start at a suggestion (last month plus ten
  * percent) until Eric sets his own.
@@ -145,7 +223,10 @@ export const GoalsCard = ({
   periodLabel,
   isPending,
   monthly,
+  projections,
 }: {
+  /** Where each goal ends the period at the current pace. */
+  projections?: Partial<Record<GoalKey, Projection>>;
   goals: GoalProgress[];
   /** The monthly goal behind each ring, saved or suggested. */
   monthly: Record<GoalKey, number>;
@@ -158,7 +239,7 @@ export const GoalsCard = ({
   const [editing, setEditing] = useState(false);
   const anySuggested = goals.some((g) => g.suggested);
   return (
-    <Card className="p-4 gap-3 h-full">
+    <Card className="@container p-4 gap-3 h-full">
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
           <Target
@@ -180,16 +261,18 @@ export const GoalsCard = ({
           className="-mr-2"
         >
           <Pencil className="size-4" aria-hidden />
-          {anySuggested ? "Set goals" : "Edit"}
+          <span className="sr-only @md:not-sr-only">
+            {anySuggested ? "Set goals" : "Edit"}
+          </span>
         </Button>
       </div>
 
       {isPending ? (
         <Skeleton className="h-36 w-full" />
       ) : (
-        <div className="flex flex-1 items-center gap-4">
+        <div className="flex flex-1 flex-col items-center gap-4 @md:flex-row">
           <Rings goals={goals} elapsed={elapsed} />
-          <ul className="flex min-w-0 flex-1 flex-col gap-3">
+          <ul className="flex w-full min-w-0 flex-1 flex-col gap-3">
             {goals.map((goal) => {
               const meta = GOALS.find((g) => g.key === goal.key)!;
               return (
@@ -221,6 +304,13 @@ export const GoalsCard = ({
                   >
                     {statusText(goal, meta.isMoney)}
                   </p>
+                  <GoalForecast
+                    goal={goal}
+                    projection={projections?.[goal.key]}
+                    colour={meta.colour}
+                    isMoney={meta.isMoney}
+                    periodLabel={periodLabel}
+                  />
                 </li>
               );
             })}

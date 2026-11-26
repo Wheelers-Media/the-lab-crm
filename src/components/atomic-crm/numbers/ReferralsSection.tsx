@@ -15,7 +15,8 @@ import { Input } from "@/components/ui/input";
 import { money } from "../operations/format";
 import { KpiTile } from "../operations/OperationsWidgets";
 import type { DrillContent } from "../operations/DrillSheet";
-import { shopDayKey } from "../operations/shopTime";
+import { paceSentence, project, shortMoney } from "../operations/forecast";
+import { periodRange, shopDayKey } from "../operations/shopTime";
 import { agoLabel } from "../shop/cartModel";
 import { CheckoutDetail } from "../shop/CheckoutDetail";
 import { summarizeLines } from "../shop/shopFormat";
@@ -115,6 +116,25 @@ export const ReferralsSection = () => {
 
   const inMonth = (iso: string) =>
     month != null && shopDayKey(iso).slice(0, 7) === month.slice(0, 7);
+  // Only the month in progress has an end to land on
+  const liveMonth =
+    month != null && shopDayKey(new Date()).slice(0, 7) === month.slice(0, 7);
+  const forecastFor = (
+    value: number,
+    format: (n: number) => string,
+    cap?: number,
+  ) => {
+    if (!liveMonth) return undefined;
+    const p = project(
+      value,
+      null,
+      periodRange("month", new Date()),
+      new Date(),
+    );
+    const projected = cap != null ? Math.min(p.projected, cap) : p.projected;
+    const text = paceSentence({ ...p, projected }, format);
+    return text ? { text } : undefined;
+  };
   const leadDeals = (taggedDeals.data ?? []).filter((d) =>
     inMonth(d.created_at),
   );
@@ -272,6 +292,9 @@ export const ReferralsSection = () => {
             value={String(current.leads)}
             detail={`${current.quotes} quotes`}
             drill={leadsDrill}
+            forecast={forecastFor(Number(current.leads), (n) =>
+              String(Math.round(n)),
+            )}
           />
           <KpiTile
             label="Open carts"
@@ -286,12 +309,21 @@ export const ReferralsSection = () => {
             )}
             detail={`${current.full_kits} full · ${current.half_kits} half`}
             drill={kitsDrill}
+            forecast={forecastFor(
+              Number(current.full_kits) + Number(current.half_kits),
+              (n) => String(Math.round(n)),
+            )}
           />
           <KpiTile
             label="Earned"
             value={money(Number(current.earned))}
             detail={`cap ${money(Number(current.monthly_cap))}`}
             drill={earnedDrill}
+            forecast={forecastFor(
+              Number(current.earned),
+              shortMoney,
+              Number(current.monthly_cap),
+            )}
           />
           <KpiTile
             label="Owed"

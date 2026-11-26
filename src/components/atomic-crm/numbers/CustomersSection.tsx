@@ -14,6 +14,7 @@ import {
   topSpenders,
 } from "./customerModel";
 import { customersInRange } from "./drillRows";
+import { tileForecast } from "./forecastTile";
 import type { NumbersRanges } from "./periods";
 import { useCustomerNames } from "./useNumbersData";
 import type { Column } from "./widgets";
@@ -48,6 +49,18 @@ export const CustomersSection = ({
   const period = useMemo(
     () => customersInRange(orders, ranges.current),
     [orders, ranges],
+  );
+  const newForecast = useMemo(
+    () =>
+      tileForecast(
+        [...customerLedger(orders).values()],
+        (r) => r.firstOrderAt,
+        () => 1,
+        ranges,
+        now,
+        (n) => String(Math.round(n)),
+      ),
+    [orders, ranges, now],
   );
   const listed = [
     ...data.top,
@@ -144,6 +157,7 @@ export const CustomersSection = ({
             "Customers whose first order ever was in this period.",
             () => period.added,
           )}
+          forecast={newForecast}
         />
         <KpiTile
           label="Returning"

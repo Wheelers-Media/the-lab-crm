@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowUp, Flame } from "lucide-react";
+import { ArrowDown, ArrowUp, Flame, ArrowRight } from "lucide-react";
 import { Link } from "react-router";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -35,9 +35,10 @@ export const MoversCard = ({
         action={
           <Link
             to="/numbers?section=products"
-            className="text-sm text-muted-foreground hover:text-foreground"
+            aria-label="See products"
+            className="grid size-8 place-items-center rounded-md text-muted-foreground hover:text-foreground"
           >
-            See products
+            <ArrowRight className="size-4" aria-hidden />
           </Link>
         }
       >

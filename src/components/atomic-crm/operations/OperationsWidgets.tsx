@@ -1,4 +1,11 @@
-import { ArrowDown, ArrowRight, ArrowUp, CalendarDays } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowRight,
+  ArrowUp,
+  CalendarDays,
+  ListTree,
+  TrendingUp,
+} from "lucide-react";
 import { type ComponentType, useState } from "react";
 import { DrillSheet, type DrillContent } from "./DrillSheet";
 import { Link } from "react-router";
@@ -40,7 +47,7 @@ export const SectionTitle = ({
     </div>
     {action ? (
       // Links like "Calendar" get a full 44pt tap target
-      <span className="-my-2 inline-flex [&>a]:inline-flex [&>a]:min-h-11 [&>a]:items-center">
+      <span className="-my-2 inline-flex shrink-0 whitespace-nowrap [&>a]:inline-flex [&>a]:min-h-11 [&>a]:items-center">
         {action}
       </span>
     ) : null}
@@ -62,6 +69,8 @@ export interface KpiTileProps {
    * on a tile that already toggles a chart, a "Details" button does instead.
    */
   drill?: () => DrillContent;
+  /** Where this figure ends the period at the current pace. */
+  forecast?: { text: string; range?: string | null; tone?: "good" | "bad" };
 }
 
 export const KpiTile = ({
@@ -73,6 +82,7 @@ export const KpiTile = ({
   onSelect,
   selected,
   drill,
+  forecast,
 }: KpiTileProps) => {
   const [open, setOpen] = useState<DrillContent | null>(null);
   const tile = (
@@ -111,6 +121,26 @@ export const KpiTile = ({
         ) : null}
         {detail ? <span className="line-clamp-2">{detail}</span> : null}
       </div>
+      {forecast ? (
+        <p
+          className={cn(
+            "mt-2 flex flex-wrap items-baseline gap-x-1 border-t border-border pt-2 text-xs leading-4",
+            forecast.tone === "good"
+              ? "text-[var(--lab-pos)]"
+              : forecast.tone === "bad"
+                ? "text-[var(--lab-neg)]"
+                : "text-muted-foreground",
+          )}
+        >
+          <TrendingUp className="size-3 shrink-0 self-center" aria-hidden />
+          <span className="font-medium lab-num">{forecast.text}</span>
+          {forecast.range ? (
+            <span className="text-muted-foreground lab-num">
+              ({forecast.range})
+            </span>
+          ) : null}
+        </p>
+      ) : null}
     </Card>
   );
   const sheet = <DrillSheet drill={open} onClose={() => setOpen(null)} />;
@@ -130,10 +160,11 @@ export const KpiTile = ({
             <button
               type="button"
               onClick={() => setOpen(drill())}
-              className="absolute bottom-2 right-3 text-[11px] uppercase tracking-wider text-[var(--lab-blue-text)] underline-offset-2 hover:underline"
+              className="absolute right-1.5 top-1.5 grid size-7 place-items-center rounded-md text-[var(--lab-blue-text)] hover:bg-muted"
               aria-label={`Details for ${label}`}
+              title="See the records behind this"
             >
-              Details
+              <ListTree className="size-4" aria-hidden />
             </button>
             {sheet}
           </>

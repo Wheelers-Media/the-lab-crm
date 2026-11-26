@@ -1,9 +1,16 @@
-import { ArrowDown, ArrowRight, ArrowUp } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUp, TrendingUp } from "lucide-react";
 import { Link } from "react-router";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 import { money } from "./format";
+import {
+  isInProgress,
+  paceRange,
+  paceSentence,
+  projectRecords,
+  shortMoney,
+} from "./forecast";
 import { cumulativeRevenue, isSale, percentChange } from "./metrics";
 import { RevenueChart } from "./RevenueChart";
 import { addDays, shopDayKey, type DateRange } from "./shopTime";
@@ -61,6 +68,32 @@ export const RevenueCard = ({
     orders
       .filter((o) => isSale(o) && shopDayKey(o.ordered_at) === key)
       .reduce((sum, o) => sum + netOf(o), 0);
+  // Where the period ends at this pace, against what the last one finished on
+  const projection =
+    size === "day" && isInProgress(range, now)
+      ? projectRecords(
+          orders.filter(isSale),
+          (o) => o.ordered_at,
+          netOf,
+          range,
+          now,
+        )
+      : null;
+  const sentence = projection
+    ? paceSentence(
+        projection,
+        shortMoney,
+        `${thisPeriod.replace(/^this /, "")} end`,
+      )
+    : null;
+  const lastFinal = orders
+    .filter(
+      (o) =>
+        isSale(o) &&
+        o.ordered_at >= previous.start.toISOString() &&
+        o.ordered_at < range.start.toISOString(),
+    )
+    .reduce((sum, o) => sum + netOf(o), 0);
   const todayKey = shopDayKey(now);
   const today = onDay(todayKey);
   const yesterday = onDay(addDays(todayKey, -1));
@@ -144,6 +177,30 @@ export const RevenueCard = ({
             {money(yesterday)}
           </span>
         </p>
+
+        {projection && sentence ? (
+          <p
+            className={cn(
+              "mb-2 flex flex-wrap items-baseline gap-x-1.5 text-sm tabular-nums",
+              lastFinal > 0 && projection.projected < lastFinal
+                ? "text-[var(--lab-neg)]"
+                : "text-[var(--lab-pos)]",
+            )}
+          >
+            <TrendingUp className="size-4 shrink-0 self-center" aria-hidden />
+            <span className="font-semibold">{sentence}</span>
+            <span className="text-xs text-muted-foreground">
+              {[
+                paceRange(projection, shortMoney),
+                lastFinal > 0
+                  ? `${comparedWith} finished ${shortMoney(lastFinal)}`
+                  : null,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+            </span>
+          </p>
+        ) : null}
 
         <RevenueChart
           points={points}
