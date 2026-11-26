@@ -730,6 +730,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/operations/Sparkline.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/operations/ShowCheckSheet.tsx",
           "type": "registry:component"
         },
@@ -799,6 +803,10 @@
         },
         {
           "path": "src/components/atomic-crm/numbers/trafficModel.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/numbers/seriesModel.ts",
           "type": "registry:component"
         },
         {
