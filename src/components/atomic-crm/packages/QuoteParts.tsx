@@ -5,6 +5,12 @@ import { Button } from "@/components/ui/button";
 import type { Package } from "../types";
 import { packagePriceLabel } from "./packageModel";
 import { ProductThumb, StockChip } from "./ProductParts";
+import {
+  SECTIONS,
+  sectionCounts,
+  sectionOf,
+  type SectionId,
+} from "./catalogSections";
 import { VariantPicker } from "./VariantPicker";
 import {
   fitsTruck,
@@ -148,10 +154,30 @@ export const QuoteParts = ({
   onPickEngine: (engine: string) => void;
 }) => {
   const [query, setQuery] = useState("");
-  const results = useMemo(
-    () => searchCatalog(catalog, query, ctx),
-    [catalog, query, ctx],
+  const [browse, setBrowse] = useState<SectionId | null>(null);
+  // Only what is for sale, like the website: active products and the shop's own services
+  const sellable = useMemo(
+    () =>
+      catalog.filter(
+        (p) =>
+          (p.status === "active" || p.status === "unlisted") &&
+          !/secure booking deposit/i.test(p.title),
+      ),
+    [catalog],
   );
+  const counts = useMemo(() => sectionCounts(sellable), [sellable]);
+  const results = useMemo(() => {
+    const scoped = browse
+      ? sellable.filter((p) => sectionOf(p) === browse)
+      : sellable;
+    if (query) return searchCatalog(scoped, query, ctx, browse ? 100 : 25);
+    if (!browse) return [];
+    const fits = (p: Package) => (fitsTruck(p.title, ctx) ? 0 : 1);
+    return [...scoped].sort(
+      (a, b) => fits(a) - fits(b) || a.title.localeCompare(b.title),
+    );
+  }, [sellable, browse, query, ctx]);
+  const showResults = Boolean(query || browse);
   const groups = useMemo(
     () => groupByType(suggestions, ctx.services),
     [suggestions, ctx.services],
@@ -195,7 +221,29 @@ export const QuoteParts = ({
         ) : null}
       </div>
 
-      {query ? (
+      <div
+        role="group"
+        aria-label="Browse the catalog by section"
+        className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0"
+      >
+        {SECTIONS.filter((s) => counts[s.id] > 0).map((s) => (
+          <button
+            key={s.id}
+            type="button"
+            aria-pressed={browse === s.id}
+            onClick={() => setBrowse(browse === s.id ? null : s.id)}
+            className={`rounded-md border px-3 py-1.5 text-xs uppercase tracking-wider whitespace-nowrap ${
+              browse === s.id
+                ? "border-primary bg-primary/15 text-foreground"
+                : "border-border text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {s.label} <span className="lab-num">{counts[s.id]}</span>
+          </button>
+        ))}
+      </div>
+
+      {showResults ? (
         results.length ? (
           <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {results.map((pkg) => (
@@ -210,7 +258,8 @@ export const QuoteParts = ({
           </ul>
         ) : (
           <p className="text-sm text-muted-foreground">
-            Nothing in the catalog matches "{query}".
+            Nothing in the catalog matches
+            {query ? ` "${query}"` : " here"}.
           </p>
         )
       ) : hideSuggestions ? null : (

@@ -1,11 +1,14 @@
 import { RecordContextProvider } from "ra-core";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 
 import { MobileFilterChip, MobileListPage } from "../layout/MobileListPage";
 import { ActionRow } from "../misc/ActionRow";
 import type { Order, ShopifyCheckout } from "../types";
 import { BIG_CART_THRESHOLD, CartFollowUp } from "./CheckoutList";
+import { CheckoutDetail } from "./CheckoutDetail";
 import { ContactLink } from "./ContactLink";
+import { ReviewAskButton } from "./ReviewAskButton";
 import {
   formatMoney,
   orderNet,
@@ -59,6 +62,9 @@ const OrderCard = ({ order }: { order: Order }) => {
               <span className="lab-chip lab-chip-eric">Deposit</span>
             ) : null}
           </div>
+          <div className="pt-1">
+            <ReviewAskButton order={order} />
+          </div>
         </Card>
       </ActionRow>
     </RecordContextProvider>
@@ -87,8 +93,13 @@ export const MobileOrderList = () => (
 const CheckoutCard = ({ checkout }: { checkout: ShopifyCheckout }) => {
   const big = checkout.total >= BIG_CART_THRESHOLD;
   const { actions, swipeLeft, swipeRight } = useCartActions(checkout);
+  const [open, setOpen] = useState(false);
   return (
     <RecordContextProvider value={checkout}>
+      <CheckoutDetail
+        checkout={open ? checkout : null}
+        onClose={() => setOpen(false)}
+      />
       <ActionRow
         title={checkout.customer_name || checkout.email || "Abandoned cart"}
         subtitle={formatMoney(checkout.total)}
@@ -96,7 +107,14 @@ const CheckoutCard = ({ checkout }: { checkout: ShopifyCheckout }) => {
         swipeLeft={swipeLeft}
         swipeRight={swipeRight}
       >
-        <Card className={`p-3 gap-1 ${big ? "lab-bay-parts" : ""}`}>
+        <Card
+          className={`p-3 gap-1 ${big ? "lab-bay-parts" : ""}`}
+          role="button"
+          tabIndex={0}
+          aria-label={`Open cart for ${checkout.customer_name || checkout.email || "customer"}`}
+          onClick={() => setOpen(true)}
+          onKeyDown={(e) => e.key === "Enter" && setOpen(true)}
+        >
           <div className="flex items-baseline justify-between gap-2">
             <span className="text-sm truncate">
               <ContactLink
@@ -123,7 +141,7 @@ const CheckoutCard = ({ checkout }: { checkout: ShopifyCheckout }) => {
               <span className="lab-chip lab-chip-muted">Call task added</span>
             ) : null}
           </div>
-          <div className="pt-2">
+          <div className="pt-2" onClick={(e) => e.stopPropagation()}>
             <CartFollowUp checkout={checkout} />
           </div>
         </Card>

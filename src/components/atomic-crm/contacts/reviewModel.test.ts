@@ -71,7 +71,7 @@ describe("reviewAskFor", () => {
 
     expect(plan?.what).toBe("Ceramic tint, crew cab truck");
     expect(plan?.at).toBe(daysAgo(2));
-    expect(plan?.text).toContain("Hi Sam,");
+    expect(plan?.text).toContain("Hey Sam,");
   });
 
   it("generalizes the package the customer bought", () => {
@@ -83,7 +83,7 @@ describe("reviewAskFor", () => {
     });
 
     expect(plan?.subject).toBe("the detail on your 2022 Ram 3500");
-    expect(plan?.text).toContain("for the detail on your 2022 Ram 3500!");
+    expect(plan?.text).toContain("the 2022 Ram 3500");
     expect(plan?.text).not.toContain("De-luxx");
   });
 

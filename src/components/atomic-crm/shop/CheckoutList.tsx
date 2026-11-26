@@ -1,7 +1,7 @@
-import { useTranslate } from "ra-core";
+import { useListContext, useTranslate } from "ra-core";
+import { useState } from "react";
 import { ExternalLink, MessageSquare, Phone } from "lucide-react";
 import { DataTable } from "@/components/admin/data-table";
-import { DateField } from "@/components/admin/date-field";
 import { List } from "@/components/admin/list";
 import { QuickFilter } from "./QuickFilter";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 
 import { TopToolbar } from "../layout/TopToolbar";
 import type { ShopifyCheckout } from "../types";
+import { agoLabel, cartHeat, cartTotals, HEAT_LABEL } from "./cartModel";
+import { CheckoutDetail } from "./CheckoutDetail";
 import { ContactLink } from "./ContactLink";
 import { formatMoney, summarizeLines } from "./shopFormat";
 
@@ -74,9 +76,30 @@ export const CartFollowUp = ({ checkout }: { checkout: ShopifyCheckout }) => {
   );
 };
 
+/** What is sitting in carts right now, above the list. */
+const CartSummary = () => {
+  const { data = [] } = useListContext<ShopifyCheckout>();
+  const totals = cartTotals(data);
+  if (!totals.count) return null;
+  return (
+    <p className="mb-3 text-sm text-muted-foreground">
+      <span className="lab-num font-semibold text-foreground">
+        {formatMoney(totals.value)}
+      </span>{" "}
+      across {totals.count} cart{totals.count === 1 ? "" : "s"} on this page ·{" "}
+      {totals.hot} left today
+      {totals.unreachable
+        ? ` · ${totals.unreachable} with no phone or email`
+        : ""}
+      . Click a cart for what was in it and a text ready to send.
+    </p>
+  );
+};
+
 /** Checkouts the customer started but never paid for. */
 export const CheckoutList = () => {
   const translate = useTranslate();
+  const [selected, setSelected] = useState<ShopifyCheckout | null>(null);
   return (
     <List
       actions={<CheckoutListActions />}
@@ -84,13 +107,27 @@ export const CheckoutList = () => {
       sort={{ field: "checkout_updated_at", order: "DESC" }}
       perPage={50}
     >
-      <DataTable<ShopifyCheckout> bulkActionButtons={false} rowClick={false}>
+      <CartSummary />
+      <CheckoutDetail checkout={selected} onClose={() => setSelected(null)} />
+      <DataTable<ShopifyCheckout>
+        bulkActionButtons={false}
+        rowClick={(_id, _resource, record) => {
+          setSelected(record as ShopifyCheckout);
+          return false;
+        }}
+      >
         <DataTable.Col<ShopifyCheckout>
           source="checkout_updated_at"
           label="resources.shopify_checkouts.fields.checkout_updated_at"
-        >
-          <DateField source="checkout_updated_at" showTime />
-        </DataTable.Col>
+          render={(c) => (
+            <div className="flex flex-col">
+              <span>{agoLabel(c.checkout_updated_at)}</span>
+              <span className="text-xs text-muted-foreground">
+                {HEAT_LABEL[cartHeat(c)]}
+              </span>
+            </div>
+          )}
+        />
         <DataTable.Col<ShopifyCheckout>
           label="resources.shopify_checkouts.fields.customer"
           disableSort
@@ -143,7 +180,11 @@ export const CheckoutList = () => {
         <DataTable.Col<ShopifyCheckout>
           label={false}
           disableSort
-          render={(c) => <CartFollowUp checkout={c} />}
+          render={(c) => (
+            <div onClick={(e) => e.stopPropagation()}>
+              <CartFollowUp checkout={c} />
+            </div>
+          )}
         />
       </DataTable>
     </List>

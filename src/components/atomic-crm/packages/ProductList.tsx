@@ -1,32 +1,31 @@
 import { LayoutGrid, Table2 } from "lucide-react";
-import { useStore } from "ra-core";
+import {
+  ListContextProvider,
+  useList,
+  useListContext,
+  useStore,
+} from "ra-core";
+import { useState } from "react";
 import { Link } from "react-router";
 import { DataTable } from "@/components/admin/data-table";
-import { List } from "@/components/admin/list";
-import { SearchInput } from "@/components/admin/search-input";
-import { SelectInput } from "@/components/admin/select-input";
+import { ListPagination } from "@/components/admin/list-pagination";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
+import { MobileContent } from "../layout/MobileContent";
+import MobileHeader from "../layout/MobileHeader";
 import { TopToolbar } from "../layout/TopToolbar";
-import {
-  MobileFilterChip,
-  MobileListPage,
-  MobileSearch,
-} from "../layout/MobileListPage";
-import { useConfigurationContext } from "../root/ConfigurationContext";
-import { QuickFilter } from "../shop/QuickFilter";
 import type { Package } from "../types";
+import { CatalogControls } from "./CatalogControls";
+import { sectionLabel, sectionOf } from "./catalogSections";
 import { packagePriceLabel } from "./packageModel";
-import { LOW_STOCK } from "./productModel";
+import { PowerPackagesGallery } from "./PowerPackagesGallery";
 import { ProductGrid } from "./ProductCards";
 import { KindChip, ProductThumb, StockChip } from "./ProductParts";
 import { SyncCatalogButton } from "./SyncCatalogButton";
-
-const useCategoryChoices = () => {
-  const { dealCategories } = useConfigurationContext();
-  return dealCategories.map((c) => ({ id: c.value, name: c.label }));
-};
+import { useCatalogBrowser } from "./useCatalogBrowser";
 
 type View = "cards" | "table";
 
@@ -52,39 +51,38 @@ const ProductListActions = () => {
         </ToggleGroupItem>
       </ToggleGroup>
       <SyncCatalogButton />
-      <QuickFilter label="Packages" value={{ kind: "package" }} />
-      <QuickFilter label="Parts and products" value={{ kind: "product" }} />
-      <QuickFilter label="Low stock" value={{ "inventory@lte": LOW_STOCK }} />
     </TopToolbar>
   );
 };
 
-/** The Shopify catalog: shop packages and Parts Store products. Read-only. */
-export const ProductList = () => {
-  const [view] = useStore<View>("packages.view", "cards");
-  const categories = useCategoryChoices();
-  const { dealCategories } = useConfigurationContext();
-  const categoryLabel = (value: string | null) =>
-    dealCategories.find((c) => c.value === value)?.label ?? "Other";
+const SORTS: Array<[string, string, "ASC" | "DESC"]> = [
+  ["Name A to Z", "title", "ASC"],
+  ["Price, high to low", "price", "DESC"],
+  ["Price, low to high", "price", "ASC"],
+  ["Most in stock", "inventory", "DESC"],
+];
+
+const ProductResults = ({ view }: { view: View }) => {
+  const { setSort, sort } = useListContext<Package>();
   return (
-    <List
-      title="Packages and products"
-      actions={<ProductListActions />}
-      filter={{ "status@neq": "deleted" }}
-      filters={[
-        <SearchInput source="q" alwaysOn key="q" />,
-        <SelectInput
-          key="category"
-          source="category"
-          label={false}
-          emptyText="All services"
-          choices={categories}
-          alwaysOn
-        />,
-      ]}
-      sort={{ field: "title", order: "ASC" }}
-      perPage={view === "cards" ? 48 : 50}
-    >
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center justify-end gap-2">
+        <select
+          aria-label="Sort"
+          value={`${sort.field}:${sort.order}`}
+          onChange={(e) => {
+            const [field, order] = e.target.value.split(":");
+            setSort({ field, order: order as "ASC" | "DESC" });
+          }}
+          className="h-9 rounded-md border border-input bg-transparent px-2 text-sm dark:bg-input/30"
+        >
+          {SORTS.map(([label, field, order]) => (
+            <option key={label} value={`${field}:${order}`}>
+              {label}
+            </option>
+          ))}
+        </select>
+      </div>
       {view === "cards" ? (
         <ProductGrid />
       ) : (
@@ -106,12 +104,12 @@ export const ProductList = () => {
           />
           <DataTable.Col<Package>
             source="category"
-            label="Service"
+            label="Section"
             render={(p) => (
               <div className="flex flex-wrap gap-1">
                 <KindChip pkg={p} />
                 <span className="lab-chip lab-chip-muted">
-                  {categoryLabel(p.category)}
+                  {sectionLabel(sectionOf(p))}
                 </span>
               </div>
             )}
@@ -139,7 +137,47 @@ export const ProductList = () => {
           />
         </DataTable>
       )}
-    </List>
+      <ListPagination rowsPerPageOptions={[24, 48, 96, 200]} />
+    </div>
+  );
+};
+
+/**
+ * The whole Shopify catalog in one place: power packages, tuning, EGR,
+ * exhaust, CCV, bumpers and accessories, merch and the Boutique's services.
+ * Browse by store section, brand or stock, or search; open anything for its
+ * details. Read-only: Shopify owns names and prices.
+ */
+export const ProductList = () => {
+  const [view] = useStore<View>("packages.view", "cards");
+  const browser = useCatalogBrowser();
+  const listContext = useList<Package>({
+    data: browser.items,
+    isPending: browser.isPending,
+    resource: "packages",
+    perPage: view === "cards" ? 48 : 50,
+    sort: { field: "title", order: "ASC" },
+  });
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <h2 className="text-2xl font-bold tracking-tight">
+          Packages and products
+        </h2>
+        <ProductListActions />
+      </div>
+      <CatalogControls browser={browser} />
+      {browser.section === "power" ? (
+        <PowerPackagesGallery catalog={browser.catalog} />
+      ) : (
+        <ListContextProvider value={listContext}>
+          <p className="text-xs text-muted-foreground">
+            {browser.items.length} item{browser.items.length === 1 ? "" : "s"}
+          </p>
+          <ProductResults view={view} />
+        </ListContextProvider>
+      )}
+    </div>
   );
 };
 
@@ -167,26 +205,50 @@ const MobileProductCard = ({ pkg }: { pkg: Package }) => (
   </Card>
 );
 
-export const MobileProductList = () => (
-  <MobileListPage<Package>
-    resource="packages"
-    title="Packages and products"
-    filter={{ "status@neq": "deleted" }}
-    sort={{ field: "title", order: "ASC" }}
-    empty="Nothing in the catalog yet."
-    toolbar={
-      <div className="flex flex-col gap-2">
-        <MobileSearch placeholder="Search packages and parts" />
-        <div className="flex flex-wrap gap-2">
-          <MobileFilterChip label="Packages" value={{ kind: "package" }} />
-          <MobileFilterChip label="Parts" value={{ kind: "product" }} />
-          <MobileFilterChip
-            label="Low stock"
-            value={{ "inventory@lte": LOW_STOCK }}
-          />
+const PHONE_PAGE = 30;
+
+/** The catalog on a phone: sections as a swipe row, search, and "show more". */
+export const MobileProductList = () => {
+  const browser = useCatalogBrowser();
+  const [shown, setShown] = useState(PHONE_PAGE);
+  const items = browser.items.slice(0, shown);
+  return (
+    <>
+      <MobileHeader>
+        <h1 className="text-xl">Packages and products</h1>
+      </MobileHeader>
+      <MobileContent>
+        <div className="mb-3">
+          <CatalogControls browser={browser} />
         </div>
-      </div>
-    }
-    renderItem={(pkg) => <MobileProductCard pkg={pkg} />}
-  />
-);
+        {browser.section === "power" ? (
+          <PowerPackagesGallery catalog={browser.catalog} />
+        ) : browser.isPending ? (
+          <div className="flex flex-col gap-2">
+            {[0, 1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-20 w-full" />
+            ))}
+          </div>
+        ) : !items.length ? (
+          <p className="py-8 text-center text-sm text-muted-foreground">
+            Nothing matches. Try a different section or clear the search.
+          </p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {items.map((pkg) => (
+              <MobileProductCard key={pkg.id} pkg={pkg} />
+            ))}
+            {browser.items.length > shown ? (
+              <Button
+                variant="outline"
+                onClick={() => setShown(shown + PHONE_PAGE)}
+              >
+                Show more ({browser.items.length - shown} left)
+              </Button>
+            ) : null}
+          </div>
+        )}
+      </MobileContent>
+    </>
+  );
+};

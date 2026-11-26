@@ -66,21 +66,56 @@ describe("reviewSubject", () => {
 });
 
 describe("reviewAsk", () => {
-  it("greets the customer by first name and links the shop's Google review form", () => {
+  it("greets by first name in Eric's voice and links the Google review form", () => {
     const text = reviewAsk({
       firstName: "Sam",
       names: ["Universal Fit - Suntek - Ceramic Tint - Front Roll Ups"],
       vehicle: "2022 Ram 3500",
     });
 
-    expect(text).toContain(
-      "Hi Sam, thanks for choosing THE LAB for the window tint on your 2022 Ram 3500!",
-    );
+    expect(text).toContain("Hey Sam, it's Eric at THE LAB.");
+    expect(text).toContain("tint on the 2022 Ram 3500");
     expect(text).toContain(REVIEW_LINK);
     expect(text).not.toContain("Suntek");
   });
 
+  it("talks diesel to a tune customer and names the engine", () => {
+    const text = reviewAsk({
+      firstName: "Dale",
+      names: ["EZ LYNK Custom Tune - Cummins 6.7L"],
+      vehicle: "2021 Ram 3500",
+    });
+
+    expect(text).toMatch(/Cummins/);
+    expect(text).toMatch(/tune/i);
+    expect(text).not.toMatch(/parts order/i);
+  });
+
+  it("mentions the exhaust, never a delete, for an exhaust order", () => {
+    const text = reviewAsk({
+      firstName: "Jo",
+      names: ['2017-2025 Duramax 6.6L - Polar - 4" Exhaust With Muffler'],
+    });
+
+    expect(text).toMatch(/exhaust/i);
+    expect(text).toMatch(/Duramax/);
+    expect(text).not.toMatch(/delete/i);
+  });
+
+  it("varies the wording between customers but not for the same one", () => {
+    const base = { names: ["EZ LYNK Custom Tune"] };
+    const texts = new Set(
+      ["A", "B", "C", "D", "E", "F"].map((firstName) =>
+        reviewAsk({ ...base, firstName }).replace(/Hey \w+/, ""),
+      ),
+    );
+    expect(texts.size).toBeGreaterThan(1);
+    expect(reviewAsk({ ...base, firstName: "A" })).toBe(
+      reviewAsk({ ...base, firstName: "A" }),
+    );
+  });
+
   it("greets 'there' when the first name is missing", () => {
-    expect(reviewAsk({})).toContain("Hi there,");
+    expect(reviewAsk({})).toContain("Hey there,");
   });
 });

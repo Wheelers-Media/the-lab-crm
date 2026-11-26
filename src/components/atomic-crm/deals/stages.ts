@@ -1,6 +1,14 @@
 import type { ConfigurationContextValue } from "../root/ConfigurationContext";
 import type { Deal } from "../types";
-import { isClosedStage, lastMovedAt } from "./pipelineView";
+
+const cameInAt = (deal: Pick<Deal, "created_at">): number => {
+  const t = new Date(deal.created_at).getTime();
+  return Number.isNaN(t) ? 0 : t;
+};
+
+/** Newest job first; ties fall back to the higher id so the order is stable. */
+export const newestFirst = (a: Deal, b: Deal): number =>
+  cameInAt(b) - cameInAt(a) || Number(b.id) - Number(a.id);
 
 export type DealsByStage = Record<Deal["stage"], Deal[]>;
 
@@ -23,14 +31,10 @@ export const getDealsByStage = (
       {} as Record<Deal["stage"], Deal[]>,
     ),
   );
-  // order open columns by index; closed ones newest first, so the board can
-  // show only recent closed jobs as the start of the column
+  // Every column runs newest to oldest by when the job came in, so a glance
+  // down any column shows what is fresh and what has gone stale.
   dealStages.forEach((stage) => {
-    dealsByStage[stage.value] = dealsByStage[stage.value].sort(
-      isClosedStage(stage.value)
-        ? (a: Deal, b: Deal) => lastMovedAt(b) - lastMovedAt(a)
-        : (recordA: Deal, recordB: Deal) => recordA.index - recordB.index,
-    );
+    dealsByStage[stage.value] = dealsByStage[stage.value].sort(newestFirst);
   });
   return dealsByStage;
 };

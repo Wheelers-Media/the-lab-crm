@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { TopToolbar } from "../layout/TopToolbar";
 import type { Order } from "../types";
 import { ContactLink } from "./ContactLink";
+import { ReviewAskButton } from "./ReviewAskButton";
 import {
   formatMoney,
   orderNet,
@@ -98,6 +99,11 @@ export const OrderList = () => (
         source="financial_status"
         label="resources.orders.fields.financial_status"
         render={(o) => orderStatusLabel(o)}
+      />
+      <DataTable.Col<Order>
+        label="Review"
+        disableSort
+        render={(o) => <ReviewAskButton order={o} />}
       />
     </DataTable>
   </List>

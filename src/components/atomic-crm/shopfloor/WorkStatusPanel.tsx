@@ -1,8 +1,9 @@
-import { useGetOne } from "ra-core";
+import { useGetList, useGetOne } from "ra-core";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
-import type { Contact, Deal, Vehicle, WorkStatus } from "../types";
+import type { Appointment, Contact, Deal, Vehicle, WorkStatus } from "../types";
 import { vehicleLabel } from "../vehicles/vehicleModel";
+import { showsFloorControls } from "./floorVisibility";
 import { TextCustomerMenu } from "./TextCustomerMenu";
 import { useSetWorkStatus } from "./useSetWorkStatus";
 import { daysInStatus, WORK_STATUS_LABEL } from "./workStatus";
@@ -23,7 +24,16 @@ export const WorkStatusPanel = ({ deal }: { deal: Deal }) => {
     { id: deal.vehicle_id! },
     { enabled: deal.vehicle_id != null },
   );
+  const { data: appointments = [], isPending: apptsPending } =
+    useGetList<Appointment>("appointments", {
+      filter: { deal_id: deal.id },
+      sort: { field: "start_at", order: "DESC" },
+      pagination: { page: 1, perPage: 20 },
+    });
   const days = daysInStatus(deal);
+
+  // Only for a vehicle that is at the shop on its appointment day
+  if (apptsPending || !showsFloorControls(deal, appointments)) return null;
 
   return (
     <div className="flex flex-col gap-2 my-4 sm:m-4">

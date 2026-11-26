@@ -37,10 +37,8 @@ export const DealListContent = () => {
       return;
     }
 
-    if (
-      destination.droppableId === source.droppableId &&
-      destination.index === source.index
-    ) {
+    // Columns are ordered by date, so dropping within a column changes nothing
+    if (destination.droppableId === source.droppableId) {
       return;
     }
 
