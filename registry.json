@@ -710,6 +710,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/operations/forecast.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/operations/chartTheme.ts",
           "type": "registry:component"
         },
@@ -727,10 +731,6 @@
         },
         {
           "path": "src/components/atomic-crm/operations/TrendTiles.tsx",
-          "type": "registry:component"
-        },
-        {
-          "path": "src/components/atomic-crm/operations/Sparkline.tsx",
           "type": "registry:component"
         },
         {
@@ -806,10 +806,6 @@
           "type": "registry:component"
         },
         {
-          "path": "src/components/atomic-crm/numbers/seriesModel.ts",
-          "type": "registry:component"
-        },
-        {
           "path": "src/components/atomic-crm/numbers/searchModel.ts",
           "type": "registry:component"
         },
@@ -835,6 +831,10 @@
         },
         {
           "path": "src/components/atomic-crm/numbers/funnelModel.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/numbers/forecastTile.ts",
           "type": "registry:component"
         },
         {
