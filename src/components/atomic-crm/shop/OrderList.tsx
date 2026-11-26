@@ -58,7 +58,7 @@ export const OrderList = () => (
     sort={{ field: "ordered_at", order: "DESC" }}
     perPage={50}
   >
-    <DataTable<Order> bulkActionButtons={false} rowClick={false}>
+    <DataTable<Order> bulkActionButtons={false} rowClick="show">
       <DataTable.Col<Order>
         source="ordered_at"
         label="resources.orders.fields.ordered_at"
@@ -73,9 +73,12 @@ export const OrderList = () => (
         source="contact_id"
         label="resources.orders.fields.contact_id"
         disableSort
-      >
-        <ContactLink />
-      </DataTable.Col>
+        render={() => (
+          <div onClick={(e) => e.stopPropagation()}>
+            <ContactLink />
+          </div>
+        )}
+      />
       <DataTable.Col<Order>
         label="resources.orders.fields.line_items"
         disableSort

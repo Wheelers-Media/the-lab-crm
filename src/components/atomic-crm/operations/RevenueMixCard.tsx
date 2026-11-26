@@ -1,5 +1,6 @@
 import { Layers } from "lucide-react";
 import { type KeyboardEvent, useMemo, useState } from "react";
+import { Link } from "react-router";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -112,6 +113,14 @@ export const RevenueMixCard = ({
       <SectionTitle
         icon={Layers}
         hint="Sales by kind of work, last 12 weeks. Deposits are counted on the final invoice."
+        action={
+          <Link
+            to="/numbers?section=sales"
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
+            See sales
+          </Link>
+        }
       >
         Where the money comes from
       </SectionTitle>

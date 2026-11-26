@@ -1,5 +1,6 @@
 import { RecordContextProvider } from "ra-core";
 import { useState } from "react";
+import { useNavigate } from "react-router";
 import { Card } from "@/components/ui/card";
 
 import { MobileFilterChip, MobileListPage } from "../layout/MobileListPage";
@@ -27,6 +28,8 @@ const shortDate = (iso: string) =>
 const OrderCard = ({ order }: { order: Order }) => {
   const status = orderStatusLabel(order);
   const actions = useOrderActions(order);
+  const navigate = useNavigate();
+  const open = () => navigate(`/orders/${order.id}/show`);
   return (
     <RecordContextProvider value={order}>
       <ActionRow
@@ -34,7 +37,14 @@ const OrderCard = ({ order }: { order: Order }) => {
         subtitle={formatMoney(orderNet(order), order.currency)}
         actions={actions}
       >
-        <Card className="p-3 gap-1">
+        <Card
+          className="p-3 gap-1"
+          role="button"
+          tabIndex={0}
+          aria-label={`Open order ${order.order_number}`}
+          onClick={open}
+          onKeyDown={(e) => e.key === "Enter" && open()}
+        >
           <div className="flex items-baseline justify-between gap-2">
             <span className="font-display uppercase tracking-wide">
               #{order.order_number.replace(/^#/, "")}
@@ -43,7 +53,10 @@ const OrderCard = ({ order }: { order: Order }) => {
               {formatMoney(orderNet(order), order.currency)}
             </span>
           </div>
-          <div className="text-sm truncate">
+          <div
+            className="text-sm truncate"
+            onClick={(e) => e.stopPropagation()}
+          >
             <ContactLink />
           </div>
           <p className="text-xs text-muted-foreground line-clamp-2">

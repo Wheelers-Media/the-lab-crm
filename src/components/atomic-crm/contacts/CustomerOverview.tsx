@@ -6,6 +6,9 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { useState } from "react";
+import { DrillSheet, type DrillContent } from "../operations/DrillSheet";
+import { appointmentRows, orderRows } from "../numbers/drillRows";
+import { useCustomerHistory } from "./useCustomerHistory";
 import { Link, useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -39,21 +42,40 @@ const Stat = ({
   label,
   value,
   detail,
+  onOpen,
 }: {
   label: string;
   value: string;
   detail?: string;
-}) => (
-  <div className="min-w-0 py-3 sm:px-4 first:sm:pl-0">
-    <dt className="lab-eyebrow text-[0.6875rem]">{label}</dt>
-    <dd className="mt-1 truncate text-xl font-semibold tabular-nums leading-none">
-      {value}
-    </dd>
-    {detail ? (
-      <dd className="mt-1 truncate text-xs text-muted-foreground">{detail}</dd>
-    ) : null}
-  </div>
-);
+  /** Opens the records behind the figure. */
+  onOpen?: () => void;
+}) => {
+  const body = (
+    <>
+      <dt className="lab-eyebrow text-[0.6875rem]">{label}</dt>
+      <dd className="mt-1 truncate text-xl font-semibold tabular-nums leading-none">
+        {value}
+      </dd>
+      {detail ? (
+        <dd className="mt-1 truncate text-xs text-muted-foreground">
+          {detail}
+        </dd>
+      ) : null}
+    </>
+  );
+  return onOpen ? (
+    <button
+      type="button"
+      onClick={onOpen}
+      aria-label={`${label}: see the records behind this`}
+      className="min-w-0 py-3 text-left hover:bg-muted/40 sm:px-4 first:sm:pl-0"
+    >
+      {body}
+    </button>
+  ) : (
+    <div className="min-w-0 py-3 sm:px-4 first:sm:pl-0">{body}</div>
+  );
+};
 
 /**
  * The top of a customer's profile: what they are worth, when they were last
@@ -62,6 +84,20 @@ const Stat = ({
  */
 export const CustomerOverview = ({ contact }: { contact: Contact }) => {
   const { now, snapshot, suggestions, isPending } = useNextSales(contact);
+  const history = useCustomerHistory(contact.id);
+  const [drill, setDrill] = useState<DrillContent | null>(null);
+  const kept = history.appointments.filter((a) => a.status === "completed");
+  const orderDrill = (): DrillContent => ({
+    title: "Orders",
+    description: "Everything this customer has bought, newest first.",
+    empty: "No orders yet.",
+    rows: orderRows(history.orders.filter((o) => !o.cancelled_at)),
+  });
+  const visitDrill = (title: string, list: typeof kept): DrillContent => ({
+    title,
+    empty: "Nothing to show.",
+    rows: appointmentRows(list),
+  });
   const [bookOpen, setBookOpen] = useState(false);
   const [bookDefaults, setBookDefaults] = useState<AppointmentDefaults>({
     day: shopDayKey(now),
@@ -89,14 +125,17 @@ export const CustomerOverview = ({ contact }: { contact: Contact }) => {
   const next = snapshot.nextVisit;
   return (
     <div className="flex flex-col gap-5">
+      <DrillSheet drill={drill} onClose={() => setDrill(null)} />
       <dl className="grid grid-cols-2 gap-x-4 border-y border-border sm:grid-cols-4 sm:gap-x-0 sm:divide-x sm:divide-border">
         <Stat
           label="Lifetime"
+          onOpen={() => setDrill(orderDrill())}
           value={money(snapshot.lifetimeSpend)}
           detail={`${snapshot.orders} ${snapshot.orders === 1 ? "order" : "orders"}`}
         />
         <Stat
           label="Visits"
+          onOpen={() => setDrill(visitDrill("Visits", kept))}
           value={String(snapshot.visits)}
           detail={
             snapshot.noShows
@@ -106,10 +145,28 @@ export const CustomerOverview = ({ contact }: { contact: Contact }) => {
         />
         <Stat
           label="Last in"
+          onOpen={() =>
+            setDrill(
+              visitDrill(
+                "Past bookings",
+                history.appointments.filter((a) => new Date(a.start_at) <= now),
+              ),
+            )
+          }
           value={snapshot.lastVisit ? shortDate(snapshot.lastVisit) : "Never"}
         />
         <Stat
           label="Next in"
+          onOpen={() =>
+            setDrill(
+              visitDrill(
+                "Upcoming bookings",
+                history.appointments.filter(
+                  (a) => new Date(a.start_at) > now && a.status !== "cancelled",
+                ),
+              ),
+            )
+          }
           value={
             next
               ? formatShopDay(shopDayKey(next.start_at), {

@@ -2,11 +2,14 @@ import { useMemo, useState } from "react";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 import { money } from "../operations/format";
+import { cleanProductName } from "../operations/metrics";
 import type { Order, Package } from "../types";
+import type { Drill } from "./OrderDrillSheet";
 import type { NumbersRanges } from "./periods";
 import {
   salesByBrand,
   salesByProduct,
+  salesOrders,
   salesSummary,
   withPrevious,
 } from "./salesModel";
@@ -19,10 +22,12 @@ export const ProductsSection = ({
   orders,
   catalog,
   ranges,
+  onDrill,
 }: {
   orders: Order[];
   catalog: Package[];
   ranges: NumbersRanges;
+  onDrill?: (drill: Drill) => void;
 }) => {
   const [sort, setSort] = useState<Sort>("netSales");
   const data = useMemo(() => {
@@ -122,6 +127,21 @@ export const ProductsSection = ({
             columns={productColumns}
             filename="top-products.csv"
             limit={15}
+            onRowClick={
+              onDrill
+                ? (r) =>
+                    onDrill({
+                      title: r.name,
+                      hint: "Orders that include this product.",
+                      orders: salesOrders(orders, ranges.current).filter((o) =>
+                        (o.line_items ?? []).some(
+                          (l) =>
+                            (cleanProductName(l.name) || l.name) === r.name,
+                        ),
+                      ),
+                    })
+                : undefined
+            }
           />
         </SectionCard>
       </div>

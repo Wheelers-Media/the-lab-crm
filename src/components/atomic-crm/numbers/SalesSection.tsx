@@ -10,6 +10,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
+import type { DrillContent } from "../operations/DrillSheet";
 import { money } from "../operations/format";
 import { KpiTile } from "../operations/OperationsWidgets";
 import type { Order } from "../types";
@@ -21,12 +22,16 @@ import {
   type SalesMetric,
   type Segment,
 } from "./insightsModel";
+import { orderRows } from "./drillRows";
 import type { Drill } from "./OrderDrillSheet";
 import type { NumbersRanges } from "./periods";
 import {
+  depositOrders,
   percentChange,
   salesByCategory,
+  salesOrders,
   salesByChannel,
+  netOf,
   salesSummary,
   withPrevious,
 } from "./salesModel";
@@ -123,6 +128,18 @@ export const SalesSection = ({
     () => metricTrend(orders, ranges, metric),
     [orders, ranges, metric],
   );
+  const periodOrders = useMemo(
+    () => salesOrders(orders, ranges.current),
+    [orders, ranges],
+  );
+  const orderDrill =
+    (title: string, description: string, list: () => Order[]) =>
+    (): DrillContent => ({
+      title,
+      description,
+      empty: "No orders in this period.",
+      rows: orderRows(list()),
+    });
   const meta = SALES_METRICS.find((m) => m.value === metric)!;
 
   const openBucket = (key: string) => {
@@ -145,6 +162,11 @@ export const SalesSection = ({
           detail={`${money(c.collected)} collected`}
           onSelect={() => onMetric("netSales")}
           selected={metric === "netSales"}
+          drill={orderDrill(
+            "Net sales",
+            "Every order that makes up this figure, before tax and shipping.",
+            () => periodOrders,
+          )}
         />
         <KpiTile
           label="Orders"
@@ -153,6 +175,11 @@ export const SalesSection = ({
           detail={vs}
           onSelect={() => onMetric("orders")}
           selected={metric === "orders"}
+          drill={orderDrill(
+            "Orders",
+            "Paid orders in this period. Deposits and cancelled orders are not counted.",
+            () => periodOrders,
+          )}
         />
         <KpiTile
           label="Average order"
@@ -165,6 +192,11 @@ export const SalesSection = ({
           detail={`largest ${money(c.largestOrder)}`}
           onSelect={() => onMetric("average")}
           selected={metric === "average"}
+          drill={orderDrill(
+            "Average order",
+            "The orders averaged, biggest first.",
+            () => [...periodOrders].sort((a, b) => netOf(b) - netOf(a)),
+          )}
         />
         <KpiTile
           label="Units sold"
@@ -177,6 +209,11 @@ export const SalesSection = ({
           }
           onSelect={() => onMetric("units")}
           selected={metric === "units"}
+          drill={orderDrill(
+            "Units sold",
+            "The orders the units came from.",
+            () => periodOrders,
+          )}
         />
         <KpiTile
           label="Refunds"
@@ -186,11 +223,21 @@ export const SalesSection = ({
               ? "no orders"
               : `${c.refundedOrders} orders, ${c.refundRate}%`
           }
+          drill={orderDrill(
+            "Refunds",
+            "Orders in this period that had money refunded.",
+            () => periodOrders.filter((o) => Number(o.refunded_amount) > 0),
+          )}
         />
         <KpiTile
           label="Deposits"
           value={String(c.deposits)}
           detail={`${money(c.depositAmount)} held, not counted as sales`}
+          drill={orderDrill(
+            "Deposits",
+            "Booking deposits taken. They hold a spot and come off the final bill, so they are not counted as sales.",
+            () => depositOrders(orders, ranges.current),
+          )}
         />
       </div>
 

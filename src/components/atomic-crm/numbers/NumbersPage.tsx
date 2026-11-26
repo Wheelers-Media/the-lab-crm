@@ -235,6 +235,7 @@ export const NumbersPage = () => {
                 orders={filtered}
                 catalog={data.catalog}
                 ranges={data.ranges}
+                onDrill={setDrill}
               />
             </div>
           ) : null}

@@ -193,6 +193,9 @@ export type Deal = {
   work_status_changed_at?: string | null;
   /** The secret in the customer's status link (see shopfloor/messageTemplates.ts). */
   status_token?: string | null;
+  /** The partner link the job came from (see numbers/ReferralsSection). */
+  referral_code?: string | null;
+  referral_keyword?: string | null;
 } & Pick<RaRecord, "id">;
 
 /** Where a vehicle is in the shop (see shopfloor/workStatus.ts). */

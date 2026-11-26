@@ -1,5 +1,6 @@
 import { ArrowDown, ArrowRight, ArrowUp, CalendarDays } from "lucide-react";
 import { type ComponentType, useState } from "react";
+import { DrillSheet, type DrillContent } from "./DrillSheet";
 import { Link } from "react-router";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -27,7 +28,9 @@ export const SectionTitle = ({
   <div className="mb-3 flex items-center gap-2.5">
     <Icon className="size-4 text-muted-foreground shrink-0" />
     <div className="flex-1 min-w-0">
-      <h2 className="text-base tracking-[0.06em] text-foreground">{children}</h2>
+      <h2 className="text-base tracking-[0.06em] text-foreground">
+        {children}
+      </h2>
       {/* Hints help on a desk; on a phone they push the numbers down */}
       {hint ? (
         <p className="mt-1 hidden truncate text-xs text-muted-foreground sm:block">
@@ -54,6 +57,11 @@ export interface KpiTileProps {
   /** Makes the tile a toggle (the Numbers screen picks its chart metric this way) */
   onSelect?: () => void;
   selected?: boolean;
+  /**
+   * The records behind the number. Tapping the tile opens them in a sheet;
+   * on a tile that already toggles a chart, a "Details" button does instead.
+   */
+  drill?: () => DrillContent;
 }
 
 export const KpiTile = ({
@@ -64,12 +72,14 @@ export const KpiTile = ({
   to,
   onSelect,
   selected,
+  drill,
 }: KpiTileProps) => {
+  const [open, setOpen] = useState<DrillContent | null>(null);
   const tile = (
     <Card
       className={cn(
         "min-w-0 gap-0 p-4 sm:p-5 h-full justify-between",
-        (to || onSelect) &&
+        (to || onSelect || drill) &&
           "transition-colors group-hover:border-[var(--lab-ice)]/40 group-hover:bg-muted",
         selected && "border-primary ring-1 ring-primary",
       )}
@@ -103,16 +113,46 @@ export const KpiTile = ({
       </div>
     </Card>
   );
+  const sheet = <DrillSheet drill={open} onClose={() => setOpen(null)} />;
   if (onSelect)
     return (
-      <button
-        type="button"
-        onClick={onSelect}
-        aria-pressed={selected}
-        className="group block w-full rounded-lg text-left"
-      >
-        {tile}
-      </button>
+      <div className="relative h-full">
+        <button
+          type="button"
+          onClick={onSelect}
+          aria-pressed={selected}
+          className="group block h-full w-full rounded-lg text-left"
+        >
+          {tile}
+        </button>
+        {drill ? (
+          <>
+            <button
+              type="button"
+              onClick={() => setOpen(drill())}
+              className="absolute bottom-2 right-3 text-[11px] uppercase tracking-wider text-[var(--lab-blue-text)] underline-offset-2 hover:underline"
+              aria-label={`Details for ${label}`}
+            >
+              Details
+            </button>
+            {sheet}
+          </>
+        ) : null}
+      </div>
+    );
+  if (drill)
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => setOpen(drill())}
+          className="group block h-full w-full rounded-lg text-left"
+          aria-label={`${label}: see what is behind this number`}
+        >
+          {tile}
+        </button>
+        {sheet}
+      </>
     );
   return to ? (
     <Link to={to} className="group block rounded-lg">

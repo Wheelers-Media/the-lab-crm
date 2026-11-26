@@ -1,4 +1,5 @@
 import { ArrowDown, ArrowUp, Flame } from "lucide-react";
+import { Link } from "react-router";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -31,6 +32,14 @@ export const MoversCard = ({
       <SectionTitle
         icon={Flame}
         hint={`Sales ${thisPeriod} against ${comparedWith} at the same point, biggest change first.`}
+        action={
+          <Link
+            to="/numbers?section=products"
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
+            See products
+          </Link>
+        }
       >
         What's moving
       </SectionTitle>
@@ -52,7 +61,10 @@ export const MoversCard = ({
               const gain = m.revenue - m.previous;
               const up = gain > 0;
               return (
-                <li key={m.name} className="flex min-w-0 flex-col gap-1.5 py-2.5">
+                <li
+                  key={m.name}
+                  className="flex min-w-0 flex-col gap-1.5 py-2.5"
+                >
                   <div className="flex items-baseline justify-between gap-3">
                     <span className="min-w-0 truncate text-sm font-medium">
                       {m.name}

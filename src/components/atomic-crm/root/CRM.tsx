@@ -30,7 +30,7 @@ import {
   getDataProvider as defaultDataProviderBuilder,
 } from "../providers/supabase";
 import sales from "../sales";
-import { AppointmentList, CheckoutList, OrderList } from "../shop";
+import { AppointmentList, CheckoutList, OrderList, OrderShow } from "../shop";
 import {
   CONFIGURATION_STORE_KEY,
   type ConfigurationContextValue,
@@ -290,7 +290,7 @@ const DesktopAdmin = (
       <Resource name="contact_notes" />
       <Resource name="deal_notes" />
       <Resource name="tasks" list={TasksPage} />
-      <Resource name="orders" list={OrderList} />
+      <Resource name="orders" list={OrderList} show={OrderShow} />
       <Resource name="shopify_checkouts" list={CheckoutList} />
       <Resource name="appointments" list={AppointmentList} />
       <Resource name="sales" {...sales} />
@@ -408,7 +408,7 @@ const MobileAdmin = (
         />
         <Resource name="tasks" list={MobileTasksList} />
         <Resource name="deals" list={MobileDealList} />
-        <Resource name="orders" list={MobileOrderList} />
+        <Resource name="orders" list={MobileOrderList} show={OrderShow} />
         <Resource name="shopify_checkouts" list={MobileCheckoutList} />
         <Resource name="appointments" />
         <Resource name="contacts_summary" />

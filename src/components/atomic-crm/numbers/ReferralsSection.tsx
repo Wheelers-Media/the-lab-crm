@@ -14,6 +14,11 @@ import { Input } from "@/components/ui/input";
 
 import { money } from "../operations/format";
 import { KpiTile } from "../operations/OperationsWidgets";
+import type { DrillContent } from "../operations/DrillSheet";
+import { shopDayKey } from "../operations/shopTime";
+import { agoLabel } from "../shop/cartModel";
+import { CheckoutDetail } from "../shop/CheckoutDetail";
+import { summarizeLines } from "../shop/shopFormat";
 import type { Deal, ShopifyCheckout } from "../types";
 import {
   type KeywordRow,
@@ -75,6 +80,18 @@ export const ReferralsSection = () => {
   });
 
   const program = programs.data?.[0];
+  // The records behind the month's tiles: tagged leads and tagged carts
+  const taggedDeals = useAllRecords<Deal>("deals", {
+    filter: { referral_code: program?.code },
+    sort: { field: "created_at", order: "DESC" },
+    enabled: Boolean(program),
+  });
+  const taggedCarts = useAllRecords<ShopifyCheckout>("shopify_checkouts", {
+    filter: { referral_code: program?.code },
+    sort: { field: "checkout_updated_at", order: "DESC" },
+    enabled: Boolean(program),
+  });
+  const [openCart, setOpenCart] = useState<ShopifyCheckout | null>(null);
   const [picked, setPicked] = useState<string | null>(null);
   const month = picked ?? months.data?.[0]?.month ?? null;
   const current = months.data?.find((m) => m.month === month);
@@ -95,6 +112,72 @@ export const ReferralsSection = () => {
         {programs.isPending ? "Loading referrals…" : "No referral program yet."}
       </p>
     );
+
+  const inMonth = (iso: string) =>
+    month != null && shopDayKey(iso).slice(0, 7) === month.slice(0, 7);
+  const leadDeals = (taggedDeals.data ?? []).filter((d) =>
+    inMonth(d.created_at),
+  );
+  const monthCarts = (taggedCarts.data ?? []).filter(
+    (c) => !c.completed_at && inMonth(c.created_at),
+  );
+  const earnedLines = monthLines.filter((l) => l.kind === "earned");
+  const lineRow = (l: ReferralLine) => ({
+    key: l.id,
+    title: l.customer || `Order ${l.order_number}`,
+    subtitle: `${l.rule}${l.keyword ? ` · ${l.keyword}` : ""} · order ${l.order_number} · ${shortDate(l.ordered_at)}`,
+    value: money(Number(l.amount)),
+    to: l.contact_id != null ? `/contacts/${l.contact_id}/show` : undefined,
+  });
+  const leadsDrill = (): DrillContent => ({
+    title: `Leads, ${monthLabel(month ?? "")}`,
+    description:
+      "Jobs that started from a tagged link. Quotes are the ones that got a priced quote.",
+    empty: "No tagged leads this month.",
+    rows: leadDeals.map((d) => ({
+      key: d.id,
+      title: d.name,
+      subtitle: `${d.stage}${d.quote ? " · quoted" : ""} · ${shortDate(d.created_at)}${d.referral_keyword ? ` · ${d.referral_keyword}` : ""}`,
+      value: d.amount ? money(Number(d.amount)) : undefined,
+      to: `/deals/${d.id}/show`,
+    })),
+  });
+  const cartsDrill = (): DrillContent => ({
+    title: `Open carts, ${monthLabel(month ?? "")}`,
+    description:
+      "Carts started from a tagged link and not paid. Tap one to call, text or open the cart.",
+    empty: "No open tagged carts this month.",
+    rows: monthCarts.map((c) => ({
+      key: c.id,
+      title: c.customer_name || c.email || c.phone || "Unknown customer",
+      subtitle: `${summarizeLines(c.line_items, 2)} · ${agoLabel(c.checkout_updated_at)}`,
+      value: money(Number(c.total)),
+      onOpen: () => setOpenCart(c),
+    })),
+  });
+  const kitsDrill = (): DrillContent => ({
+    title: `Paid kits, ${monthLabel(month ?? "")}`,
+    description: "Orders paid in full that earned commission.",
+    empty: "No paid kits this month.",
+    rows: earnedLines.map(lineRow),
+  });
+  const earnedDrill = (): DrillContent => ({
+    title: `Earned, ${monthLabel(month ?? "")}`,
+    description: `Commission before the ${money(Number(current?.monthly_cap ?? 0))} cap and before refunds.`,
+    empty: "Nothing earned this month.",
+    rows: earnedLines.map(lineRow),
+  });
+  const owedDrill = (): DrillContent => ({
+    title: `Owed, ${monthLabel(month ?? "")}`,
+    description:
+      "Earned up to the cap, less refunds from the month before. These are the lines behind it, refunds included.",
+    empty: "Nothing owed this month.",
+    rows: monthLines.map((l) => ({
+      ...lineRow(l),
+      subtitle: `${l.kind === "refund" ? "Refund" : l.rule} · order ${l.order_number} · ${shortDate(l.ordered_at)}`,
+      value: `${l.kind === "refund" ? "-" : ""}${money(Math.abs(Number(l.amount)))}`,
+    })),
+  });
 
   const salesName = (userId: string | null) => {
     const s = sales.data?.find((x) => x.user_id === userId);
@@ -177,6 +260,7 @@ export const ReferralsSection = () => {
 
   return (
     <>
+      <CheckoutDetail checkout={openCart} onClose={() => setOpenCart(null)} />
       <p className="text-sm text-muted-foreground">
         {program.name}: links with <code>?ref={program.code}</code> (or{" "}
         <code>thelabfsj.ca/{program.code}/&lt;page&gt;</code>).
@@ -187,11 +271,13 @@ export const ReferralsSection = () => {
             label="Leads"
             value={String(current.leads)}
             detail={`${current.quotes} quotes`}
+            drill={leadsDrill}
           />
           <KpiTile
             label="Open carts"
             value={String(current.open_checkouts)}
             detail="tagged, not paid"
+            drill={cartsDrill}
           />
           <KpiTile
             label="Paid kits"
@@ -199,11 +285,13 @@ export const ReferralsSection = () => {
               Number(current.full_kits) + Number(current.half_kits),
             )}
             detail={`${current.full_kits} full · ${current.half_kits} half`}
+            drill={kitsDrill}
           />
           <KpiTile
             label="Earned"
             value={money(Number(current.earned))}
             detail={`cap ${money(Number(current.monthly_cap))}`}
+            drill={earnedDrill}
           />
           <KpiTile
             label="Owed"
@@ -213,6 +301,7 @@ export const ReferralsSection = () => {
                 ? `after ${money(Number(current.refunds))} refunds`
                 : monthLabel(current.month)
             }
+            drill={owedDrill}
           />
         </div>
       ) : null}

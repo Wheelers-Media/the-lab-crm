@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Link } from "react-router";
 
 import { firstPhone } from "../contacts/firstPhone";
+import type { DrillContent, DrillRow } from "../operations/DrillSheet";
 import { contactName, money } from "../operations/format";
 import { KpiTile } from "../operations/OperationsWidgets";
 import {
@@ -12,6 +13,7 @@ import {
   quietCustomers,
   topSpenders,
 } from "./customerModel";
+import { customersInRange } from "./drillRows";
 import type { NumbersRanges } from "./periods";
 import { useCustomerNames } from "./useNumbersData";
 import type { Column } from "./widgets";
@@ -43,11 +45,40 @@ export const CustomersSection = ({
     };
   }, [orders, ranges, now]);
   const { stats: s } = data;
-  const listed = [...data.top, ...data.quiet.slipping.slice(0, 25)];
+  const period = useMemo(
+    () => customersInRange(orders, ranges.current),
+    [orders, ranges],
+  );
+  const listed = [
+    ...data.top,
+    ...data.quiet.slipping.slice(0, 25),
+    ...period.active.slice(0, 200),
+  ];
   const contacts = useCustomerNames(listed.map((r) => r.contactId));
 
   const nameOf = (r: LedgerRow) =>
     contactName(contacts.get(r.contactId)) || `Customer ${r.contactId}`;
+  const customerRows = (rows: LedgerRow[]): DrillRow[] =>
+    rows.slice(0, 200).map((r) => {
+      const phone = contacts.get(r.contactId)
+        ? firstPhone(contacts.get(r.contactId)!)
+        : null;
+      return {
+        key: r.contactId,
+        title: nameOf(r),
+        subtitle: `${r.orders} order${r.orders === 1 ? "" : "s"} · last ${day(r.lastOrderAt)}${phone ? ` · ${phone}` : ""}`,
+        value: money(r.spend),
+        to: `/contacts/${r.contactId}/show`,
+      };
+    });
+  const customerDrill =
+    (title: string, description: string, rows: () => LedgerRow[]) =>
+    (): DrillContent => ({
+      title,
+      description,
+      empty: "Nobody in this group for this period.",
+      rows: customerRows(rows()),
+    });
   const customerCell = (r: LedgerRow) => (
     <Link to={`/contacts/${r.contactId}/show`} className="hover:underline">
       {nameOf(r)}
@@ -98,16 +129,31 @@ export const CustomersSection = ({
           label="Customers who ordered"
           value={String(s.active)}
           detail="in this period"
+          drill={customerDrill(
+            "Customers who ordered",
+            "Everyone with a paid order in this period, biggest spender first.",
+            () => period.active,
+          )}
         />
         <KpiTile
           label="New customers"
           value={String(s.newCustomers)}
           detail={`${money(s.newCollected)} collected`}
+          drill={customerDrill(
+            "New customers",
+            "Customers whose first order ever was in this period.",
+            () => period.added,
+          )}
         />
         <KpiTile
           label="Returning"
           value={String(s.returning)}
           detail={`${s.repeatRate == null ? "–" : `${s.repeatRate}%`} of customers · ${money(s.returningCollected)}`}
+          drill={customerDrill(
+            "Returning customers",
+            "Customers who ordered in this period and had ordered before.",
+            () => period.returning,
+          )}
         />
         <KpiTile
           label="Average lifetime spend"
@@ -119,11 +165,17 @@ export const CustomersSection = ({
               ? ""
               : `${s.averageOrdersPerCustomer.toFixed(1)} orders each`
           }
+          drill={customerDrill(
+            "Biggest lifetime spenders",
+            "The customers who pull the average up.",
+            () => data.top,
+          )}
         />
         <KpiTile
           label="Sold without a customer"
           value={s.unidentifiedShare == null ? "–" : `${s.unidentifiedShare}%`}
           detail="of orders, mostly in-shop sales"
+          to={`/orders?filter=${encodeURIComponent(JSON.stringify({ "contact_id@is": null }))}`}
         />
       </div>
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-stretch">
