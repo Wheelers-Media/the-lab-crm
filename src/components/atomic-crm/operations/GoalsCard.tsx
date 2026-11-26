@@ -23,7 +23,8 @@ import {
   useConfigurationUpdater,
 } from "../root/ConfigurationContext";
 import { money } from "./format";
-import type { GoalKey, GoalProgress } from "./goalsModel";
+import type { GoalCurves, GoalKey, GoalProgress } from "./goalsModel";
+import { Sparkline } from "./Sparkline";
 import { useInView } from "./useInView";
 
 const GOALS: Array<{
@@ -145,7 +146,10 @@ export const GoalsCard = ({
   periodLabel,
   isPending,
   monthly,
+  curves,
 }: {
+  /** The shape of the period so far, drawn under each goal against its pace. */
+  curves?: GoalCurves;
   goals: GoalProgress[];
   /** The monthly goal behind each ring, saved or suggested. */
   monthly: Record<GoalKey, number>;
@@ -158,7 +162,7 @@ export const GoalsCard = ({
   const [editing, setEditing] = useState(false);
   const anySuggested = goals.some((g) => g.suggested);
   return (
-    <Card className="p-4 gap-3 h-full">
+    <Card className="@container p-4 gap-3 h-full">
       <div className="flex items-start justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2">
           <Target
@@ -180,16 +184,18 @@ export const GoalsCard = ({
           className="-mr-2"
         >
           <Pencil className="size-4" aria-hidden />
-          {anySuggested ? "Set goals" : "Edit"}
+          <span className="sr-only @md:not-sr-only">
+            {anySuggested ? "Set goals" : "Edit"}
+          </span>
         </Button>
       </div>
 
       {isPending ? (
         <Skeleton className="h-36 w-full" />
       ) : (
-        <div className="flex flex-1 items-center gap-4">
+        <div className="flex flex-1 flex-col items-center gap-4 @md:flex-row">
           <Rings goals={goals} elapsed={elapsed} />
-          <ul className="flex min-w-0 flex-1 flex-col gap-3">
+          <ul className="flex w-full min-w-0 flex-1 flex-col gap-3">
             {goals.map((goal) => {
               const meta = GOALS.find((g) => g.key === goal.key)!;
               return (
@@ -221,6 +227,16 @@ export const GoalsCard = ({
                   >
                     {statusText(goal, meta.isMoney)}
                   </p>
+                  {curves && curves.actual[goal.key].length > 0 ? (
+                    <Sparkline
+                      className="mt-1 h-6 text-muted-foreground"
+                      values={curves.actual[goal.key]}
+                      slots={curves.slots}
+                      pace={curves.pace.map((share) => share * goal.target)}
+                      colour={meta.colour}
+                      label={`${meta.label} so far this period against the pace needed for the goal`}
+                    />
+                  ) : null}
                 </li>
               );
             })}

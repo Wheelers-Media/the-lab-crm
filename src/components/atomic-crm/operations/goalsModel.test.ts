@@ -2,12 +2,13 @@ import { describe, expect, it } from "vitest";
 
 import {
   elapsedShare,
+  goalCurves,
   goalProgress,
   monthlyTargets,
   suggestTarget,
   targetForPeriod,
 } from "./goalsModel";
-import { startOfShopDay } from "./shopTime";
+import { periodRange, startOfShopDay } from "./shopTime";
 
 describe("targetForPeriod", () => {
   it("scales a monthly goal to a week and to one working day", () => {
@@ -93,5 +94,47 @@ describe("elapsedShare", () => {
       end: new Date("2026-10-07T00:00:00Z"),
     };
     expect(elapsedShare(day, new Date("2026-10-06T12:00:00Z"))).toBe(0.5);
+  });
+});
+
+describe("goalCurves", () => {
+  const range = periodRange("week", new Date("2026-11-25T18:00:00Z")); // Mon 23 to Sun 29 Nov
+  const now = new Date("2026-11-25T18:00:00Z"); // Wednesday
+  const order = (id: number, contact: number, at: string, total: number) => ({
+    ordered_at: at,
+    contact_id: contact,
+    total,
+    refunded_amount: 0,
+    is_deposit: false,
+    cancelled_at: null,
+    id,
+  });
+
+  it("runs totals up day by day to today and counts first orders as new customers", () => {
+    const first = new Map<unknown, string>([
+      [1, "2026-11-23T18:00:00Z"],
+      [2, "2026-01-05T18:00:00Z"],
+    ]);
+    const curves = goalCurves(
+      [
+        order(1, 1, "2026-11-23T18:00:00Z", 100),
+        order(2, 2, "2026-11-24T18:00:00Z", 50),
+        order(3, 1, "2026-11-25T16:00:00Z", 25),
+      ],
+      first,
+      range,
+      now,
+    );
+    expect(curves.slots).toBe(7);
+    expect(curves.actual.revenue).toEqual([100, 150, 175]);
+    expect(curves.actual.orders).toEqual([1, 2, 3]);
+    expect(curves.actual.newCustomers).toEqual([1, 1, 1]);
+  });
+
+  it("paces over weekdays only, ending at the full target", () => {
+    const curves = goalCurves([], new Map(), range, now);
+    expect(curves.pace[curves.slots - 1]).toBe(1);
+    expect(curves.pace[4]).toBe(1); // Friday: all five weekdays done
+    expect(curves.pace[5]).toBe(1); // weekends add nothing
   });
 });

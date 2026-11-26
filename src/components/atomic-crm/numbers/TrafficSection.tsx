@@ -193,6 +193,22 @@ export const TrafficSection = ({
     () => trafficTrend(rows, ranges, metric, filter),
     [rows, ranges, metric, filter],
   );
+  const sparks = useMemo(() => {
+    const of = (m: TrafficMetric) => {
+      const pts = trafficTrend(rows, ranges, m, filter);
+      return {
+        values: pts.map((x) => x.value),
+        previous: pts.map((x) => x.previous),
+      };
+    };
+    return {
+      sessions: of("sessions"),
+      conversion: of("conversion"),
+      carts: of("carts"),
+      checkouts: of("checkouts"),
+      completed: of("completed"),
+    };
+  }, [rows, ranges, filter]);
   const funnel = useMemo(() => trafficFunnel(data.current), [data]);
   const meta = TRAFFIC_METRICS.find((m) => m.value === metric)!;
   const { current: c, previous: p } = data;
@@ -286,6 +302,7 @@ export const TrafficSection = ({
               detail={vs}
               onSelect={() => onMetric("sessions")}
               selected={metric === "sessions"}
+              spark={sparks.sessions}
             />
             <KpiTile
               label="Conversion rate"
@@ -293,6 +310,7 @@ export const TrafficSection = ({
               detail={`${count(c.completed)} completed · was ${percentText(p.conversion)}`}
               onSelect={() => onMetric("conversion")}
               selected={metric === "conversion"}
+              spark={sparks.conversion}
             />
             <KpiTile
               label="Added to cart"
@@ -301,6 +319,7 @@ export const TrafficSection = ({
               detail={`${percentText(funnel[1].share)} of sessions`}
               onSelect={() => onMetric("carts")}
               selected={metric === "carts"}
+              spark={sparks.carts}
             />
             <KpiTile
               label="Reached checkout"
@@ -309,6 +328,7 @@ export const TrafficSection = ({
               detail={`${percentText(funnel[2].share)} of sessions`}
               onSelect={() => onMetric("checkouts")}
               selected={metric === "checkouts"}
+              spark={sparks.checkouts}
             />
             <KpiTile
               label="Completed checkout"
@@ -317,6 +337,7 @@ export const TrafficSection = ({
               detail={`${percentText(funnel[3].share)} of sessions`}
               onSelect={() => onMetric("completed")}
               selected={metric === "completed"}
+              spark={sparks.completed}
             />
           </div>
 

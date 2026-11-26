@@ -15,6 +15,7 @@ import { shopCapacity, upcomingLoad } from "./capacityModel";
 import { inventoryHealth, type StockLine, slowWindow } from "./inventoryModel";
 import type { NumbersRanges } from "./periods";
 import { appointmentRows } from "./drillRows";
+import { bucketSeries } from "./seriesModel";
 import type { Column } from "./widgets";
 import { SectionCard, StatTable } from "./widgets";
 
@@ -90,6 +91,25 @@ export const ShopSection = ({
       a.status !== "cancelled"
     );
   });
+  const sparks = useMemo(
+    () => ({
+      bay: bucketSeries(
+        appointments.filter(
+          (a) => a.resource === "detailing-bay" && a.status !== "cancelled",
+        ),
+        (a) => a.start_at,
+        () => 1,
+        ranges,
+      ),
+      noShows: bucketSeries(
+        appointments.filter((a) => a.status === "no_show"),
+        (a) => a.start_at,
+        () => 1,
+        ranges,
+      ),
+    }),
+    [appointments, ranges],
+  );
   const bookingDrill =
     (title: string, description: string, list: () => Appointment[]) =>
     (): DrillContent => ({
@@ -148,6 +168,7 @@ export const ShopSection = ({
                   a.resource === "detailing-bay" && a.status !== "cancelled",
               ),
           )}
+          spark={sparks.bay}
         />
         <KpiTile
           label="Next 2 weeks"
@@ -168,6 +189,7 @@ export const ShopSection = ({
             "Bookings in this period marked as no-show.",
             () => inPeriod.filter((a) => a.status === "no_show"),
           )}
+          spark={sparks.noShows}
         />
       </div>
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-stretch">

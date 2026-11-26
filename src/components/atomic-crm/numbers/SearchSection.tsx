@@ -182,6 +182,26 @@ export const SearchSection = ({
     () => searchTrend(rows, ranges, metric),
     [rows, ranges, metric],
   );
+  const sparks = useMemo(() => {
+    const of = (m: SearchMetric) => {
+      const pts = searchTrend(rows, ranges, m);
+      return {
+        values: pts.map((x) => x.value),
+        previous: pts.map((x) => x.previous),
+      };
+    };
+    return {
+      clicks: of("clicks"),
+      impressions: of("impressions"),
+      ctr: of("ctr"),
+      // A lower spot is better, so the line is drawn upside down: up is good
+      position: (() => {
+        const base = of("position");
+        const flip = (list: number[]) => list.map((v) => (v ? -v : 0));
+        return { values: flip(base.values), previous: flip(base.previous) };
+      })(),
+    };
+  }, [rows, ranges]);
   const topQueries = useMemo(
     () => searchGroups(queries.data ?? [], ranges.current, (r) => r.query),
     [queries.data, ranges],
@@ -274,6 +294,7 @@ export const SearchSection = ({
               detail={vs}
               onSelect={() => setMetric("clicks")}
               selected={metric === "clicks"}
+              spark={sparks.clicks}
             />
             <KpiTile
               label="Times shown"
@@ -282,6 +303,7 @@ export const SearchSection = ({
               detail="in someone's results"
               onSelect={() => setMetric("impressions")}
               selected={metric === "impressions"}
+              spark={sparks.impressions}
             />
             <KpiTile
               label="Click rate"
@@ -289,6 +311,7 @@ export const SearchSection = ({
               detail={`was ${p.ctr}%`}
               onSelect={() => setMetric("ctr")}
               selected={metric === "ctr"}
+              spark={sparks.ctr}
             />
             <KpiTile
               label="Average spot"
@@ -297,6 +320,7 @@ export const SearchSection = ({
               detail={`1 is the top · was ${spot(p.position)}`}
               onSelect={() => setMetric("position")}
               selected={metric === "position"}
+              spark={sparks.position}
             />
           </div>
 

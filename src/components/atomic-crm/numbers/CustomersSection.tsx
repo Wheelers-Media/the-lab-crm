@@ -14,6 +14,7 @@ import {
   topSpenders,
 } from "./customerModel";
 import { customersInRange } from "./drillRows";
+import { customerSeries } from "./seriesModel";
 import type { NumbersRanges } from "./periods";
 import { useCustomerNames } from "./useNumbersData";
 import type { Column } from "./widgets";
@@ -47,6 +48,10 @@ export const CustomersSection = ({
   const { stats: s } = data;
   const period = useMemo(
     () => customersInRange(orders, ranges.current),
+    [orders, ranges],
+  );
+  const sparks = useMemo(
+    () => customerSeries(orders, ranges),
     [orders, ranges],
   );
   const listed = [
@@ -134,6 +139,7 @@ export const CustomersSection = ({
             "Everyone with a paid order in this period, biggest spender first.",
             () => period.active,
           )}
+          spark={sparks.active}
         />
         <KpiTile
           label="New customers"
@@ -144,6 +150,7 @@ export const CustomersSection = ({
             "Customers whose first order ever was in this period.",
             () => period.added,
           )}
+          spark={sparks.added}
         />
         <KpiTile
           label="Returning"
@@ -154,6 +161,7 @@ export const CustomersSection = ({
             "Customers who ordered in this period and had ordered before.",
             () => period.returning,
           )}
+          spark={sparks.returning}
         />
         <KpiTile
           label="Average lifetime spend"

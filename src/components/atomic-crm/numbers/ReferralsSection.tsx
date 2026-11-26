@@ -115,6 +115,13 @@ export const ReferralsSection = () => {
 
   const inMonth = (iso: string) =>
     month != null && shopDayKey(iso).slice(0, 7) === month.slice(0, 7);
+  // The last six months, oldest first, for each tile's trend
+  const monthSpark = (pick: (m: ReferralMonth) => number) => ({
+    values: [...(months.data ?? [])]
+      .sort((a, b) => a.month.localeCompare(b.month))
+      .slice(-6)
+      .map(pick),
+  });
   const leadDeals = (taggedDeals.data ?? []).filter((d) =>
     inMonth(d.created_at),
   );
@@ -272,12 +279,14 @@ export const ReferralsSection = () => {
             value={String(current.leads)}
             detail={`${current.quotes} quotes`}
             drill={leadsDrill}
+            spark={monthSpark((m) => Number(m.leads))}
           />
           <KpiTile
             label="Open carts"
             value={String(current.open_checkouts)}
             detail="tagged, not paid"
             drill={cartsDrill}
+            spark={monthSpark((m) => Number(m.open_checkouts))}
           />
           <KpiTile
             label="Paid kits"
@@ -286,12 +295,14 @@ export const ReferralsSection = () => {
             )}
             detail={`${current.full_kits} full · ${current.half_kits} half`}
             drill={kitsDrill}
+            spark={monthSpark((m) => Number(m.full_kits) + Number(m.half_kits))}
           />
           <KpiTile
             label="Earned"
             value={money(Number(current.earned))}
             detail={`cap ${money(Number(current.monthly_cap))}`}
             drill={earnedDrill}
+            spark={monthSpark((m) => Number(m.earned))}
           />
           <KpiTile
             label="Owed"
@@ -302,6 +313,7 @@ export const ReferralsSection = () => {
                 : monthLabel(current.month)
             }
             drill={owedDrill}
+            spark={monthSpark((m) => Number(m.owed))}
           />
         </div>
       ) : null}
