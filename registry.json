@@ -262,6 +262,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/shop/OrderShow.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/shop/OrderList.tsx",
           "type": "registry:component"
         },
@@ -766,6 +770,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/operations/DrillSheet.tsx",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/operations/DonutChart.tsx",
           "type": "registry:component"
         },
@@ -819,6 +827,10 @@
         },
         {
           "path": "src/components/atomic-crm/numbers/funnelModel.ts",
+          "type": "registry:component"
+        },
+        {
+          "path": "src/components/atomic-crm/numbers/drillRows.ts",
           "type": "registry:component"
         },
         {
