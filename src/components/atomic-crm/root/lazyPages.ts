@@ -25,7 +25,6 @@ export const ReviewQueuePage = page(
   () => import("../shop/ReviewQueuePage"),
   "ReviewQueuePage",
 );
-export const HelpPage = page(() => import("../misc/HelpPage"), "HelpPage");
 export const QuoteBuilderPage = page(
   () => import("../packages/QuoteBuilderPage"),
   "QuoteBuilderPage",
@@ -69,7 +68,6 @@ export const PAGE_PATHS = {
   calendar: "/calendar",
   shopFloor: "/shop-floor",
   reviews: "/reviews",
-  help: "/help",
   quoteBuilder: "/quotes/:id",
   settings: "/settings",
   profile: "/profile",

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   askedNote,
-  askedOrders,
+  askedContacts,
   canAskReview,
   isDueForReview,
   nextEveningReminder,
@@ -64,12 +64,27 @@ describe("nextEveningReminder", () => {
 });
 
 describe("asked notes", () => {
-  it("recognises an order that was already asked about", () => {
-    const asked = askedOrders([
-      askedNote({ order_number: "1042" }),
-      "Called back",
-    ]);
-    expect(wasAsked({ order_number: "#1042" }, asked)).toBe(true);
-    expect(wasAsked({ order_number: "1043" }, asked)).toBe(false);
+  const now = new Date("2026-11-26T18:00:00Z");
+  it("counts a customer as asked for 30 days, whichever order it was", () => {
+    const asked = askedContacts(
+      [
+        {
+          contact_id: 5,
+          text: askedNote({ order_number: "1042" }),
+          date: "2026-11-20T00:00:00Z",
+        },
+        { contact_id: 6, text: "Called back", date: "2026-11-20T00:00:00Z" },
+        {
+          contact_id: 7,
+          text: askedNote({ order_number: "900" }),
+          date: "2026-09-01T00:00:00Z",
+        },
+      ],
+      now,
+    );
+    expect(wasAsked({ contact_id: 5 }, asked)).toBe(true);
+    expect(wasAsked({ contact_id: 6 }, asked)).toBe(false);
+    expect(wasAsked({ contact_id: 7 }, asked)).toBe(false);
+    expect(wasAsked({ contact_id: null }, asked)).toBe(false);
   });
 });

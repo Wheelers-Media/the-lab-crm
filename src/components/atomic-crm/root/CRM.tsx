@@ -73,7 +73,6 @@ import {
   QuoteBuilderPage,
   SettingsPage,
   SettingsPageMobile,
-  HelpPage,
   ReviewQueuePage,
   ShopFloorPage,
 } from "./lazyPages";
@@ -282,7 +281,6 @@ const DesktopAdmin = (
         <Route path={PAGE_PATHS.calendar} element={<CalendarPage />} />
         <Route path={PAGE_PATHS.shopFloor} element={<ShopFloorPage />} />
         <Route path={PAGE_PATHS.reviews} element={<ReviewQueuePage />} />
-        <Route path={PAGE_PATHS.help} element={<HelpPage />} />
         <Route path={PAGE_PATHS.numbers} element={<NumbersPage />} />
         <Route path={PAGE_PATHS.quoteBuilder} element={<QuoteBuilderPage />} />
       </CustomRoutes>
@@ -382,14 +380,6 @@ const MobileAdmin = (
             element={
               <MobilePage>
                 <ReviewQueuePage />
-              </MobilePage>
-            }
-          />
-          <Route
-            path={PAGE_PATHS.help}
-            element={
-              <MobilePage>
-                <HelpPage />
               </MobilePage>
             }
           />

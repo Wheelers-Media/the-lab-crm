@@ -55,6 +55,15 @@ const ProductListActions = () => {
   );
 };
 
+const CatalogError = ({ onRetry }: { onRetry: () => void }) => (
+  <div role="alert" className="rounded-md border border-border p-3 text-sm">
+    Couldn't load the catalog, so nothing is shown rather than a partial list.{" "}
+    <button type="button" className="underline" onClick={onRetry}>
+      Try again
+    </button>
+  </div>
+);
+
 const SORTS: Array<[string, string, "ASC" | "DESC"]> = [
   ["Name A to Z", "title", "ASC"],
   ["Price, high to low", "price", "DESC"],
@@ -167,7 +176,9 @@ export const ProductList = () => {
         <ProductListActions />
       </div>
       <CatalogControls browser={browser} />
-      {browser.section === "power" ? (
+      {browser.error ? (
+        <CatalogError onRetry={() => void browser.refetch()} />
+      ) : browser.section === "power" ? (
         <PowerPackagesGallery catalog={browser.catalog} />
       ) : (
         <ListContextProvider value={listContext}>
@@ -221,7 +232,9 @@ export const MobileProductList = () => {
         <div className="mb-3">
           <CatalogControls browser={browser} />
         </div>
-        {browser.section === "power" ? (
+        {browser.error ? (
+          <CatalogError onRetry={() => void browser.refetch()} />
+        ) : browser.section === "power" ? (
           <PowerPackagesGallery catalog={browser.catalog} />
         ) : browser.isPending ? (
           <div className="flex flex-col gap-2">

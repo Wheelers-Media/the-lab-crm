@@ -24,7 +24,7 @@ import { smsHref } from "../shopfloor/messageTemplates";
 import type { Contact, ContactNote, Order } from "../types";
 import {
   askedNote,
-  askedOrders,
+  askedContacts,
   nextEveningReminder,
   reviewTiming,
   REVIEW_NOTE_PREFIX,
@@ -38,10 +38,10 @@ export const useAskedReviews = (): Set<string> => {
     sort: { field: "date", order: "DESC" },
     pagination: { page: 1, perPage: 1000 },
   });
-  return askedOrders(data.map((n) => n.text));
+  return askedContacts(data);
 };
 
-export const useOrderAsked = (order: Pick<Order, "order_number">): boolean =>
+export const useOrderAsked = (order: Pick<Order, "contact_id">): boolean =>
   wasAsked(order, useAskedReviews());
 
 /**
@@ -85,27 +85,34 @@ export const ReviewAskDialog = ({
   if (!order) return null;
   const name = contact?.first_name?.trim() || "the customer";
 
+  const noIdentity = () =>
+    notify("Still signing you in. Try again in a moment.", { type: "warning" });
+
   const markAsked = () =>
-    create(
-      "contact_notes",
-      {
-        data: {
-          contact_id: order.contact_id,
-          text: askedNote(order),
-          date: new Date().toISOString(),
-          sales_id: identity?.id,
-          status: "cold",
-        },
-      },
-      {
-        onSuccess: () => {
-          notify(`Marked as asked. ${name} won't show up in the queue again.`);
-          refresh();
-          onClose();
-        },
-        onError: () => notify("Could not save that", { type: "error" }),
-      },
-    );
+    !identity
+      ? noIdentity()
+      : create(
+          "contact_notes",
+          {
+            data: {
+              contact_id: order.contact_id,
+              text: askedNote(order),
+              date: new Date().toISOString(),
+              sales_id: identity?.id,
+              status: "cold",
+            },
+          },
+          {
+            onSuccess: () => {
+              notify(
+                `Marked as asked. ${name} won't be asked again for 30 days.`,
+              );
+              refresh();
+              onClose();
+            },
+            onError: () => notify("Could not save that", { type: "error" }),
+          },
+        );
 
   const textNow = () => {
     if (!phone) return;
@@ -120,25 +127,28 @@ export const ReviewAskDialog = ({
   };
 
   const remindTonight = () =>
-    create(
-      "tasks",
-      {
-        data: {
-          contact_id: order.contact_id,
-          type: "text",
-          text: `Ask ${name} for a review (order ${order.order_number}). Text is ready on the Orders tab.`,
-          due_date: nextEveningReminder().toISOString(),
-          sales_id: identity?.id,
-        },
-      },
-      {
-        onSuccess: () => {
-          notify("Reminder set for 6 p.m. in Tasks.");
-          onClose();
-        },
-        onError: () => notify("Could not set the reminder", { type: "error" }),
-      },
-    );
+    !identity
+      ? noIdentity()
+      : create(
+          "tasks",
+          {
+            data: {
+              contact_id: order.contact_id,
+              type: "text",
+              text: `Ask ${name} for a review (order ${order.order_number}). Text is ready on the Orders tab.`,
+              due_date: nextEveningReminder().toISOString(),
+              sales_id: identity?.id,
+            },
+          },
+          {
+            onSuccess: () => {
+              notify("Reminder set for 6 p.m. in Tasks.");
+              onClose();
+            },
+            onError: () =>
+              notify("Could not set the reminder", { type: "error" }),
+          },
+        );
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>

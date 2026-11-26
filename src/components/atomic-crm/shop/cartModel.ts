@@ -85,7 +85,7 @@ const itemPhrase = (lines: OrderLineItem[]): string => {
 };
 
 /**
- * A recovery text in Eric's voice: personal, no pressure, an offer to answer
+ * A recovery text in the shop team's voice: personal, no pressure, an offer to answer
  * fitment questions, and the cart link when there is one. Never sent for the
  * shop; it only fills the Messages app.
  */
@@ -99,5 +99,5 @@ export const recoveryText = (
     checkout.recovery_url && /^https:\/\//i.test(checkout.recovery_url)
       ? `\n\nYour cart is saved here: ${checkout.recovery_url}`
       : "";
-  return `Hey ${firstWord(checkout.customer_name)}, it's Eric at THE LAB. I saw you were looking at ${itemPhrase(checkout.line_items ?? [])}. If you've got any questions on fitment or what goes with what, text me back or call ${SHOP_PHONE} and I'll sort you out.${link}`;
+  return `Hey ${firstWord(checkout.customer_name)}, it's the team at THE LAB. we saw you were looking at ${itemPhrase(checkout.line_items ?? [])}. If you've got any questions on fitment or what goes with what, text back or call ${SHOP_PHONE} and we'll sort you out.${link}`;
 };

@@ -53,7 +53,7 @@ describe("cartTotals", () => {
 describe("recoveryText", () => {
   it("greets by first name, names the item and links the cart", () => {
     const text = recoveryText(cart());
-    expect(text).toContain("Hey Dale, it's Eric at THE LAB.");
+    expect(text).toContain("Hey Dale, it's the team at THE LAB.");
     expect(text).toContain("EZ LYNK Tune");
     expect(text).toContain("https://thelabfsj.ca/cart/abc");
   });

@@ -93,19 +93,31 @@ export const nextEveningReminder = (now: Date = new Date()): Date => {
 export const askedNote = (order: Pick<Order, "order_number">): string =>
   `${REVIEW_NOTE_PREFIX} for order ${order.order_number.startsWith("#") ? "" : "#"}${order.order_number}.`;
 
-/** Order numbers a customer's notes say were already asked about. */
-export const askedOrders = (
-  noteTexts: Array<string | null | undefined>,
+/**
+ * Customers who were asked for a review within the last 30 days, from the
+ * notes. Counted per customer, not per order, so someone with two orders is
+ * never texted for a review twice in a row.
+ */
+export const askedContacts = (
+  notes: Array<{
+    contact_id: unknown;
+    text?: string | null;
+    date?: string | null;
+  }>,
+  now: Date = new Date(),
 ): Set<string> => {
   const asked = new Set<string>();
-  for (const text of noteTexts) {
-    const match = text?.match(/^Review asked for order #?(\S+?)\.?$/i);
-    if (match) asked.add(match[1]);
+  for (const note of notes) {
+    if (!note.text?.startsWith(REVIEW_NOTE_PREFIX)) continue;
+    const at = note.date ? new Date(note.date).getTime() : now.getTime();
+    if (now.getTime() - at < REVIEW_WINDOW_DAYS * DAY_MS) {
+      asked.add(String(note.contact_id));
+    }
   }
   return asked;
 };
 
 export const wasAsked = (
-  order: Pick<Order, "order_number">,
+  order: Pick<Order, "contact_id">,
   asked: Set<string>,
-): boolean => asked.has(order.order_number.replace(/^#/, ""));
+): boolean => order.contact_id != null && asked.has(String(order.contact_id));

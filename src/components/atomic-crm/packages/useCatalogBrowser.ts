@@ -35,7 +35,12 @@ const stockMatches = (pkg: Package, stock: StockFilter): boolean => {
  * query is the quote builder's, so both share one cached catalog.
  */
 export const useCatalogBrowser = () => {
-  const { data: catalog = [], isPending } = useGetList<Package>("packages", {
+  const {
+    data: catalog = [],
+    isPending,
+    error,
+    refetch,
+  } = useGetList<Package>("packages", {
     pagination: { page: 1, perPage: 2000 },
     sort: { field: "title", order: "ASC" },
     filter: { "status@neq": "deleted" },
@@ -92,6 +97,8 @@ export const useCatalogBrowser = () => {
     counts,
     vendors,
     isPending,
+    error,
+    refetch,
     section,
     q,
     vendor,

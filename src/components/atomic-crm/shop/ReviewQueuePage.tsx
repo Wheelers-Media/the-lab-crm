@@ -24,7 +24,12 @@ const shortDate = (iso: string) =>
  * page says whether now is a good time and each row can set a 6 p.m. reminder.
  */
 export const ReviewQueuePage = () => {
-  const { data = [], isPending } = useGetList<Order>("orders", {
+  const {
+    data = [],
+    isPending,
+    error,
+    refetch,
+  } = useGetList<Order>("orders", {
     sort: { field: "ordered_at", order: "DESC" },
     pagination: { page: 1, perPage: 300 },
     filter: { "cancelled_at@is": null, is_deposit: false },
@@ -54,7 +59,21 @@ export const ReviewQueuePage = () => {
       >
         {timing.label}
       </p>
-      {isPending ? (
+      {error ? (
+        <div
+          role="alert"
+          className="rounded-md border border-[var(--lab-neg,currentColor)] p-3 text-sm"
+        >
+          Couldn't load recent orders, so this list isn't trustworthy.{" "}
+          <button
+            type="button"
+            className="underline"
+            onClick={() => void refetch()}
+          >
+            Try again
+          </button>
+        </div>
+      ) : isPending ? (
         <Skeleton className="h-24 w-full" />
       ) : queue.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">

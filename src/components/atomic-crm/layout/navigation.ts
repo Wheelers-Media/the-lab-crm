@@ -8,7 +8,6 @@ import {
   BarChart3,
   Building2,
   CalendarDays,
-  HelpCircle,
   Home,
   KanbanSquare,
   ListTodo,
@@ -125,13 +124,6 @@ export const PAGES = {
     Icon: BarChart3,
     match: ["/numbers"],
   },
-  help: {
-    to: "/help",
-    label: "How it works",
-    hint: "The life of a job and where to find things",
-    Icon: HelpCircle,
-    match: ["/help"],
-  },
   settings: {
     to: "/settings",
     label: "Settings",
@@ -192,7 +184,6 @@ export const SIDEBAR_GROUPS: SidebarGroup[] = [
     area: "insights",
     pages: [PAGES.numbers],
   },
-  { id: "help", label: "Help", area: "admin", pages: [PAGES.help] },
 ];
 
 /** Settings sits apart at the foot of the sidebar. */
@@ -224,5 +215,5 @@ export const PHONE_MORE: NavGroup[] = [
     label: "Store",
     pages: [PAGES.orders, PAGES.reviews, PAGES.carts, PAGES.packages],
   },
-  { label: "Accounts", pages: [PAGES.businesses, PAGES.help, PAGES.settings] },
+  { label: "Accounts", pages: [PAGES.businesses, PAGES.settings] },
 ];

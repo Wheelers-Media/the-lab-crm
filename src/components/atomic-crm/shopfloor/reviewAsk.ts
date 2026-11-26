@@ -87,7 +87,7 @@ const ASK = (link: string) =>
   `It means a lot to a family shop like ours: ${link}`;
 
 /**
- * The pre-filled review text, in Eric's voice: plain, grateful and
+ * The pre-filled review text, in the shop team's voice: plain, grateful and
  * shop-floor. It talks about the work that was really done (a tune, an
  * exhaust, a tint), names the truck's engine when it is a diesel, and
  * rotates wordings by seed so repeat customers are not sent the same text.
@@ -106,7 +106,7 @@ export const reviewAsk = ({
   const salt = `${seed ?? ""}${name}${kind ?? ""}`;
   const joined = (subject.names ?? []).filter(Boolean).join(" ");
   const ask = ASK(REVIEW_LINK);
-  const hi = `Hey ${name}, it's Eric at THE LAB.`;
+  const hi = `Hey ${name}, it's the team at THE LAB.`;
 
   let body: string;
   if (kind === "tune") {
@@ -137,7 +137,7 @@ export const reviewAsk = ({
     body = pick(
       [
         `Hope ${ride} is still looking sharp. If you're happy with the detail, a quick Google review helps a lot. ${ask}`,
-        `Christine and I hope you're loving how ${ride} turned out. If you are, a quick Google review would mean the world. ${ask}`,
+        `We hope you're loving how ${ride} turned out. If you are, a quick Google review would mean the world. ${ask}`,
       ],
       salt,
     );
@@ -150,5 +150,5 @@ export const reviewAsk = ({
   } else {
     body = `Thanks for trusting us with ${ride}. If you're happy with the work, a quick Google review helps a lot. ${ask}`;
   }
-  return `${hi} ${body}\n\nAppreciate you. Eric`;
+  return `${hi} ${body}\n\nAppreciate you.\n\nThe LAB team`;
 };

@@ -73,7 +73,7 @@ describe("reviewAsk", () => {
       vehicle: "2022 Ram 3500",
     });
 
-    expect(text).toContain("Hey Sam, it's Eric at THE LAB.");
+    expect(text).toContain("Hey Sam, it's the team at THE LAB.");
     expect(text).toContain("tint on the 2022 Ram 3500");
     expect(text).toContain(REVIEW_LINK);
     expect(text).not.toContain("Suntek");
