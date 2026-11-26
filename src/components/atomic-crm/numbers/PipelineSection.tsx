@@ -14,7 +14,6 @@ import {
   type StageChange,
 } from "./funnelModel";
 import { cartRows, dealRows } from "./drillRows";
-import { bucketSeries } from "./seriesModel";
 import type { NumbersRanges } from "./periods";
 import type { Column } from "./widgets";
 import { SectionCard, StatTable } from "./widgets";
@@ -66,29 +65,6 @@ export const PipelineSection = ({
           now.getTime() - new Date(c.checkout_updated_at).getTime() > 3_600_000,
       ),
     [checkouts, ranges, now],
-  );
-  const sparks = useMemo(
-    () => ({
-      leads: bucketSeries(
-        deals,
-        (d) => d.created_at,
-        () => 1,
-        ranges,
-      ),
-      converted: bucketSeries(
-        deals.filter((d) => d.stage === "won"),
-        (d) => d.created_at,
-        () => 1,
-        ranges,
-      ),
-      carts: bucketSeries(
-        checkouts.filter((c) => !c.completed_at),
-        (c) => c.checkout_updated_at,
-        () => 1,
-        ranges,
-      ),
-    }),
-    [deals, checkouts, ranges],
   );
   const dealDrill =
     (title: string, description: string, list: () => Deal[]) =>
@@ -144,7 +120,6 @@ export const PipelineSection = ({
             "Every request and booking that started in this period, newest first.",
             () => leads,
           )}
-          spark={sparks.leads}
         />
         <KpiTile
           label="Lead to converted"
@@ -155,7 +130,6 @@ export const PipelineSection = ({
             "Jobs that started in this period and are now Converted.",
             () => converted,
           )}
-          spark={sparks.converted}
         />
         <KpiTile
           label="Time to quote"
@@ -196,7 +170,6 @@ export const PipelineSection = ({
             empty: "No abandoned carts in this period.",
             rows: cartRows(abandoned, setOpenCart),
           })}
-          spark={sparks.carts}
         />
       </div>
       <SectionCard

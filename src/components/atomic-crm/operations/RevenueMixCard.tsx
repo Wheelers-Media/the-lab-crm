@@ -1,4 +1,4 @@
-import { Layers, ArrowRight } from "lucide-react";
+import { Layers } from "lucide-react";
 import { type KeyboardEvent, useMemo, useState } from "react";
 import { Link } from "react-router";
 import { Card } from "@/components/ui/card";
@@ -116,10 +116,9 @@ export const RevenueMixCard = ({
         action={
           <Link
             to="/numbers?section=sales"
-            aria-label="See sales"
-            className="grid size-8 place-items-center rounded-md text-muted-foreground hover:text-foreground"
+            className="text-sm text-muted-foreground hover:text-foreground"
           >
-            <ArrowRight className="size-4" aria-hidden />
+            See sales
           </Link>
         }
       >

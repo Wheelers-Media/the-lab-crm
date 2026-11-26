@@ -3,7 +3,6 @@
 // shop should be by now to hit it. Plain numbers in and out, so it is tested
 // without a screen.
 import type { MonthlyTargets } from "../root/ConfigurationContext";
-import type { Order } from "../types";
 import {
   addDays,
   type DateRange,
@@ -133,105 +132,5 @@ export const monthlyTargets = (
     revenue: pick("revenue", true),
     orders: pick("orders", false),
     newCustomers: pick("newCustomers", false),
-  };
-};
-
-export interface GoalCurves {
-  /** Points on the axis: days of the period, or hours when the period is one day. */
-  slots: number;
-  /** Running total per goal up to now, one point per slot so far. */
-  actual: Record<GoalKey, number[]>;
-  /** Share of the period's target that should be done by the end of each slot, 0 to 1. */
-  pace: number[];
-}
-
-/**
- * The shape of the period so far for each goal: what has been taken up to
- * each day (or hour), against where the weekday pace says it should be.
- */
-export const goalCurves = (
-  orders: Array<
-    Pick<
-      Order,
-      | "ordered_at"
-      | "contact_id"
-      | "total"
-      | "refunded_amount"
-      | "is_deposit"
-      | "cancelled_at"
-    >
-  >,
-  firstOrderAt: Map<unknown, string>,
-  range: DateRange,
-  now: Date,
-): GoalCurves => {
-  const start = range.start.getTime();
-  const spanMs = range.end.getTime() - start;
-  const hourly = spanMs <= 1.5 * DAY_MS;
-  const slotMs = hourly ? 3_600_000 : DAY_MS;
-  const slots = Math.max(1, Math.round(spanMs / slotMs));
-  const slotOf = (iso: string) =>
-    Math.min(
-      slots - 1,
-      Math.max(0, Math.floor((new Date(iso).getTime() - start) / slotMs)),
-    );
-  const nowSlot = Math.min(
-    slots - 1,
-    Math.max(0, Math.floor((now.getTime() - start) / slotMs)),
-  );
-  const revenue = new Array<number>(slots).fill(0);
-  const count = new Array<number>(slots).fill(0);
-  const added = new Array<number>(slots).fill(0);
-  const seen = new Set<unknown>();
-  for (const o of [...orders].sort((a, b) =>
-    a.ordered_at.localeCompare(b.ordered_at),
-  )) {
-    const at = new Date(o.ordered_at).getTime();
-    if (
-      o.cancelled_at ||
-      o.is_deposit ||
-      at < start ||
-      at >= range.end.getTime()
-    )
-      continue;
-    const i = slotOf(o.ordered_at);
-    revenue[i] += Math.max(
-      0,
-      (Number(o.total) || 0) - (Number(o.refunded_amount) || 0),
-    );
-    count[i] += 1;
-    const first = o.contact_id != null ? firstOrderAt.get(o.contact_id) : null;
-    if (
-      o.contact_id != null &&
-      !seen.has(o.contact_id) &&
-      first &&
-      new Date(first).getTime() >= start
-    ) {
-      seen.add(o.contact_id);
-      added[i] += 1;
-    }
-  }
-  const running = (list: number[]) => {
-    let sum = 0;
-    return list.slice(0, nowSlot + 1).map((v) => (sum += v));
-  };
-  // Pace by weekdays, the way the rings count it: weekends add nothing
-  const open: number[] = Array.from({ length: slots }, (_, i) => {
-    if (hourly) return 1;
-    return isWeekend(shopDayKey(new Date(start + i * slotMs + slotMs / 2)))
-      ? 0
-      : 1;
-  });
-  const total = open.reduce((a, b) => a + b, 0) || slots;
-  let done = 0;
-  const pace = open.map((w) => (done += w) / total);
-  return {
-    slots,
-    actual: {
-      revenue: running(revenue),
-      orders: running(count),
-      newCustomers: running(added),
-    },
-    pace,
   };
 };

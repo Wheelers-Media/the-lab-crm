@@ -1,13 +1,6 @@
-import {
-  ArrowDown,
-  ArrowRight,
-  ArrowUp,
-  CalendarDays,
-  ListTree,
-} from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUp, CalendarDays } from "lucide-react";
 import { type ComponentType, useState } from "react";
 import { DrillSheet, type DrillContent } from "./DrillSheet";
-import { Sparkline, sparkLabel } from "./Sparkline";
 import { Link } from "react-router";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -47,7 +40,7 @@ export const SectionTitle = ({
     </div>
     {action ? (
       // Links like "Calendar" get a full 44pt tap target
-      <span className="-my-2 inline-flex shrink-0 whitespace-nowrap [&>a]:inline-flex [&>a]:min-h-11 [&>a]:items-center">
+      <span className="-my-2 inline-flex [&>a]:inline-flex [&>a]:min-h-11 [&>a]:items-center">
         {action}
       </span>
     ) : null}
@@ -69,8 +62,6 @@ export interface KpiTileProps {
    * on a tile that already toggles a chart, a "Details" button does instead.
    */
   drill?: () => DrillContent;
-  /** The figure over time, drawn under the number; `previous` is the period before. */
-  spark?: { values: number[]; previous?: number[] };
 }
 
 export const KpiTile = ({
@@ -82,7 +73,6 @@ export const KpiTile = ({
   onSelect,
   selected,
   drill,
-  spark,
 }: KpiTileProps) => {
   const [open, setOpen] = useState<DrillContent | null>(null);
   const tile = (
@@ -121,19 +111,6 @@ export const KpiTile = ({
         ) : null}
         {detail ? <span className="line-clamp-2">{detail}</span> : null}
       </div>
-      {spark && spark.values.length > 1 && spark.values.some((v) => v !== 0) ? (
-        <Sparkline
-          className="mt-2 text-muted-foreground"
-          values={spark.values}
-          compare={spark.previous}
-          label={sparkLabel(label, spark.values)}
-          colour={
-            trend != null && trend < 0
-              ? "var(--lab-neg)"
-              : "var(--lab-blue-text)"
-          }
-        />
-      ) : null}
     </Card>
   );
   const sheet = <DrillSheet drill={open} onClose={() => setOpen(null)} />;
@@ -153,11 +130,10 @@ export const KpiTile = ({
             <button
               type="button"
               onClick={() => setOpen(drill())}
-              className="absolute right-1.5 top-1.5 grid size-7 place-items-center rounded-md text-[var(--lab-blue-text)] hover:bg-muted"
+              className="absolute bottom-2 right-3 text-[11px] uppercase tracking-wider text-[var(--lab-blue-text)] underline-offset-2 hover:underline"
               aria-label={`Details for ${label}`}
-              title="See the records behind this"
             >
-              <ListTree className="size-4" aria-hidden />
+              Details
             </button>
             {sheet}
           </>

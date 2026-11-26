@@ -20,13 +20,7 @@ import { AppointmentRow, SectionTitle, WeekStrip } from "./OperationsWidgets";
 import { Reveal } from "./Reveal";
 import { RevenueMixCard } from "./RevenueMixCard";
 import { GoalsCard } from "./GoalsCard";
-import {
-  elapsedShare,
-  goalCurves,
-  goalProgress,
-  monthlyTargets,
-} from "./goalsModel";
-import { customerLedger } from "../numbers/customerModel";
+import { elapsedShare, goalProgress, monthlyTargets } from "./goalsModel";
 import { useConfigurationContext } from "../root/ConfigurationContext";
 import { TrendTiles } from "./TrendTiles";
 import { movers, trends, weeklyMix } from "./trendsModel";
@@ -157,15 +151,8 @@ export const CommandCenter = ({
     });
     const elapsed = elapsedShare(range, now);
     const current = trend.current;
-    const firstOrderAt = new Map(
-      [...customerLedger(history.ledgerOrders).values()].map((r) => [
-        r.contactId,
-        r.firstOrderAt,
-      ]),
-    );
     return {
       elapsed,
-      curves: goalCurves(history.orders, firstOrderAt, range, now),
       monthly: {
         revenue: monthly.revenue.value,
         orders: monthly.orders.value,
@@ -315,7 +302,6 @@ export const CommandCenter = ({
     <GoalsCard
       goals={goals.list}
       monthly={goals.monthly}
-      curves={goals.curves}
       elapsed={goals.elapsed}
       periodLabel={periodLabel.thisPeriod}
       isPending={history.isPending || data.isPending}

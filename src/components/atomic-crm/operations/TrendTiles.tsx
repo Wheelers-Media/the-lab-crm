@@ -142,9 +142,6 @@ export const TrendTiles = ({
               label={tile.label}
               to={tile.to}
               value={tile.format(current)}
-              spark={{
-                values: trends.series.map((f) => tile.value(f) ?? 0),
-              }}
               trend={isSmall ? null : changeOf(current, previous)}
               detail={
                 isSmall

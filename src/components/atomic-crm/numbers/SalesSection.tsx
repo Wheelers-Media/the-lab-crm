@@ -23,7 +23,6 @@ import {
   type Segment,
 } from "./insightsModel";
 import { orderRows } from "./drillRows";
-import { bucketSeries, type Series } from "./seriesModel";
 import type { Drill } from "./OrderDrillSheet";
 import type { NumbersRanges } from "./periods";
 import {
@@ -129,35 +128,6 @@ export const SalesSection = ({
     () => metricTrend(orders, ranges, metric),
     [orders, ranges, metric],
   );
-  const sparks = useMemo(() => {
-    const fromMetric = (m: SalesMetric): Series => {
-      const pts = metricTrend(orders, ranges, m);
-      return {
-        values: pts.map((p) => p.value),
-        previous: pts.map((p) => p.previous),
-      };
-    };
-    return {
-      netSales: fromMetric("netSales"),
-      orders: fromMetric("orders"),
-      average: fromMetric("average"),
-      units: fromMetric("units"),
-      refunds: bucketSeries(
-        salesOrders(orders, ranges.current).concat(
-          salesOrders(orders, ranges.previous),
-        ),
-        (o) => o.ordered_at,
-        (o) => Number(o.refunded_amount) || 0,
-        ranges,
-      ),
-      deposits: bucketSeries(
-        orders.filter((o) => o.is_deposit && !o.cancelled_at),
-        (o) => o.ordered_at,
-        () => 1,
-        ranges,
-      ),
-    };
-  }, [orders, ranges]);
   const periodOrders = useMemo(
     () => salesOrders(orders, ranges.current),
     [orders, ranges],
@@ -197,7 +167,6 @@ export const SalesSection = ({
             "Every order that makes up this figure, before tax and shipping.",
             () => periodOrders,
           )}
-          spark={sparks.netSales}
         />
         <KpiTile
           label="Orders"
@@ -211,7 +180,6 @@ export const SalesSection = ({
             "Paid orders in this period. Deposits and cancelled orders are not counted.",
             () => periodOrders,
           )}
-          spark={sparks.orders}
         />
         <KpiTile
           label="Average order"
@@ -229,7 +197,6 @@ export const SalesSection = ({
             "The orders averaged, biggest first.",
             () => [...periodOrders].sort((a, b) => netOf(b) - netOf(a)),
           )}
-          spark={sparks.average}
         />
         <KpiTile
           label="Units sold"
@@ -247,7 +214,6 @@ export const SalesSection = ({
             "The orders the units came from.",
             () => periodOrders,
           )}
-          spark={sparks.units}
         />
         <KpiTile
           label="Refunds"
@@ -262,7 +228,6 @@ export const SalesSection = ({
             "Orders in this period that had money refunded.",
             () => periodOrders.filter((o) => Number(o.refunded_amount) > 0),
           )}
-          spark={sparks.refunds}
         />
         <KpiTile
           label="Deposits"
@@ -273,7 +238,6 @@ export const SalesSection = ({
             "Booking deposits taken. They hold a spot and come off the final bill, so they are not counted as sales.",
             () => depositOrders(orders, ranges.current),
           )}
-          spark={sparks.deposits}
         />
       </div>
 
