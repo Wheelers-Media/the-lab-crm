@@ -58,21 +58,17 @@ export const Notification = (props: ToasterProps) => {
 
         const mutation = takeMutation();
 
-        const handleExited = () => {
-          if (undoable) {
-            if (mutation) {
-              mutation({ isUndo: false });
-            }
-            window.removeEventListener("beforeunload", beforeunload);
-          }
-        };
-
-        const handleUndo = () => {
-          if (mutation) {
-            mutation({ isUndo: true });
-          }
+        // Settle the change exactly once. Tapping Undo also dismisses the
+        // toast, which used to run the "keep it" path right after the undo.
+        let settled = false;
+        const settle = (isUndo: boolean) => {
+          if (!undoable || settled) return;
+          settled = true;
+          mutation?.({ isUndo });
           window.removeEventListener("beforeunload", beforeunload);
         };
+        const handleExited = () => settle(false);
+        const handleUndo = () => settle(true);
 
         const finalMessage = message
           ? typeof message === "string"
@@ -108,10 +104,10 @@ export const Notification = (props: ToasterProps) => {
   return (
     <CloseNotificationContext.Provider value={handleRequestClose}>
       <Toaster
-        richColors
         theme={theme}
-        closeButton
         position="bottom-center"
+        visibleToasts={2}
+        className="lab-toaster"
         {...props}
       />
     </CloseNotificationContext.Provider>

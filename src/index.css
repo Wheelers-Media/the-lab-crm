@@ -831,3 +831,60 @@ html {
 :root:not(.dark) .lab-chip-danger {
   color: color-mix(in oklab, #e5484d 55%, var(--foreground));
 }
+
+/* Notifications: the site's panel look instead of a bright blue pill. A dark
+   card, a hairline rule, a 3px bar in the colour of what happened, and the
+   Undo action as a plain blue site button. */
+.lab-toaster [data-sonner-toast] {
+  --normal-bg: var(--lab-card);
+  --normal-text: var(--lab-text);
+  --normal-border: var(--lab-rule);
+  background: var(--lab-card);
+  color: var(--lab-text);
+  border: 1px solid var(--lab-rule);
+  border-left: 3px solid var(--lab-blue-text);
+  border-radius: 10px;
+  padding: 14px 16px;
+  font-family: "Barlow", ui-sans-serif, system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.35;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+  gap: 12px;
+}
+.lab-toaster [data-sonner-toast][data-type="success"] {
+  border-left-color: var(--lab-pos);
+}
+.lab-toaster [data-sonner-toast][data-type="error"] {
+  border-left-color: var(--lab-neg);
+}
+.lab-toaster [data-sonner-toast][data-type="warning"] {
+  border-left-color: var(--lab-amber);
+}
+.lab-toaster [data-sonner-toast] [data-icon] {
+  display: none;
+}
+.lab-toaster [data-sonner-toast] [data-content] {
+  flex: 1;
+}
+.lab-toaster [data-sonner-toast] [data-button] {
+  margin-left: auto;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 3px;
+  background: var(--lab-blue);
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.lab-toaster [data-sonner-toast] [data-close-button] {
+  display: none;
+}
+:root:not(.dark) .lab-toaster [data-sonner-toast] {
+  --normal-bg: #fff;
+  background: #fff;
+  color: #0a0a0b;
+  border-color: #dcdde1;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.15);
+}

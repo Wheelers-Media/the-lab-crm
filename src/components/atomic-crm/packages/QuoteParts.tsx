@@ -232,7 +232,7 @@ export const QuoteParts = ({
             type="button"
             aria-pressed={browse === s.id}
             onClick={() => setBrowse(browse === s.id ? null : s.id)}
-            className={`rounded-md border px-3 py-1.5 text-xs uppercase tracking-wider whitespace-nowrap ${
+            className={`shrink-0 rounded-md border px-3 py-1.5 text-xs uppercase tracking-wider whitespace-nowrap ${
               browse === s.id
                 ? "border-primary bg-primary/15 text-foreground"
                 : "border-border text-muted-foreground hover:text-foreground"

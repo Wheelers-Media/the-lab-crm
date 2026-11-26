@@ -7,6 +7,12 @@ import type { Appointment, Deal, Order } from "../types";
 
 const DAY_MS = 86_400_000;
 
+/**
+ * A fresh start: nobody knew which review asks had gone out, so everything
+ * ordered before this moment counts as done. Only newer orders are asked.
+ */
+export const REVIEW_FRESH_START = "2026-11-26T20:00:00Z";
+
 /** A review asked later than this reads as spam, so the card stays quiet. */
 export const REVIEW_WINDOW_DAYS = 30;
 
@@ -75,6 +81,8 @@ export interface ReviewAskInput {
   appointments?: Appointment[];
   deals?: Deal[];
   now?: Date;
+  /** Work finished before this is treated as already asked about. */
+  since?: string;
 }
 
 /**
@@ -88,13 +96,17 @@ export const reviewAskFor = ({
   appointments = [],
   deals = [],
   now = new Date(),
+  since = REVIEW_FRESH_START,
 }: ReviewAskInput): ReviewAskPlan | null => {
   const t = now.getTime();
   const latest = finishedWork(orders, appointments, deals)
     .filter((work) => {
       const at = new Date(work.at).getTime();
       return (
-        !Number.isNaN(at) && at <= t && t - at < REVIEW_WINDOW_DAYS * DAY_MS
+        !Number.isNaN(at) &&
+        work.at >= since &&
+        at <= t &&
+        t - at < REVIEW_WINDOW_DAYS * DAY_MS
       );
     })
     .sort((a, b) => b.at.localeCompare(a.at))[0];

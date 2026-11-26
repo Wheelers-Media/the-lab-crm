@@ -1,7 +1,10 @@
 // Asking for reviews from the Orders tab. A text the minute an order lands
 // reaches people on the road home, so the shop asks in the evening, when they
 // are home and relaxed. Plain records in, plain answers out.
-import { REVIEW_WINDOW_DAYS } from "../contacts/reviewModel";
+import {
+  REVIEW_FRESH_START,
+  REVIEW_WINDOW_DAYS,
+} from "../contacts/reviewModel";
 import {
   shopDayKey,
   shopHour,
@@ -118,6 +121,8 @@ export const askedContacts = (
 };
 
 export const wasAsked = (
-  order: Pick<Order, "contact_id">,
+  order: Pick<Order, "contact_id"> & { ordered_at?: string },
   asked: Set<string>,
-): boolean => order.contact_id != null && asked.has(String(order.contact_id));
+): boolean =>
+  (order.ordered_at != null && order.ordered_at < REVIEW_FRESH_START) ||
+  (order.contact_id != null && asked.has(String(order.contact_id)));

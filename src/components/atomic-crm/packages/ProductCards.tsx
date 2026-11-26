@@ -8,6 +8,7 @@ import type { Package } from "../types";
 import { packagePriceLabel } from "./packageModel";
 import { marginOf } from "./productModel";
 import { StockChip } from "./ProductParts";
+import { sectionLabel, sectionOf } from "./catalogSections";
 
 /** A product as a card: picture, brand, name, price, stock and margin when known. */
 export const ProductCard = ({ pkg }: { pkg: Package }) => {
@@ -49,6 +50,9 @@ export const ProductCard = ({ pkg }: { pkg: Package }) => {
           <p className="line-clamp-2 text-sm font-medium leading-snug">
             {pkg.title}
           </p>
+          <span className="lab-chip lab-chip-muted w-fit">
+            {sectionLabel(sectionOf(pkg))}
+          </span>
           <div className="flex items-baseline justify-between gap-2 pt-1">
             <span className="lab-num font-semibold">
               {packagePriceLabel(pkg)}

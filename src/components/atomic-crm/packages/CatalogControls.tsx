@@ -8,7 +8,7 @@ import type { StockFilter, useCatalogBrowser } from "./useCatalogBrowser";
 type Browser = ReturnType<typeof useCatalogBrowser>;
 
 const chip = (active: boolean) =>
-  `rounded-md border px-3 py-1.5 text-xs uppercase tracking-wider whitespace-nowrap ${
+  `shrink-0 rounded-md border px-3 py-1.5 text-xs uppercase tracking-wider whitespace-nowrap ${
     active
       ? "border-primary bg-primary/15 text-foreground"
       : "border-border text-muted-foreground hover:text-foreground"

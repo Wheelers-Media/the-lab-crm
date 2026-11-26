@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import type { Appointment, Deal, Order } from "../types";
-import { reviewAskFor } from "./reviewModel";
+import { reviewAskFor, type ReviewAskInput } from "./reviewModel";
+
+const ask = (input: ReviewAskInput) =>
+  reviewAskFor({ since: "2000-01-01T00:00:00Z", ...input });
 
 const NOW = new Date("2026-11-02T18:00:00Z");
 const DAY_MS = 86_400_000;
@@ -62,7 +65,7 @@ const appointment = (over: Partial<Appointment> = {}): Appointment =>
 
 describe("reviewAskFor", () => {
   it("asks about the most recent finished work", () => {
-    const plan = reviewAskFor({
+    const plan = ask({
       firstName: "Sam",
       orders: [order({ ordered_at: daysAgo(9) })],
       deals: [deal({ name: "Ceramic tint, crew cab truck" })],
@@ -75,7 +78,7 @@ describe("reviewAskFor", () => {
   });
 
   it("generalizes the package the customer bought", () => {
-    const plan = reviewAskFor({
+    const plan = ask({
       firstName: "Sam",
       vehicle: "2022 Ram 3500",
       orders: [order()],
@@ -88,7 +91,7 @@ describe("reviewAskFor", () => {
   });
 
   it("counts an appointment they kept", () => {
-    const plan = reviewAskFor({
+    const plan = ask({
       firstName: "Sam",
       vehicle: "2021 Ram 3500",
       appointments: [
@@ -105,7 +108,7 @@ describe("reviewAskFor", () => {
   });
 
   it("ignores deposits, cancelled orders and work still in the shop", () => {
-    const plan = reviewAskFor({
+    const plan = ask({
       orders: [
         order({ is_deposit: true, ordered_at: daysAgo(1) }),
         order({ id: 2, cancelled_at: daysAgo(1), ordered_at: daysAgo(1) }),
@@ -125,7 +128,7 @@ describe("reviewAskFor", () => {
   });
 
   it("stays quiet once the work is more than 30 days old", () => {
-    const plan = reviewAskFor({
+    const plan = ask({
       orders: [order({ ordered_at: daysAgo(40) })],
       now: NOW,
     });
@@ -134,7 +137,7 @@ describe("reviewAskFor", () => {
   });
 
   it("treats a converted job as finished even with no floor status", () => {
-    const plan = reviewAskFor({
+    const plan = ask({
       deals: [
         deal({
           stage: "won",
@@ -148,5 +151,13 @@ describe("reviewAskFor", () => {
     });
 
     expect(plan?.at).toBe(daysAgo(6));
+  });
+});
+
+describe("fresh start", () => {
+  it("stays quiet about work finished before the fresh start", () => {
+    expect(
+      reviewAskFor({ firstName: "Sam", orders: [order()], now: NOW }),
+    ).toBeNull();
   });
 });

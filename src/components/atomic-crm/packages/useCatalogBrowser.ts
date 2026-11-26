@@ -8,9 +8,17 @@ import {
   matchesCatalogQuery,
   SECTIONS,
   sectionCounts,
+  sectionLabel,
+  sectionOf,
   type SectionId,
 } from "./catalogSections";
 import { LOW_STOCK } from "./productModel";
+
+/** A catalog row with where it sits in the store, so lists can sort and group by section. */
+export type CatalogItem = Package & {
+  section_order: number;
+  section_label: string;
+};
 
 export type StockFilter = "all" | "in" | "low" | "out";
 
@@ -80,14 +88,29 @@ export const useCatalogBrowser = () => {
       ) as string[],
     [catalog],
   );
-  const items = useMemo(
+  const items = useMemo<CatalogItem[]>(
     () =>
-      inSection(catalog, section === "power" ? null : section).filter(
-        (p) =>
-          (!vendor || p.vendor === vendor) &&
-          stockMatches(p, stock) &&
-          matchesCatalogQuery(p, q),
-      ),
+      inSection(catalog, section === "power" ? null : section)
+        .filter(
+          (p) =>
+            // The booking deposit is paperwork, not something the shop sells
+            !/secure booking deposit/i.test(p.title) &&
+            (!vendor || p.vendor === vendor) &&
+            stockMatches(p, stock) &&
+            matchesCatalogQuery(p, q),
+        )
+        .map((p) => {
+          const id = sectionOf(p);
+          return {
+            ...p,
+            section_order: SECTIONS.findIndex((s) => s.id === id),
+            section_label: sectionLabel(id),
+          };
+        })
+        .sort(
+          (a, b) =>
+            a.section_order - b.section_order || a.title.localeCompare(b.title),
+        ),
     [catalog, section, vendor, stock, q],
   );
 

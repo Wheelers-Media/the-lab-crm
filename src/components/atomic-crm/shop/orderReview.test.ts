@@ -87,4 +87,14 @@ describe("asked notes", () => {
     expect(wasAsked({ contact_id: 7 }, asked)).toBe(false);
     expect(wasAsked({ contact_id: null }, asked)).toBe(false);
   });
+
+  it("treats every order from before the fresh start as already done", () => {
+    const none = new Set<string>();
+    expect(
+      wasAsked({ contact_id: 9, ordered_at: "2026-11-20T00:00:00Z" }, none),
+    ).toBe(true);
+    expect(
+      wasAsked({ contact_id: 9, ordered_at: "2026-11-27T00:00:00Z" }, none),
+    ).toBe(false);
+  });
 });

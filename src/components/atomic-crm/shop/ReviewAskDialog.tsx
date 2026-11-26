@@ -1,4 +1,4 @@
-import { Check, Clock, Copy, MessageSquare } from "lucide-react";
+import { Check, Clock, Copy, MessageSquare, Pencil } from "lucide-react";
 import {
   useCreate,
   useGetIdentity,
@@ -41,8 +41,9 @@ export const useAskedReviews = (): Set<string> => {
   return askedContacts(data);
 };
 
-export const useOrderAsked = (order: Pick<Order, "contact_id">): boolean =>
-  wasAsked(order, useAskedReviews());
+export const useOrderAsked = (
+  order: Pick<Order, "contact_id" | "ordered_at">,
+): boolean => wasAsked(order, useAskedReviews());
 
 /**
  * Ask one customer for a Google review from their order. The text is written
@@ -67,10 +68,12 @@ export const ReviewAskDialog = ({
     { enabled: order?.contact_id != null },
   );
   const [text, setText] = useState("");
+  const [editing, setEditing] = useState(false);
   const timing = reviewTiming();
   const phone = contact ? firstPhone(contact) : null;
 
   useEffect(() => {
+    setEditing(false);
     if (!order || !contact) return;
     setText(
       reviewAsk({
@@ -152,7 +155,11 @@ export const ReviewAskDialog = ({
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent
+        className="max-h-[90vh] overflow-y-auto sm:max-w-lg"
+        // Opening must not pop the keyboard; the text is edited on purpose
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
         <DialogHeader>
           <DialogTitle>Ask {name} for a review</DialogTitle>
           <DialogDescription>
@@ -170,17 +177,35 @@ export const ReviewAskDialog = ({
           {timing.label}
         </p>
 
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="text-xs uppercase tracking-wider text-muted-foreground">
-            The text (edit it if you like)
-          </span>
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            rows={8}
-            className="w-full rounded-md border border-input bg-transparent p-3 text-sm leading-relaxed dark:bg-input/30"
-          />
-        </label>
+        <div className="flex flex-col gap-1 text-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs uppercase tracking-wider text-muted-foreground">
+              The text
+            </span>
+            <button
+              type="button"
+              onClick={() => setEditing(!editing)}
+              className="inline-flex items-center gap-1 text-xs uppercase tracking-wider text-[var(--lab-blue-text)]"
+            >
+              <Pencil className="size-3" aria-hidden />
+              {editing ? "Done" : "Edit text"}
+            </button>
+          </div>
+          {editing ? (
+            <textarea
+              autoFocus
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              rows={8}
+              aria-label="Review text"
+              className="w-full rounded-md border border-input bg-transparent p-3 text-sm leading-relaxed dark:bg-input/30"
+            />
+          ) : (
+            <p className="whitespace-pre-line rounded-md bg-muted/60 p-3 leading-relaxed text-muted-foreground">
+              {text}
+            </p>
+          )}
+        </div>
 
         <div className="flex flex-wrap gap-2">
           <Button type="button" size="sm" disabled={!phone} onClick={textNow}>

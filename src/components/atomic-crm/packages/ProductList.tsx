@@ -25,7 +25,7 @@ import { PowerPackagesGallery } from "./PowerPackagesGallery";
 import { ProductGrid } from "./ProductCards";
 import { KindChip, ProductThumb, StockChip } from "./ProductParts";
 import { SyncCatalogButton } from "./SyncCatalogButton";
-import { useCatalogBrowser } from "./useCatalogBrowser";
+import { type CatalogItem, useCatalogBrowser } from "./useCatalogBrowser";
 
 type View = "cards" | "table";
 
@@ -65,6 +65,7 @@ const CatalogError = ({ onRetry }: { onRetry: () => void }) => (
 );
 
 const SORTS: Array<[string, string, "ASC" | "DESC"]> = [
+  ["By store section", "section_order", "ASC"],
   ["Name A to Z", "title", "ASC"],
   ["Price, high to low", "price", "DESC"],
   ["Price, low to high", "price", "ASC"],
@@ -160,7 +161,7 @@ const ProductResults = ({ view }: { view: View }) => {
 export const ProductList = () => {
   const [view] = useStore<View>("packages.view", "cards");
   const browser = useCatalogBrowser();
-  const listContext = useList<Package>({
+  const listContext = useList<CatalogItem>({
     data: browser.items,
     isPending: browser.isPending,
     resource: "packages",
@@ -205,7 +206,9 @@ const MobileProductCard = ({ pkg }: { pkg: Package }) => (
         </p>
         <p className="font-medium leading-snug line-clamp-2">{pkg.title}</p>
         <div className="flex flex-wrap items-center gap-1 pt-1">
-          <KindChip pkg={pkg} />
+          <span className="lab-chip lab-chip-muted">
+            {sectionLabel(sectionOf(pkg))}
+          </span>
           <StockChip inventory={pkg.inventory} />
         </div>
         <p className="lab-num pt-1 text-sm font-semibold">
@@ -248,8 +251,19 @@ export const MobileProductList = () => {
           </p>
         ) : (
           <div className="flex flex-col gap-2">
-            {items.map((pkg) => (
-              <MobileProductCard key={pkg.id} pkg={pkg} />
+            {items.map((pkg, i) => (
+              <div key={pkg.id} className="flex flex-col gap-2">
+                {!browser.section &&
+                pkg.section_label !== items[i - 1]?.section_label ? (
+                  <h2 className="mt-3 text-sm uppercase tracking-wider text-muted-foreground">
+                    {pkg.section_label}{" "}
+                    <span className="lab-num">
+                      {browser.counts[sectionOf(pkg)]}
+                    </span>
+                  </h2>
+                ) : null}
+                <MobileProductCard pkg={pkg} />
+              </div>
             ))}
             {browser.items.length > shown ? (
               <Button
