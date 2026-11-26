@@ -1738,6 +1738,10 @@
           "type": "registry:hook"
         },
         {
+          "path": "src/hooks/use-overlay-history.ts",
+          "type": "registry:hook"
+        },
+        {
           "path": "src/hooks/use-long-press.ts",
           "type": "registry:hook"
         },
