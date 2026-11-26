@@ -1134,6 +1134,10 @@
           "type": "registry:component"
         },
         {
+          "path": "src/components/atomic-crm/layout/pageMemory.ts",
+          "type": "registry:component"
+        },
+        {
           "path": "src/components/atomic-crm/layout/navigation.ts",
           "type": "registry:component"
         },
